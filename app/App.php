@@ -26,15 +26,15 @@ class App {
                     if (class_exists($this->__controller)) {
                         $this->__controller = new $this->__controller();
                     } else {
-                        die('page not found');
+                         throw new \Exception('page not found',404);
                     }
                     //   xóa phần tử khi thực hiện xong
                     unset($urlarr[0]);
                 } else {
-                    throw new \Exception('page not found');
+                    throw new \Exception('page not found',404);
                 }
             } else {
-                throw new \Exception('page not found');
+                throw new \Exception('page not found', 404);
             }
             // xử lý action
             if (isset($urlarr[1])) {
@@ -46,10 +46,10 @@ class App {
                 // xử lý method
                 $this->__controller->{$this->__action}();
             }else{
-                throw new \Exception('Method does not exit');
+                throw new \Exception('Method router does not exit',400);
             }
         }catch (\Exception $e){
-            die($e->getMessage());
+            echo $e;
         }
     }
 }

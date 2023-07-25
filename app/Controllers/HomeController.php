@@ -1,7 +1,8 @@
 <?php
 namespace App\Controllers;
+use App\BaseController;
 
-class HomeController {
+class HomeController extends BaseController {
     public function __construct()
     {
         echo 'home';
