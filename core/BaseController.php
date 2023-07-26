@@ -18,8 +18,6 @@ class BaseController {
         // Đổi key mảng thành biến
         extract($data);
         $views = preg_replace('/([.]+)/', '/' , $views);
-        // print_r($views);
-        // print_r($views);
         if(file_exists(__DIR__ROOT . '/app/views/'.$views.'.view.php')){
             require_once __DIR__ROOT . '/app/views/'.$views.'.view.php';
         }

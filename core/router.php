@@ -23,36 +23,46 @@ class Router {
 //        $with_ids = array_values(preg_grep( '/{([a-z]+)}/', array_keys(self::$routers[$method])));
 //        $url_with_params = array_values(preg_grep( '//', array_keys(self::$routers[$method])));
         $action = '';
+        $path = '';
+        $error = new \Exception('router');
         foreach ($routers as $router){
-            $path = $router['path'];
+            $path_router = $router['path'];
             $method_router = $router['method'];
             $action_router = $router['action'];
             $check_has_params = preg_match('/([0-9]+)/', $url);
             if (!$check_has_params) {
-                if(strcmp($url, $path) !== 0){
-                    die("Not found");
+                if(strcmp($url, $path_router) !== 0){
+                    throw new \Exception('Router not match', 500,$error);
                 }else{
                     if($method_router != $method){
-                        die("Method not allowed");
+                        throw new \Exception("Method router not match", 500,$error);
+                    }
+                    if($path === $path_router){
+                        throw new \Exception("Duplicate router", 500,$error);
                     }
                     $action = $action_router;
+                    $path = $path_router;
                 }
-            } else if (preg_match('/{([a-z]+)}/',$path)){ // check router with params
-                $path_arr = array_values(array_filter(explode('/',$path)));
+            } else if (preg_match('/{([a-z]+)}/',$path_router)){ // check router with params
+                $path_arr = array_values(array_filter(explode('/',$path_router)));
                 $url_arr = array_filter(explode('/', $url));
                 if(count($path_arr) == count($url_arr)){
                     $result = array_diff($url_arr,$path_arr);
                     if(count($result) < count($url_arr)){
                         if($method_router != $method){
-                            die("Method not allowed");
+                            throw new \Exception("Method router not match", 500,$error);
+                        }
+                        if($path === $path_router){
+                            throw new \Exception("Duplicate router", 500,$error);
                         }
                         // $result sẽ là params
                         $action = array_merge($action_router, $result);
+                        $path = $path_router;
                     }
                 }
             }
         }
-        if(empty($action)) die('Action not exist');
+        if(empty($action)) throw new \Exception("Action not exist", 500,$error);
         return $action;
     }
 
