@@ -1,9 +1,11 @@
 <?php
 namespace App;
 use App\Controllers\HomeController;
+use Core\BaseController;
+use Core\Request;
 use Core\Router;
 
-class App extends BaseController{
+class App extends BaseController {
     private $controller;
     private $action;
     private $param = [];
