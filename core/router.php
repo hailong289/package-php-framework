@@ -30,19 +30,25 @@ class Router {
             $method_router = $router['method'];
             $action_router = $router['action'];
             $check_has_params = preg_match('/([0-9]+)/', $url);
-            if (!$check_has_params) {
-                if(strcmp($url, $path_router) !== 0){
-                    throw new \Exception('Router not match', 500,$error);
-                }else{
-                    if($method_router != $method){
-                        throw new \Exception("Method router not match", 500,$error);
+            if (!$check_has_params && !preg_match('/{([a-z]+)}/',$path_router)) {
+                $path_arr = array_values(array_filter(explode('/',$path_router)));
+                $url_arr = array_filter(explode('/', $url));
+                if(count($path_arr) == count($url_arr)){
+                    if(strcmp($url, $path_router) !== 0){
+                           throw new \Exception('Router not match', 500,$error);
+                    }else{
+                        if($method_router != $method){
+                            throw new \Exception("Method router not match", 500,$error);
+                        }
+                        if($path === $path_router){
+                            throw new \Exception("Duplicate router", 500,$error);
+                        }
+
+                        $action = $action_router;
+                        $path = $path_router;
                     }
-                    if($path === $path_router){
-                        throw new \Exception("Duplicate router", 500,$error);
-                    }
-                    $action = $action_router;
-                    $path = $path_router;
                 }
+
             } else if (preg_match('/{([a-z]+)}/',$path_router)){ // check router with params
                 $path_arr = array_values(array_filter(explode('/',$path_router)));
                 $url_arr = array_filter(explode('/', $url));

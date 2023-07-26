@@ -63,7 +63,7 @@ class App extends BaseController {
                 throw new \Exception("Method {$this->__action} does not exit",400);
             }
         }catch (\Exception $e){
-           ob_end_clean(); // remove echo
+//            ob_end_clean(); // remove echo
             $file = $e->getFile();
             if($e->getPrevious() && $e->getPrevious()->getMessage() == 'router'){
                 $file = __DIR__ROOT. '\router\web.php';

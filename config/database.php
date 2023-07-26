@@ -1,25 +1,38 @@
 <?php
+define('DATABASE_CONNECTION','mysql'); // chỉ hỗ trợ mysql, pgsql
+
 define('DATABASE',[
-    "default" => [
-        "HOST" => '127.0.0.1',
-        "PORT" => '3306',
-        "DATABASE_NAME" => 'default',
-        "USERNAME" => 'root',
-        "PASSWORD" => 'root'
+    "mysql" => [
+        "default" => [
+            "HOST" => '127.0.0.1',
+            "PORT" => '3306',
+            "DATABASE_NAME" => 'default',
+            "USERNAME" => 'root',
+            "PASSWORD" => 'root'
+        ],
+        "production" => [
+            "HOST" => '127.0.0.1',
+            "PORT" => '3306',
+            "DATABASE_NAME" => 'default',
+            "USERNAME" => 'root',
+            "PASSWORD" => 'root'
+        ]
     ],
-    "slave" => [
-        "HOST" => '127.0.0.1',
-        "PORT" => '3306',
-        "DATABASE_NAME" => 'default',
-        "USERNAME" => 'root',
-        "PASSWORD" => 'root'
-    ],
-    "master" => [
-        "HOST" => '127.0.0.1',
-        "PORT" => '3306',
-        "DATABASE_NAME" => 'default',
-        "USERNAME" => 'root',
-        "PASSWORD" => 'root'
+    "pqsql" => [
+        "default" => [
+            "HOST" => '127.0.0.1',
+            "PORT" => '5432',
+            "DATABASE_NAME" => 'default',
+            "USERNAME" => 'root',
+            "PASSWORD" => 'root'
+        ],
+        "production" => [
+            "HOST" => '127.0.0.1',
+            "PORT" => '5432',
+            "DATABASE_NAME" => 'default',
+            "USERNAME" => 'root',
+            "PASSWORD" => 'root'
+        ]
     ]
 ]);
 
