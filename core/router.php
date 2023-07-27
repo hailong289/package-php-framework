@@ -24,7 +24,6 @@ class Router {
 //        $url_with_params = array_values(preg_grep( '//', array_keys(self::$routers[$method])));
         $action = '';
         $path = '';
-        $error = new \Exception('router');
         foreach ($routers as $router){
             $path_router = $router['path'];
             $method_router = $router['method'];
@@ -34,14 +33,12 @@ class Router {
                 $path_arr = array_values(array_filter(explode('/',$path_router)));
                 $url_arr = array_filter(explode('/', $url));
                 if(count($path_arr) == count($url_arr)){
-                    if(strcmp($url, $path_router) !== 0){
-                           throw new \Exception('Router not match', 500,$error);
-                    }else{
-                        if($method_router != $method){
-                            throw new \Exception("Method router not match", 500,$error);
+                    if (strcmp($url, $path_router) === 0) {
+                        if ($method_router != $method) {
+                            throw new \Exception("Method router not match", 500);
                         }
-                        if($path === $path_router){
-                            throw new \Exception("Duplicate router", 500,$error);
+                        if ($path === $path_router) {
+                            throw new \Exception("Duplicate router", 500);
                         }
 
                         $action = $action_router;
@@ -56,10 +53,10 @@ class Router {
                     $result = array_diff($url_arr,$path_arr);
                     if(count($result) < count($url_arr)){
                         if($method_router != $method){
-                            throw new \Exception("Method router not match", 500,$error);
+                            throw new \Exception("Method router not match", 500);
                         }
                         if($path === $path_router){
-                            throw new \Exception("Duplicate router", 500,$error);
+                            throw new \Exception("Duplicate router", 500);
                         }
                         // $result sẽ là params
                         $action = array_merge($action_router, $result);
@@ -68,7 +65,7 @@ class Router {
                 }
             }
         }
-        if(empty($action)) throw new \Exception("Action not exist", 500,$error);
+        if(empty($action)) throw new \Exception("Router not exist", 500);
         return $action;
     }
 

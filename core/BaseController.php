@@ -3,8 +3,8 @@ namespace Core;
 
 class BaseController {
     public function model($model){
-        if(file_exists(__DIR__ROOT . '/app/models/'.$model.'.php')){
-            require_once __DIR__ROOT . '/app/models/'.$model.'.php';
+        if(file_exists($model.'.php')){
+            require_once $model.'.php';
             if(class_exists($model)){
                 $model = new $model();
                 return $model;

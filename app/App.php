@@ -64,15 +64,12 @@ class App extends BaseController {
             }
         }catch (\Exception $e){
 //            ob_end_clean(); // remove echo
-            $file = $e->getFile();
-            if($e->getPrevious() && $e->getPrevious()->getMessage() == 'router'){
-                $file = __DIR__ROOT. '\router\web.php';
-            }
+           $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
+           file_put_contents(__DIR__ROOT .'/storage/debug.log',$date . $e, FILE_APPEND);
            return $this->render_view("error.index",[
                "message" => $e->getMessage(),
                "line" => $e->getLine(),
-               "file" => $file,
-               "trace" => $e->getTraceAsString(),
+               "file" => $e->getFile(),
                "code" => $e->getCode() ?? 500
            ]);
         }

@@ -1,0 +1,17 @@
+[2023-07-27 03:42:57]: Exception: Action not exist in C:\laragon\www\php\version1\core\router.php:68
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle('/', 'GET')
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}[2023-07-27 03:44:25]: Exception: Action not exist in C:\laragon\www\php\version1\core\router.php:68
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle('/', 'GET')
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}
+[2023-07-27 03:44:49]: Exception: Action not exist in C:\laragon\www\php\version1\core\router.php:68
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle('/', 'GET')
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}

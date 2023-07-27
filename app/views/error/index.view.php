@@ -36,7 +36,7 @@
         <div class="notfound-social">
             <p>Line: <?=$line ?? 1?></p>
             <p>File: <?=$file ?? ''?></p>
-            <p>Trace:  <?=$trace ?? ''?></p>
+<!--            <p>Trace:  --><?//=$trace ?? ''?><!--</p>-->
 <!--            <a href="#"><i class="fa fa-facebook"></i></a>-->
 <!--            <a href="#"><i class="fa fa-twitter"></i></a>-->
 <!--            <a href="#"><i class="fa fa-pinterest"></i></a>-->
