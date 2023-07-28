@@ -8,7 +8,7 @@ class HomeController extends BaseController {
     public function __construct()
     {}
 
-    public function index($type = 1){
+    public function index(){
         $category = $this->model(Categories::class)::index();
         echo 'index';
     }
