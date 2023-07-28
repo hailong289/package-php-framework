@@ -1,16 +1,17 @@
 <?php
 namespace Core;
+use Core\Builder\QueryBuilder;
 
 class Database {
-    private $__conn;
-    private $enableLog = false;
-    private $log;
-    public $timestamp = false;
-    public $table = false;
-//    use QueryBuilder;
+    private static $__conn;
+    private static $enableLog = false;
+    private static $log;
+    private static $class;
+    use QueryBuilder;
     public function __construct()
     {
-        $this->__conn = Connection::getInstance(DB_ENVIRONMENT, DB_CONNECTION);
+        self::$__conn = Connection::getInstance(DB_ENVIRONMENT, DB_CONNECTION);
+        self::$class = $this;
     }
 
 //    public function insert($data){
@@ -66,41 +67,41 @@ class Database {
 //
     public function query($sql){
         try {
-            $statement = $this->__conn->prepare($sql);
+            $statement = self::$__conn->prepare($sql);
             $statement->execute();
-            if($this->enableLog) $this->log = $statement;
+            if(self::$enableLog) self::$log = $statement;
             return $statement;
         } catch (\Throwable $th) {
             throw $th;
         }
     }
 
-    public function enableQueryLog(){
-        $this->enableLog = true;
+    public static function enableQueryLog(){
+        self::$enableLog = true;
     }
 
-    public function getQueryLog(){
+    public static function getQueryLog(){
         try {
-            if(empty($this->log)){
-                throw new \RuntimeException("log not working");
+            if(empty(self::$log)){
+                throw new \RuntimeException("No sql result",500);
             }
-            print_r($this->log);
+            print_r(self::$log);
             exit();
         } catch (\Throwable $th) {
             throw $th;
         }
     }
 
-    public function beginTransaction(){
-        return $this->__conn->beginTransaction();
+    public static function beginTransaction(){
+        return self::$__conn->beginTransaction();
     }
 
-    public function commit(){
-        return $this->__conn->commit();
+    public static function commit(){
+        return self::$__conn->commit();
     }
 
-    public function rollBack(){
-        return $this->__conn->rollBack();
+    public static function rollBack(){
+        return self::$__conn->rollBack();
     }
 
 }

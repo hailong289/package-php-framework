@@ -15,9 +15,8 @@ require_once 'core/Request.php';
 require_once 'router/web.php';
 
 require_once 'core/Connection.php'; // connection database
-//require_once 'trait/QueryBuilder.php'; // xử lý query builder
+require_once 'trait/QueryBuilder.php'; // xử lý query builder
 require_once 'core/Database.php';
-$a = new \Core\Database();
 require_once 'core/Model.php';
 
 
