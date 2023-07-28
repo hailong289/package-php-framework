@@ -1,0 +1,6 @@
+{
+  "repositories": [
+    {"type": "composer", "url": "https://repo.packagist.com/php-framework/"},
+    {"packagist.org": false}
+  ]
+}
