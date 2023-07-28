@@ -1,0 +1,20 @@
+{
+    "name": "longdh/hola-framework",
+    "description": "This is framework php",
+    "require": {
+        "php": "^7.4"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Longdh\\HolaFramework\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "hailong289",
+            "email": "longdh.dev@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev"
+}
