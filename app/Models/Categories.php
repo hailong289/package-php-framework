@@ -11,6 +11,6 @@ class Categories extends Model {
     ];
 
     public static function index(){
-//        echo 'categories index';
+        echo 'categories index';
     }
 }
