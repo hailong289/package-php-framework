@@ -9,7 +9,8 @@ git clone https://gitlab.com/hailong289/php-framework.git
 ```
 
 ## Router 
-Set up in router/web.php
+- Set up in router/web.php
+- Router will receive 2 parameters, 1st parameter will be url, 2nd parameter will be array including controller and function in controller
 ```
 use Core\Router;
 use App\Controllers\HomeController;
@@ -79,6 +80,7 @@ public function index(){
 ```
 
 ### Use view
+- 
 
 
 ## Test and Deploy
