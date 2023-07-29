@@ -1,20 +1,15 @@
 {
     "name": "longdhdev/holaframework",
-    "description": "This is package php framework",
-    "require": {
-        "php": "^7.4"
-    },
-    "license": "MIT",
-    "autoload": {
-        "psr-4": {
-            "Longdhdev\\Holaframework\\": "src/"
-        }
-    },
+    "type": "project",
+    "description": "A small library which implement some features to phalcon",
+    "license": "GPL-3.0",
     "authors": [
         {
             "name": "hailong289",
             "email": "longdh.dev@gmail.com"
         }
     ],
-    "minimum-stability": "dev"
+    "require": {
+        "php": ">=7.4"
+    }
 }
