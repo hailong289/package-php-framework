@@ -5,7 +5,7 @@
 ## Getting started
 
 ```
-git clone https://gitlab.com/hailong289/php-framework.git
+composer create-project longdhdev/holaframework:dev-master@dev
 ```
 
 ## Router 
