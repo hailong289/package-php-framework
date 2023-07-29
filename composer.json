@@ -1,13 +1,13 @@
 {
-    "name": "longdh/hola-framework",
-    "description": "This is framework php",
+    "name": "longdhdev/holaframework",
+    "description": "This is package php framework",
     "require": {
         "php": "^7.4"
     },
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Longdh\\HolaFramework\\": "src/"
+            "Longdhdev\\Holaframework\\": "src/"
         }
     },
     "authors": [
