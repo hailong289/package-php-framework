@@ -9,10 +9,14 @@ class HomeController extends BaseController {
     {}
 
     public function index(){
-        $category = $this->model(Categories::class)::index();
+//        $category = $this->model(Categories::class)::index();
         echo 'index';
     }
     public function store(Request $request, $id){
         echo 'store';
     }
+    public function home(){
+        echo 'home';
+    }
+
 }

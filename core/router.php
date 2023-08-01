@@ -139,4 +139,23 @@ class Router {
             'action' => self::$action
         ];
     }
+
+    public static function middleware($name){
+        $path_middleware = __DIR__ROOT . '/middleware/'. $name. 'Middleware';
+        if(file_exists($path_middleware.'.php')){
+            require_once $path_middleware . '.php';
+            $class = "App\Middleware\\" .$name;
+            $call_middleware = new $class();
+            $handle = $call_middleware->handle(new Request());
+            if($handle) return new static();
+            exit();
+        }else{
+            die('Middleware does not exist');
+        }
+    }
+
+
+    public static function group($router_fn){
+        $router_fn();
+    }
 }

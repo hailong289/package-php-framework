@@ -93,4 +93,20 @@ class Request {
             return $this->put('', true);
         }
     }
+
+    public function session($key = ''){
+        if(empty($_SESSION[$key])) die('key not exit');
+        return $_SESSION[$key];
+    }
+
+    public function cookie($key = ''){
+        if(empty($_COOKIE[$key])) die('key not exit');
+        return $_COOKIE[$key];
+    }
+
+    public function headers($key){
+        $headers = getallheaders();
+        if(empty($headers[$key])) die('key not exit');
+        return $headers[$key];
+    }
 }
