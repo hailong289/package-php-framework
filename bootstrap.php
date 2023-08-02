@@ -9,11 +9,11 @@ if(!empty($config_dir)){
         }
     }
 }
+require_once "core/SessionOrCookie.php";
 require_once 'core/router.php';
 require_once 'core/BaseController.php';
 require_once 'core/Request.php';
 require_once 'router/web.php';
-
 require_once 'core/Connection.php'; // connection database
 require_once 'trait/QueryBuilder.php'; // xử lý query builder
 require_once 'core/Database.php';

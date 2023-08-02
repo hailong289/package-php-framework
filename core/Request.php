@@ -109,4 +109,18 @@ class Request {
         if(empty($headers[$key])) die('key not exit');
         return $headers[$key];
     }
+
+    public function next($string = ''){
+        return (object)[
+            "message" => $string,
+            "error_code" => 0
+        ];
+    }
+
+    public function close($string = ''){
+        return (object)[
+            "message" => $string,
+            "error_code" => 1
+        ];
+    }
 }

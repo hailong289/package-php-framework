@@ -1,14 +1,17 @@
 <?php
 namespace Core;
 
+use App\Core\Middleware;
+
 class Router {
     protected static $method = 'GET';
     protected static $action;
     protected static $path;
     protected static $routers;
+    private static $name_middleware = [];
 
-    public function __construct(){
-
+    public function __construct($middleware = null){
+        if($middleware) self::$name_middleware = $middleware;
     }
 
     public function handle($url, $method){
@@ -24,6 +27,7 @@ class Router {
 //        $url_with_params = array_values(preg_grep( '//', array_keys(self::$routers[$method])));
         $action = '';
         $path = '';
+        $current_router = [];
         foreach ($routers as $router){
             $path_router = $router['path'];
             $method_router = $router['method'];
@@ -43,6 +47,7 @@ class Router {
 
                         $action = $action_router;
                         $path = $path_router;
+                        $current_router = $router;
                     }
                 }
 
@@ -61,11 +66,27 @@ class Router {
                         // $result sẽ là params
                         $action = array_merge($action_router, $result);
                         $path = $path_router;
+                        $current_router = $router;
                     }
                 }
             }
         }
-        if(empty($action)) throw new \Exception("Router not exist", 500);
+        if(empty($action) && count($current_router) == 0) throw new \Exception("Router not exist", 500);
+        $names = $current_router['middleware'];
+        if($names) {
+            $path_middleware = __DIR__ROOT . '/middleware/'. $names. 'Middleware';
+            if(file_exists($path_middleware.'.php')) {
+                require_once $path_middleware . '.php';
+                $class = "App\Middleware\\" . $names;
+                $call_middleware = new $class();
+                $handle = $call_middleware->handle(new Request());
+                if($handle->error_code){
+                    header('Content-Type: application/json; charset=utf-8');
+                    echo json_encode($handle);
+                    exit();
+                }
+            }
+        }
         return $action;
     }
 
@@ -76,7 +97,8 @@ class Router {
         self::$routers[] =[
             'method' => self::$method,
             'path' => self::$path,
-            'action' => self::$action
+            'action' => self::$action,
+            'middleware' => self::$name_middleware ?? null
         ];
     }
     public static function post($name, $action){
@@ -86,7 +108,8 @@ class Router {
         self::$routers[] =[
             'method' => self::$method,
             'path' => self::$path,
-            'action' => self::$action
+            'action' => self::$action,
+            'middleware' => self::$name_middleware ?? null
         ];
     }
     public static function put($name, $action){
@@ -96,7 +119,8 @@ class Router {
         self::$routers[] =[
             'method' => self::$method,
             'path' => self::$path,
-            'action' => self::$action
+            'action' => self::$action,
+            'middleware' => self::$name_middleware ?? null
         ];
     }
     public static function patch($name, $action){
@@ -106,7 +130,8 @@ class Router {
         self::$routers[] =[
             'method' => self::$method,
             'path' => self::$path,
-            'action' => self::$action
+            'action' => self::$action,
+            'middleware' => self::$name_middleware ?? null
         ];
     }
     public static function delete($name, $action){
@@ -116,7 +141,8 @@ class Router {
         self::$routers[] =[
             'method' => self::$method,
             'path' => self::$path,
-            'action' => self::$action
+            'action' => self::$action,
+            'middleware' => self::$name_middleware ?? null
         ];
     }
     public static function head($name, $action){
@@ -126,7 +152,8 @@ class Router {
         self::$routers[] =[
             'method' => self::$method,
             'path' => self::$path,
-            'action' => self::$action
+            'action' => self::$action,
+            'middleware' => self::$name_middleware ?? null
         ];
     }
     public static function options($name, $action){
@@ -136,26 +163,16 @@ class Router {
         self::$routers[] =[
             'method' => self::$method,
             'path' => self::$path,
-            'action' => self::$action
+            'action' => self::$action,
+            'middleware' => self::$name_middleware ?? null
         ];
     }
 
     public static function middleware($name){
-        $path_middleware = __DIR__ROOT . '/middleware/'. $name. 'Middleware';
-        if(file_exists($path_middleware.'.php')){
-            require_once $path_middleware . '.php';
-            $class = "App\Middleware\\" .$name;
-            $call_middleware = new $class();
-            $handle = $call_middleware->handle(new Request());
-            if($handle) return new static();
-            exit();
-        }else{
-            die('Middleware does not exist');
-        }
+        return new static($name);
     }
 
-
-    public static function group($router_fn){
-        $router_fn();
+    public static function group($function){
+        $function();
     }
 }
