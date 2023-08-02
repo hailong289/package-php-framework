@@ -487,3 +487,10 @@ Stack trace:
 #0 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
 #1 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
 #2 {main}
+
+[2023-08-02 09:50:12]: Exception: Router not exist in C:\laragon\www\php\version1\core\router.php:74
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle(NULL, NULL)
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}

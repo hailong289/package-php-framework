@@ -9,8 +9,8 @@ class HomeController extends BaseController {
     {}
 
     public function index(){
-//        $category = $this->model(Categories::class)::index();
         echo 'index';
+        $this->render_view('name_file', ["title" => "Home"]);
     }
     public function store(Request $request, $id){
         echo 'store';
