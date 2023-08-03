@@ -10,7 +10,6 @@
         }
     ],
     "require": {
-        "php": ">=7.4",
-        "longdhdev/holaframework":"dev-master@dev"
+        "php": ">=7.4"
     }
 }
