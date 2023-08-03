@@ -9,19 +9,16 @@ class Router {
     protected static $action;
     protected static $path;
     protected static $routers;
-    private static $name_middleware = [];
+    private static $name_middleware = '';
     private static $prefix = '';
 
     public function __construct($name = null, $is_prefix = false){
         if($name) {
             if ($is_prefix) {
-                self::$name_middleware = [];
                 self::$prefix = $name;
             } else {
-                if (count(self::$name_middleware) > 0)  self::$name_middleware = [];
                 self::$name_middleware = $name;
             }
-
         }
     }
 
@@ -73,7 +70,7 @@ class Router {
                 }
             }
         }
-        if(empty($action) && count($current_router) == 0) throw new \RuntimeException("Router not exist", 500);
+        if(empty($action) || count($current_router) == 0) throw new \RuntimeException("Router not exist", 500);
         $names = $current_router['middleware'];
         if($names && is_string($names)) {
             $result = $this->middlewareWork($names);
@@ -109,7 +106,7 @@ class Router {
         self::$method = 'GET';
         self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
         self::$action = $action;
-        self::$routers[] =[
+        self::$routers[] = [
             'method' => self::$method,
             'path' => self::$path,
             'action' => self::$action,
@@ -191,9 +188,15 @@ class Router {
         return new static($path, true);
     }
 
-    public static function group($function): void
+    public static function group($function)
     {
         $function();
+        self::clear();
+    }
+
+    public static function clear(): void{
+        if(self::$name_middleware) self::$name_middleware = '';
+        if(self::$prefix) self::$prefix = '';
     }
 
     public function middlewareWork($names){

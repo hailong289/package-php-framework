@@ -501,3 +501,108 @@ Stack trace:
 #1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
 #2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
 #3 {main}
+
+[2023-08-03 06:14:56]: RuntimeException: Router not exist in C:\laragon\www\php\version1\core\router.php:77
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle('/home4', 'GET')
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}
+
+[2023-08-03 06:15:10]: RuntimeException: Router not exist in C:\laragon\www\php\version1\core\router.php:77
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle('/home4', 'GET')
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}
+
+[2023-08-03 06:15:50]: RuntimeException: Router not exist in C:\laragon\www\php\version1\core\router.php:75
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle('/home4', 'GET')
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}
+
+[2023-08-03 06:16:26]: RuntimeException: Router not exist in C:\laragon\www\php\version1\core\router.php:75
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle('/', 'GET')
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}
+
+[2023-08-03 06:16:28]: RuntimeException: Router not exist in C:\laragon\www\php\version1\core\router.php:75
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle('/', 'GET')
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}
+
+[2023-08-03 06:16:29]: RuntimeException: Router not exist in C:\laragon\www\php\version1\core\router.php:75
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle('/', 'GET')
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}
+
+[2023-08-03 06:17:18]: RuntimeException: Router not exist in C:\laragon\www\php\version1\core\router.php:75
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle('/', 'GET')
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}
+
+[2023-08-03 06:17:20]: RuntimeException: Router not exist in C:\laragon\www\php\version1\core\router.php:75
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle('/', 'GET')
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}
+
+[2023-08-03 06:17:40]: RuntimeException: Router not exist in C:\laragon\www\php\version1\core\router.php:76
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle('/', 'GET')
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}
+
+[2023-08-03 06:17:50]: RuntimeException: Router not exist in C:\laragon\www\php\version1\core\router.php:76
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle('/', 'GET')
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}
+
+[2023-08-03 06:21:49]: RuntimeException: Router not exist in C:\laragon\www\php\version1\core\router.php:75
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle('/', 'GET')
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}
+
+[2023-08-03 06:23:02]: RuntimeException: Router not exist in C:\laragon\www\php\version1\core\router.php:75
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle('/', 'GET')
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}
+
+[2023-08-03 06:23:23]: RuntimeException: Router not exist in C:\laragon\www\php\version1\core\router.php:75
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle('/', 'GET')
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}
+
+[2023-08-03 06:27:36]: RuntimeException: Router not exist in C:\laragon\www\php\version1\core\router.php:75
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle('/', 'GET')
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}
+
+[2023-08-03 06:28:10]: RuntimeException: Router not exist in C:\laragon\www\php\version1\core\router.php:75
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle('/', 'GET')
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}

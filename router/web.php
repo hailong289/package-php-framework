@@ -2,7 +2,7 @@
 use Core\Router;
 use App\Controllers\HomeController;
 
-Router::get('/', [HomeController::class,'index']);
+
 
 Router::middleware(['auth'])->group(function (){
     Router::get('/home', [HomeController::class,'home']);
@@ -15,3 +15,5 @@ Router::middleware(['auth'])->group(function (){
 Router::prefix('home3')->group(function (){
     Router::get('{id}', [HomeController::class,'store']);
 });
+
+Router::get('/', [HomeController::class,'index']);
