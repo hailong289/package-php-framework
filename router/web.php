@@ -12,3 +12,6 @@ Router::middleware(['auth'])->group(function (){
     Router::get('/home/{id}/{name}', [HomeController::class,'index']);
 });
 
+Router::prefix('home3')->group(function (){
+    Router::get('{id}', [HomeController::class,'store']);
+});

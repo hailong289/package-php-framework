@@ -10,9 +10,18 @@ class Router {
     protected static $path;
     protected static $routers;
     private static $name_middleware = [];
+    private static $prefix = '';
 
-    public function __construct($middleware = null){
-        if($middleware) self::$name_middleware = $middleware;
+    public function __construct($name = null, $is_prefix = false){
+        if($name) {
+            if ($is_prefix) {
+                self::$name_middleware = [];
+                self::$prefix = $name;
+            } else {
+                self::$name_middleware = $name;
+            }
+
+        }
     }
 
     public function handle($url, $method){
@@ -28,13 +37,13 @@ class Router {
             if (!$check_has_params && !preg_match('/{([a-z]+)}/',$path_router)) {
                 $path_arr = array_values(array_filter(explode('/',$path_router)));
                 $url_arr = array_filter(explode('/', $url));
-                if(count($path_arr) == count($url_arr)){
+                if(count($path_arr) === count($url_arr)){
                     if (strcmp($url, $path_router) === 0) {
-                        if ($method_router != $method) {
-                            throw new \Exception("Method router not match", 500);
+                        if ($method_router !== $method) {
+                            throw new \RuntimeException("Method router not match", 500);
                         }
                         if ($path === $path_router) {
-                            throw new \Exception("Duplicate router", 500);
+                            throw new \RuntimeException("Duplicate router", 500);
                         }
 
                         $action = $action_router;
@@ -46,14 +55,14 @@ class Router {
             } else if (preg_match('/{([a-z]+)}/',$path_router)){ // check router with params
                 $path_arr = array_values(array_filter(explode('/',$path_router)));
                 $url_arr = array_filter(explode('/', $url));
-                if(count($path_arr) == count($url_arr)){
+                if(count($path_arr) === count($url_arr)){
                     $result = array_diff($url_arr,$path_arr);
                     if(count($result) < count($url_arr)){
-                        if($method_router != $method){
-                            throw new \Exception("Method router not match", 500);
+                        if($method_router !== $method){
+                            throw new \RuntimeException("Method router not match", 500);
                         }
                         if($path === $path_router){
-                            throw new \Exception("Duplicate router", 500);
+                            throw new \RuntimeException("Duplicate router", 500);
                         }
                         // $result sẽ là params
                         $action = array_merge($action_router, $result);
@@ -63,7 +72,7 @@ class Router {
                 }
             }
         }
-        if(empty($action) && count($current_router) == 0) throw new \Exception("Router not exist", 500);
+        if(empty($action) && count($current_router) == 0) throw new \RuntimeException("Router not exist", 500);
         $names = $current_router['middleware'];
         if($names && is_string($names)) {
             $result = $this->middlewareWork($names);
@@ -94,9 +103,10 @@ class Router {
         return $action;
     }
 
-    public static function get($name,  $action){
+    public static function get($name,  $action): void
+    {
         self::$method = 'GET';
-        self::$path = $name;
+        self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
         self::$action = $action;
         self::$routers[] =[
             'method' => self::$method,
@@ -105,9 +115,9 @@ class Router {
             'middleware' => self::$name_middleware ?? null
         ];
     }
-    public static function post($name, $action){
+    public static function post($name, $action): void{
         self::$method = 'POST';
-        self::$path = $name;
+        self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
         self::$action = $action;
         self::$routers[] =[
             'method' => self::$method,
@@ -116,9 +126,9 @@ class Router {
             'middleware' => self::$name_middleware ?? null
         ];
     }
-    public static function put($name, $action){
+    public static function put($name, $action): void{
         self::$method = 'PUT';
-        self::$path = $name;
+        self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
         self::$action = $action;
         self::$routers[] =[
             'method' => self::$method,
@@ -127,9 +137,9 @@ class Router {
             'middleware' => self::$name_middleware ?? null
         ];
     }
-    public static function patch($name, $action){
+    public static function patch($name, $action): void{
         self::$method = 'PATH';
-        self::$path = $name;
+        self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
         self::$action = $action;
         self::$routers[] =[
             'method' => self::$method,
@@ -138,9 +148,9 @@ class Router {
             'middleware' => self::$name_middleware ?? null
         ];
     }
-    public static function delete($name, $action){
+    public static function delete($name, $action): void{
         self::$method = 'DELETE';
-        self::$path = $name;
+        self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
         self::$action = $action;
         self::$routers[] =[
             'method' => self::$method,
@@ -149,9 +159,9 @@ class Router {
             'middleware' => self::$name_middleware ?? null
         ];
     }
-    public static function head($name, $action){
+    public static function head($name, $action): void{
         self::$method = 'HEAD';
-        self::$path = $name;
+        self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
         self::$action = $action;
         self::$routers[] =[
             'method' => self::$method,
@@ -160,9 +170,9 @@ class Router {
             'middleware' => self::$name_middleware ?? null
         ];
     }
-    public static function options($name, $action){
+    public static function options($name, $action): void{
         self::$method = 'OPTIONS';
-        self::$path = $name;
+        self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
         self::$action = $action;
         self::$routers[] =[
             'method' => self::$method,
@@ -176,7 +186,12 @@ class Router {
         return new static($name);
     }
 
-    public static function group($function){
+    public static function prefix($path){
+        return new static($path, true);
+    }
+
+    public static function group($function): void
+    {
         $function();
     }
 
@@ -189,8 +204,7 @@ class Router {
             if(file_exists($path_middleware.'.php')) {
                 require_once $path_middleware . '.php';
                 $call_middleware = new $class();
-                $handle = $call_middleware->handle(new Request());
-                return $handle;
+                return $call_middleware->handle(new Request());
             }
         }else{
             return (object)[

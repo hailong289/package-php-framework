@@ -494,3 +494,10 @@ Stack trace:
 #1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
 #2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
 #3 {main}
+
+[2023-08-03 03:46:42]: RuntimeException: Router not exist in C:\laragon\www\php\version1\core\router.php:74
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle('/home', 'GET')
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}
