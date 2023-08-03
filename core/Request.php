@@ -95,13 +95,12 @@ class Request {
     }
 
     public function session($key = ''){
-        if(empty($_SESSION[$key])) die('key not exit');
-        return $_SESSION[$key];
+        return empty($_SESSION[$key]) ? false:$_SESSION[$key];
     }
 
     public function cookie($key = ''){
         if(empty($_COOKIE[$key])) die('key not exit');
-        return $_COOKIE[$key];
+        return empty($_COOKIE[$key]) ? false:$_COOKIE[$key];
     }
 
     public function headers($key){

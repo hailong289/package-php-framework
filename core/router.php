@@ -2,6 +2,7 @@
 namespace Core;
 
 use App\Core\Middleware;
+use App\Middleware\Kernel;
 
 class Router {
     protected static $method = 'GET';
@@ -15,16 +16,7 @@ class Router {
     }
 
     public function handle($url, $method){
-
-//        if(!isset(self::$routers[$method])){
-//            die('Method not allowed');
-//        }
         $routers = self::$routers;
-//      if(strcmp($url, self::$path) !== 0){
-//          die('Not found');
-//      }
-//        $with_ids = array_values(preg_grep( '/{([a-z]+)}/', array_keys(self::$routers[$method])));
-//        $url_with_params = array_values(preg_grep( '//', array_keys(self::$routers[$method])));
         $action = '';
         $path = '';
         $current_router = [];
@@ -73,18 +65,30 @@ class Router {
         }
         if(empty($action) && count($current_router) == 0) throw new \Exception("Router not exist", 500);
         $names = $current_router['middleware'];
-        if($names) {
-            $path_middleware = __DIR__ROOT . '/middleware/'. $names. 'Middleware';
-            if(file_exists($path_middleware.'.php')) {
-                require_once $path_middleware . '.php';
-                $class = "App\Middleware\\" . $names;
-                $call_middleware = new $class();
-                $handle = $call_middleware->handle(new Request());
-                if($handle->error_code){
-                    header('Content-Type: application/json; charset=utf-8');
-                    echo json_encode($handle);
-                    exit();
+        if($names && is_string($names)) {
+            $result = $this->middlewareWork($names);
+            if($result->error_code){
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode($result);
+                exit();
+            }
+        }elseif ($names && is_array($names)){
+            $is_error = false;
+            $errors_return = [];
+            foreach ($names as $name){
+                $result = $this->middlewareWork($name);
+                if($result->error_code){
+                    $errors_return[] = $result;
+                    $is_error = true;
                 }
+            }
+            usort($errors_return, function ($item1, $item2) {
+                return isset($item1->middleware_not_exist) ? -1:1;
+            });
+            if($is_error && count($errors_return)){
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode($errors_return[0]);
+                exit();
             }
         }
         return $action;
@@ -174,5 +178,26 @@ class Router {
 
     public static function group($function){
         $function();
+    }
+
+    public function middlewareWork($names){
+        require_once 'middleware/Kernel.php';
+        $kernel = new Kernel();
+        if(!empty($kernel->routerMiddleware[$names])){
+            $class = $kernel->routerMiddleware[$names];
+            $path_middleware = __DIR__ROOT . '/middleware/'. $names. 'Middleware';
+            if(file_exists($path_middleware.'.php')) {
+                require_once $path_middleware . '.php';
+                $call_middleware = new $class();
+                $handle = $call_middleware->handle(new Request());
+                return $handle;
+            }
+        }else{
+            return (object)[
+                'error_code' => 1,
+                'message' => "Middleware $names does not exist",
+                'middleware_not_exist' => 1
+            ];
+        }
     }
 }

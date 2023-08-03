@@ -4,7 +4,7 @@ use App\Controllers\HomeController;
 
 Router::get('/', [HomeController::class,'index']);
 
-Router::middleware('Auth')->group(function (){
+Router::middleware(['auth'])->group(function (){
     Router::get('/home', [HomeController::class,'home']);
     Router::get('/home/detail', [HomeController::class,'index2']);
     Router::get('/home/{id}', [HomeController::class,'store']);
