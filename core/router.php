@@ -18,6 +18,7 @@ class Router {
                 self::$name_middleware = [];
                 self::$prefix = $name;
             } else {
+                if (count(self::$name_middleware) > 0)  self::$name_middleware = [];
                 self::$name_middleware = $name;
             }
 
