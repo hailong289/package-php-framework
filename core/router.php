@@ -31,7 +31,7 @@ class Router {
             $path_router = $router['path'];
             $method_router = $router['method'];
             $action_router = $router['action'];
-            $check_has_params = preg_match('/([0-9]+)/', $url);
+            $check_has_params = preg_match('/\d+/', $url);
             if (!$check_has_params && !preg_match('/{([a-z]+)}/',$path_router)) {
                 $path_arr = array_values(array_filter(explode('/',$path_router)));
                 $url_arr = array_filter(explode('/', $url));
@@ -50,7 +50,7 @@ class Router {
                     }
                 }
 
-            } else if (preg_match('/{([a-z]+)}/',$path_router)){ // check router with params
+            } else if ($check_has_params && preg_match('/{([a-z]+)}/',$path_router)){ // check router with params
                 $path_arr = array_values(array_filter(explode('/',$path_router)));
                 $url_arr = array_filter(explode('/', $url));
                 if(count($path_arr) === count($url_arr)){
@@ -70,6 +70,7 @@ class Router {
                 }
             }
         }
+
         if(empty($action) || count($current_router) == 0) throw new \RuntimeException("Router not exist", 500);
         $names = $current_router['middleware'];
         if($names && is_string($names)) {

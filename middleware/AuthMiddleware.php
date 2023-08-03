@@ -9,7 +9,7 @@ class Auth {
     // return boolean function
      public function handle(Request $request){
          if(!$request->session('auth')){
-            return $request->close('Login does not exit');
+            return $request->next('Login does not exit');
          }
          return $request->next();
      }

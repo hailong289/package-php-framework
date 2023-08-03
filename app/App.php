@@ -28,15 +28,15 @@ class App extends BaseController {
                     if (class_exists($this->__controller)) {
                         $this->__controller = new $this->__controller();
                     } else {
-                         throw new \Exception('Page not found',404);
+                         throw new \RuntimeException('Page not found',404);
                     }
                     //   xóa phần tử khi thực hiện xong
                     unset($urlarr[0]);
                 } else {
-                    throw new \Exception('Page not found',404);
+                    throw new \RuntimeException('Page not found',404);
                 }
             } else {
-                throw new \Exception('Page not found', 404);
+                throw new \RuntimeException('Page not found', 404);
             }
             // xử lý action
             if (isset($urlarr[1])) {
@@ -60,7 +60,8 @@ class App extends BaseController {
                 }
                 $this->__controller->{$this->__action}(...$agr);
             }else{
-                throw new \Exception("Method {$this->__action} does not exit",400);
+                $controller = serialize($this->__controller);
+                throw new \RuntimeException("Method {$this->__action} does not exit in controller {$controller}",400);
             }
         }catch (\Exception $e){
 //            ob_end_clean(); // remove echo

@@ -606,3 +606,29 @@ Stack trace:
 #1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
 #2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
 #3 {main}
+
+[2023-08-03 08:22:03]: Exception: Method storeWithID does not exit in controller O:30:"App\Controllers\HomeController":0:{} in C:\laragon\www\php\version1\app\App.php:64
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#1 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#2 {main}
+
+[2023-08-03 08:33:19]: RuntimeException: Router not exist in C:\laragon\www\php\version1\core\router.php:75
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle('/home/detail', 'GET')
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}
+
+[2023-08-03 08:33:36]: RuntimeException: Method detail does not exit in controller O:30:"App\Controllers\HomeController":0:{} in C:\laragon\www\php\version1\app\App.php:64
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#1 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#2 {main}
+
+[2023-08-03 08:36:59]: RuntimeException: Router not exist in C:\laragon\www\php\version1\core\router.php:74
+Stack trace:
+#0 C:\laragon\www\php\version1\app\App.php(20): Core\Router->handle('/home/1/detail', 'GET')
+#1 C:\laragon\www\php\version1\app\App.php(16): App\App->handleUrl()
+#2 C:\laragon\www\php\version1\index.php(6): App\App->__construct()
+#3 {main}

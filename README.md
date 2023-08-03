@@ -11,12 +11,38 @@ composer create-project longdhdev/holaframework:dev-master@dev
 ## Router 
 - Set up in router/web.php
 - Router will receive 2 parameters, 1st parameter will be url, 2nd parameter will be array including controller and function in controller
-```
+```php
 use Core\Router;
 use App\Controllers\HomeController;
 
 Router::get('/', [HomeController::class,'index']);
 Router::get('/home', [HomeController::class,'index']);
+```
+- Use parameters
+```php
+use Core\Router;
+use App\Controllers\HomeController;
+
+// url {domain}/home/1
+Router::get('/home/{id}', [HomeController::class,'index']); 
+
+// url {domain}/home/detail/2
+Router::get('/home/detail/{id}', [HomeController::class,'detail']); 
+
+```
+- Parameters in controller
+```php
+<?php
+namespace App\Controllers;
+
+class HomeController extends BaseController {
+    public function index($id){
+        echo $id;
+    }
+    public function detail($id){
+        echo $id;
+    }
+}
 ```
 
 ## App
@@ -29,7 +55,7 @@ Router::get('/home', [HomeController::class,'index']);
 
 - Create controller
 
-```
+```php
 <?php
 namespace App\Controllers;
 use Core\BaseController;
@@ -47,13 +73,17 @@ class HomeController extends BaseController {
 }
 
 ```
-
+- How to create namespace in controller
+```php
+File in folder app/Controllers -> namespace App\Controllers 
+File in folder app/Controllers/{name_folder} -> namespace App\Controllers\{name_folder} 
+```
 ### Use model
 
 - Create model 
 - To create a function in the model, make it a static function
 
-```
+```php
 <?php
 namespace App\Models;
 use Core\Model\Model;
@@ -72,7 +102,7 @@ class Categories extends Model {
 ```
 
 - Use model in controller
-```
+```php
 public function index(){
   $category = $this->model(Categories::class)::index();
   echo 'index';
@@ -82,7 +112,7 @@ public function index(){
 ### Use view
 - Create view in folder app/views with name {name_file}.view.php
 - Use view controller
-```
+```php
 <?php
 namespace App\Controllers;
 use App\Models\Categories;
@@ -100,7 +130,7 @@ class HomeController extends BaseController {
 }
 ```
 - Use variable in view
-```
+```html
 <!DOCTYPE html>
 <html lang="en">
 

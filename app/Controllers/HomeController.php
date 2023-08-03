@@ -19,4 +19,8 @@ class HomeController extends BaseController {
         echo 'home';
     }
 
+    public function detail($id){
+        echo $id;
+    }
+
 }
