@@ -14,4 +14,4 @@ Router::prefix('prefix')->group(function (){
     Router::get('name', [HomeController::class,'index']);
 });
 
-Router::get('/', [HomeController::class,'index']);
+Router::get('/', [HomeController::class,'store']);

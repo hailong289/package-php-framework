@@ -9,8 +9,9 @@ composer create-project longdhdev/holaframework:dev-master@dev
 ```
 
 ## Router 
-- Set up in router/web.php
+- Set up in router/web.php 
 - Router will receive 2 parameters, 1st parameter will be url, 2nd parameter will be array including controller and function in controller
+
 ```php
 use Core\Router;
 use App\Controllers\HomeController;

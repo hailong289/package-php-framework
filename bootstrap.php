@@ -1,23 +1,31 @@
 <?php
 define('__DIR__ROOT', __DIR__);
-// tự động load config
-$config_dir = scandir('config'); // hàm lấy các file trong folder configs
-if(!empty($config_dir)){
+
+// auto load file
+$config_dir = array_diff(scandir('config'), array('..', '.'));
+if (!empty($config_dir)) {
     foreach($config_dir as $item){
-        if($item !='.' && $item !='..' && file_exists('config/'.$item)){
+        if(file_exists('config/'.$item)){
             require_once "config/".$item;
         }
     }
 }
-require_once "core/SessionOrCookie.php";
-require_once 'core/router.php';
-require_once 'core/BaseController.php';
-require_once 'core/Request.php';
+$trait_dir = array_diff(scandir('trait'), array('..', '.'));
+if (!empty($trait_dir)) {
+    foreach($trait_dir as $item){
+        if(file_exists('trait/'.$item)){
+            require_once "trait/".$item;
+        }
+    }
+}
+
+$core_dir = array_diff(scandir('core'), array('..', '.'));
+if (!empty($core_dir)) {
+    foreach($core_dir as $item){
+        if(file_exists('core/'.$item)){
+            require_once "core/".$item;
+        }
+    }
+}
 require_once 'router/web.php';
-require_once 'core/Connection.php'; // connection database
-require_once 'trait/QueryBuilder.php'; // xử lý query builder
-require_once 'core/Database.php';
-require_once 'core/Model.php';
-
-
 require_once 'app/App.php';

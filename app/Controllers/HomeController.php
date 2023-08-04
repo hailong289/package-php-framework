@@ -10,11 +10,12 @@ class HomeController extends BaseController {
 
     public function index(){
         echo 'index';
-        $this->render_view('name_file', ["title" => "Home"]);
     }
-    public function store(Request $request, $id){
+
+    public function store(Request $request){
         echo 'store';
     }
+
     public function home(){
         echo 'home';
     }

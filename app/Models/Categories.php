@@ -6,11 +6,15 @@ use Core\Model\Model;
 class Categories extends Model {
     protected static $tableName = 'categories';
     protected static $field = [
-        'id',
-        'name'
+        'name',
+        'view'
     ];
 
     public static function index(){
-        echo 'categories index';
+        echo 'index';
+    }
+
+    public static function store(){
+        echo 'store';
     }
 }

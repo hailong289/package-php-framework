@@ -195,4 +195,104 @@ trait QueryBuilder
         self::$limit = '';
         return $sql;
     }
+
+    public static function create($data){
+        $tableName = self::$tableName ? self::$tableName:static::$tableName;
+        $fieldTable = static::$field ?? [];
+        $fieldTableNone = [];
+        if(!empty($data)){
+            $field = '';
+            $value = '';
+            foreach($data as $key=>$val){
+                if (!in_array($key, $fieldTable)) {
+                    $fieldTableNone[] = $key;
+                }
+                $field .= $key . ',';
+                $value .= "'".$val."'". ",";
+            }
+            if(count($fieldTableNone) > 0){
+                $class = get_class(new static());
+                $fieldTableNone = implode(',', $fieldTableNone);
+                die("Missing $fieldTableNone in fieldTable class $class");
+            }
+            $field = rtrim($field, ',');
+            $value = rtrim($value, ',');
+            $sql = "INSERT INTO $tableName($field) VALUES ($value)";
+            $result = self::$class->query($sql, true);
+            if($result){
+                return self::where('id','=', $result)->first();
+            }
+            return false;
+        }
+    }
+
+    public static function insert($data){
+        $tableName = self::$tableName ? self::$tableName:static::$tableName; // ko có sẽ lấy bên model
+        if(!empty($data)){
+            $field = '';
+            $value = '';
+            foreach($data as $key=>$val){
+                $field .= $key . ',';
+                $value .= "'".$val."'". ",";
+            }
+            $field = rtrim($field, ',');
+            $value = rtrim($value, ',');
+            $sql = "INSERT INTO $tableName($field) VALUES ($value)";
+            $status = self::$class->query($sql);
+            if($status){
+                return true;
+            }
+            return false;
+        }
+    }
+
+    public static function insertLastId($data){
+        $tableName = self::$tableName ? self::$tableName:static::$tableName; // ko có sẽ lấy bên model
+        if(!empty($data)){
+            $field = '';
+            $value = '';
+            foreach($data as $key=>$val){
+                $field .= $key . ',';
+                $value .= "'".$val."'". ",";
+            }
+            $field = rtrim($field, ',');
+            $value = rtrim($value, ',');
+            $sql = "INSERT INTO $tableName($field) VALUES ($value)";
+            $result = self::$class->query($sql, true);
+            if($result){
+                return $result;
+            }
+            return false;
+        }
+    }
+
+    public static function update($data, $fieldOrId){
+        $tableName = self::$tableName ? self::$tableName:static::$tableName; // ko có sẽ lấy bên model
+        if(!empty($data)){
+            $compare = '';
+            foreach($data as $key=>$val){
+                $compare .= $key." = '".$val."', ";
+            }
+            $where = '';
+            if(is_array($fieldOrId)){
+                foreach ($fieldOrId as $key=>$value){
+                    if (empty($where)) {
+                        $where = " WHERE {$key} = '$value'";
+                    } else {
+                        $where .= " AND {$key} = '$value'";
+                    }
+                }
+            }else{
+                $where = " WHERE id = $fieldOrId";
+            }
+            $compare = rtrim($compare, ", ");
+            $sql = "UPDATE {$tableName} SET {$compare}{$where}";
+            $status = self::$class->query($sql);
+            if($status){
+                return true;
+            }
+            return false;
+        }
+    }
+
 }
