@@ -2,7 +2,8 @@
     "name": "longdhdev/holaframework",
     "type": "project",
     "description": "A small library which implement some features to phalcon",
-    "license": "GPL-3.0",
+    "homepage": "https://github.com/hailong289/php-framework.git",
+    "license": "MIT",
     "authors": [
         {
             "name": "hailong289",
