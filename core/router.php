@@ -15,7 +15,7 @@ class Router {
     public function __construct($name = null, $is_prefix = false){
         if($name) {
             if ($is_prefix) {
-                self::$prefix = $name;
+                self::$prefix = (preg_match('/^\//', $name) ? $name: '/'.$name);
             } else {
                 self::$name_middleware = $name;
             }
