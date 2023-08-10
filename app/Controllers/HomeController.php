@@ -2,6 +2,7 @@
 namespace App\Controllers;
 use App\Models\Categories;
 use Core\BaseController;
+use Core\Database;
 use Core\Request;
 
 class HomeController extends BaseController {

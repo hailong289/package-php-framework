@@ -103,10 +103,49 @@ class Categories extends Model {
 ```
 
 - Use model in controller
+
+=== use way 1 ===
 ```php
 public function index(){
   $category = $this->model(Categories::class)::index();
-  echo 'index';
+}
+```
+=== use way 2 ===
+```php
+class Controller extends BaseController {
+    public function __construct()
+    {
+        $this->model([
+            Categories::class,
+            Product::class
+        ]);
+    }
+    public function listCategories(){
+         $data = $this->Categories::get();
+    }
+    public function listProduct(){
+         $data = $this->Product::get();
+         return $data;
+    }
+}
+```
+=== use way 3 ===
+```php
+class Controller extends BaseController {
+    public function __construct()
+    {
+        $this->model([
+            Categories::class,
+            Product::class
+        ]);
+    }
+    public function listCategories(){
+         $data = Categories::get();
+    }
+    public function listProduct(){
+         $data = Product::get();
+         return $data;
+    }
 }
 ```
 
@@ -125,8 +164,7 @@ class HomeController extends BaseController {
     {}
 
     public function index(){
-        echo 'index';
-        $this->render_view('name_file', ["title" => "Home"]);
+        return $this->render_view('name_file', ["title" => "Home"]);
     }
 }
 ```
