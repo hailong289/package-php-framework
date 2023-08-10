@@ -12,7 +12,7 @@ class BaseController {
                     require_once $model.'.php';
                     if(class_exists($model)){
                         $model = new $model();
-//                        {$variable} = $model;
+                        $this->{$variable} = $model;
                     }else{
                         $result[] = (object)[
                             'error_code' => 1,
