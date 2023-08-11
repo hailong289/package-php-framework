@@ -38,7 +38,7 @@ class Router {
                 if(count($path_arr) === count($url_arr)){
                     if (strcmp($url, $path_router) === 0) {
                         if ($method_router !== $method) {
-                            throw new \RuntimeException("Method router not match", 500);
+                            throw new \RuntimeException("Method router not match", 400);
                         }
                         if ($path === $path_router) {
                             throw new \RuntimeException("Duplicate router", 500);
@@ -57,7 +57,7 @@ class Router {
                     $result = array_diff($url_arr,$path_arr);
                     if(count($result) < count($url_arr)){
                         if($method_router !== $method){
-                            throw new \RuntimeException("Method router not match", 500);
+                            throw new \RuntimeException("Method router not match", 400);
                         }
                         if($path === $path_router){
                             throw new \RuntimeException("Duplicate router", 500);
@@ -71,7 +71,7 @@ class Router {
             }
         }
 
-        if(empty($action) || count($current_router) == 0) throw new \RuntimeException("Router not exist", 500);
+        if(empty($action) || count($current_router) == 0) throw new \RuntimeException("Not found", 404);
         $names = $current_router['middleware'];
         if($names && is_string($names)) {
             $result = $this->middlewareWork($names);
