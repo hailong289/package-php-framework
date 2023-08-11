@@ -64,7 +64,6 @@ class App extends BaseController {
                 throw new \RuntimeException("Method {$this->__action} does not exit in controller {$controller}",400);
             }
         }catch (\Exception $e){
-//            ob_end_clean(); // remove echo
 //           $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
 //           file_put_contents(__DIR__ROOT .'/storage/debug.log',$date . $e, FILE_APPEND);
            return $this->render_view("error.index",[

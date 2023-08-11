@@ -10,11 +10,9 @@ class Request {
         $is_patch = $method == 'PATCH' ? true:false;
         $is_put = $method == 'PUT' ? true:false;
         if($is_get){
-            if(!array_key_exists($key, $_GET)) die('key '.$key.' not exit');
-            return $_GET[$key];
+            return $_GET[$key] ?? null;
         }elseif($is_post){
-            if(!array_key_exists($key, $_POST)) die('key '.$key.' not exit');
-            return $_POST[$key];
+            return $_POST[$key] ?? null;
         }elseif($is_patch){
             return $this->patch($key);
         }else{
@@ -25,15 +23,13 @@ class Request {
     private function patch($key = '', $all = false){
         $_PATCH = file_get_contents('php://input');
         if($all) return $_PATCH;
-        if(is_array($_PATCH) && !array_key_exists($key, $_PATCH)) die('key '.$key.' not exit');
-        return empty($key) ? $_PATCH:$_PATCH[$key];
+        return $_PATCH[$key] ?? null;
     }
 
     private function put($key = '', $all = false){
         $_PUT = file_get_contents('php://input');
         if($all) return $_PUT;
-        if(is_array($_PUT) && !array_key_exists($key, $_PUT)) die('key '.$key.' not exit');
-        return empty($key) ? $_PUT:$_PUT[$key];
+        return $_PUT[$key] ?? null;
     }
 
     public function file($key = ''){
@@ -95,18 +91,16 @@ class Request {
     }
 
     public function session($key = ''){
-        return empty($_SESSION[$key]) ? false:$_SESSION[$key];
+        return $_SESSION[$key] ?? null;
     }
 
     public function cookie($key = ''){
-        if(empty($_COOKIE[$key])) die('key not exit');
-        return empty($_COOKIE[$key]) ? false:$_COOKIE[$key];
+        return $_COOKIE[$key] ?? null;
     }
 
     public function headers($key){
         $headers = getallheaders();
-        if(empty($headers[$key])) die('key not exit');
-        return $headers[$key];
+        return $headers[$key] ?? null;
     }
 
     public function next($string = ''){
