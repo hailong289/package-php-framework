@@ -10,8 +10,10 @@ Router::middleware(['auth'])->group(function (){
     Router::get('/home/{id}/detail/{name}', [HomeController::class,'detail']);
 });
 
-Router::prefix('prefix')->group(function (){
-    Router::get('name', [HomeController::class,'index']);
+Router::middleware(['auth'])->group(function (){
+    Router::prefix('prefix')->group(function (){
+        Router::get('name', [HomeController::class,'index']);
+    });
 });
 
 Router::get('/', [HomeController::class,'store']);

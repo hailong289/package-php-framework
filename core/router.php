@@ -196,8 +196,11 @@ class Router {
     }
 
     public static function clear(): void{
-        if(self::$name_middleware) self::$name_middleware = '';
-        if(self::$prefix) self::$prefix = '';
+        if(self::$prefix){
+            self::$prefix = '';
+        }else{
+            if(self::$name_middleware) self::$name_middleware = '';
+        }
     }
 
     public function middlewareWork($names){
