@@ -37,16 +37,14 @@ class Router {
                 $url_arr = array_filter(explode('/', $url));
                 if(count($path_arr) === count($url_arr)){
                     if (strcmp($url, $path_router) === 0) {
-                        if ($method_router !== $method) {
-                            throw new \RuntimeException("Method router not match", 400);
+                        if ($method_router === $method) {
+                            if ($path === $path_router) {
+                                throw new \RuntimeException("Duplicate router", 500);
+                            }
+                            $action = $action_router;
+                            $path = $path_router;
+                            $current_router = $router;
                         }
-                        if ($path === $path_router) {
-                            throw new \RuntimeException("Duplicate router", 500);
-                        }
-
-                        $action = $action_router;
-                        $path = $path_router;
-                        $current_router = $router;
                     }
                 }
 
@@ -56,16 +54,15 @@ class Router {
                 if(count($path_arr) === count($url_arr)){
                     $result = array_diff($url_arr,$path_arr);
                     if(count($result) < count($url_arr)){
-                        if($method_router !== $method){
-                            throw new \RuntimeException("Method router not match", 400);
+                        if($method_router === $method){
+                            if($path === $path_router){
+                                throw new \RuntimeException("Duplicate router", 500);
+                            }
+                            // $result sẽ là params
+                            $action = array_merge($action_router, $result);
+                            $path = $path_router;
+                            $current_router = $router;
                         }
-                        if($path === $path_router){
-                            throw new \RuntimeException("Duplicate router", 500);
-                        }
-                        // $result sẽ là params
-                        $action = array_merge($action_router, $result);
-                        $path = $path_router;
-                        $current_router = $router;
                     }
                 }
             }
