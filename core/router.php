@@ -106,7 +106,7 @@ class Router {
         self::$action = $action;
         self::$routers[] = [
             'method' => self::$method,
-            'path' => self::$path,
+            'path' => endsWith(self::$path, '/') ? substr(self::$path, 0, -1):self::$path,
             'action' => self::$action,
             'middleware' => self::$name_middleware ?? null
         ];
@@ -117,7 +117,7 @@ class Router {
         self::$action = $action;
         self::$routers[] =[
             'method' => self::$method,
-            'path' => self::$path,
+            'path' => endsWith(self::$path, '/') ? substr(self::$path, 0, -1):self::$path,
             'action' => self::$action,
             'middleware' => self::$name_middleware ?? null
         ];
@@ -128,7 +128,7 @@ class Router {
         self::$action = $action;
         self::$routers[] =[
             'method' => self::$method,
-            'path' => self::$path,
+            'path' => endsWith(self::$path, '/') ? substr(self::$path, 0, -1):self::$path,
             'action' => self::$action,
             'middleware' => self::$name_middleware ?? null
         ];
@@ -139,7 +139,7 @@ class Router {
         self::$action = $action;
         self::$routers[] =[
             'method' => self::$method,
-            'path' => self::$path,
+            'path' => endsWith(self::$path, '/') ? substr(self::$path, 0, -1):self::$path,
             'action' => self::$action,
             'middleware' => self::$name_middleware ?? null
         ];
@@ -150,7 +150,7 @@ class Router {
         self::$action = $action;
         self::$routers[] =[
             'method' => self::$method,
-            'path' => self::$path,
+            'path' => endsWith(self::$path, '/') ? substr(self::$path, 0, -1):self::$path,
             'action' => self::$action,
             'middleware' => self::$name_middleware ?? null
         ];
@@ -161,7 +161,7 @@ class Router {
         self::$action = $action;
         self::$routers[] =[
             'method' => self::$method,
-            'path' => self::$path,
+            'path' => endsWith(self::$path, '/') ? substr(self::$path, 0, -1):self::$path,
             'action' => self::$action,
             'middleware' => self::$name_middleware ?? null
         ];
@@ -172,7 +172,7 @@ class Router {
         self::$action = $action;
         self::$routers[] =[
             'method' => self::$method,
-            'path' => self::$path,
+            'path' => endsWith(self::$path, '/') ? substr(self::$path, 0, -1):self::$path,
             'action' => self::$action,
             'middleware' => self::$name_middleware ?? null
         ];
