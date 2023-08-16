@@ -58,7 +58,13 @@ class App extends BaseController {
                         $agr = array_merge($agr, $this->__param);
                     }
                 }
-                $this->__controller->{$this->__action}(...$agr);
+                $result = $this->__controller->{$this->__action}(...$agr);
+                if (is_array($result)) {
+                    echo json_encode($result);
+                } else {
+                    echo $result;
+                }
+                exit();
             }else{
                 $controller = serialize($this->__controller);
                 throw new \RuntimeException("Method {$this->__action} does not exit in controller {$controller}",400);
