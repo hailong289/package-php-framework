@@ -59,7 +59,7 @@ class App extends BaseController {
                     }
                 }
                 $result = $this->__controller->{$this->__action}(...$agr);
-                if (is_array($result)) {
+                if (is_array($result) || is_object($result)) {
                     echo json_encode($result);
                 } else {
                     echo $result;
