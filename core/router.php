@@ -64,7 +64,6 @@ class Router {
                         $action = array_merge($action_router, $result);
                         $path = $path_router;
                         $current_router = $router;
-
                     }
                 }
             }
