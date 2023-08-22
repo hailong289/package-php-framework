@@ -160,6 +160,16 @@ trait QueryBuilder
         return false;
     }
 
+    public static function findById($id) {
+        $tableName = self::$tableName ? self::$tableName:static::$tableName;
+        $sql = "SELECT * FROM {$tableName} WHERE id = '$id'";
+        $query = self::$class->query($sql);
+        if (!empty($query)) {
+            return $query->fetch(\PDO::FETCH_ASSOC);
+        }
+        return false;
+    }
+
     public static function sqlQuery(){
         $select = self::$select;
         $tableName = self::$tableName ? self::$tableName:static::$tableName; // ko có sẽ lấy bên model
