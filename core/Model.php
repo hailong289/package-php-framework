@@ -21,5 +21,4 @@ abstract class Model extends Database
         return self::$class;
     }
 
-
 }

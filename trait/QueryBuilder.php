@@ -84,7 +84,35 @@ trait QueryBuilder
     }
 
     public static function join($table, $function = ''){
-        self::$join = " INNER JOIN {$table}";
+        if (empty(self::$join)) {
+            self::$join = " INNER JOIN {$table}";
+        } else {
+            self::$join .= " INNER JOIN {$table}";
+        }
+        if (is_callable($function)) {
+            $function(self::$class);
+        }
+        return self::$class;
+    }
+
+    public static function leftJoin($table, $function = ''){
+        if (empty(self::$join)) {
+            self::$join = " LEFT JOIN {$table}";
+        } else {
+            self::$join .= " LEFT JOIN {$table}";
+        }
+        if (is_callable($function)) {
+            $function(self::$class);
+        }
+        return self::$class;
+    }
+
+    public static function rightJoin($table, $function = ''){
+        if (empty(self::$join)) {
+            self::$join = " RIGHT JOIN {$table}";
+        } else {
+            self::$join .= " RIGHT JOIN {$table}";
+        }
         if (is_callable($function)) {
             $function(self::$class);
         }
