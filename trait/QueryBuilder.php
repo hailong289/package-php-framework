@@ -131,6 +131,12 @@ trait QueryBuilder
         return self::$class;
     }
 
+    public static function groupBy($field){
+        $field = is_array($field) ? implode(',',$field):$field;
+        self::$groupBy = " GROUP BY {$field}";
+        return self::$class;
+    }
+
     public static function page($page){
         self::$page = $page;
         return self::$class;
