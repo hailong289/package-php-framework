@@ -20,11 +20,11 @@ define('DATABASE',[
     ],
     "pgsql" => [
         "default" => [
-            "HOST" => 'db.bzqayhgrthcvrcisrhll.supabase.co',
+            "HOST" => 'postgres_host',
             "PORT" => '5432',
             "DATABASE_NAME" => 'postgres',
             "USERNAME" => 'postgres',
-            "PASSWORD" => 'JMUbnrBnQ9OAWmYP'
+            "PASSWORD" => 'postgres'
         ],
         "production" => [
             "HOST" => '127.0.0.1',
@@ -34,7 +34,7 @@ define('DATABASE',[
             "PASSWORD" => 'root'
         ]
     ],
-    'redis' => [
+    'redis' => [ // comming soon
         'default' => [
             'host' => '127.0.0.1',
             'password' => null,

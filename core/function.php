@@ -32,3 +32,10 @@ if(!function_exists('path_root')){
         return str_replace('\\','/',$_SERVER["DOCUMENT_ROOT"] ."/" . $url);
     }
 }
+
+if(!function_exists('view_root')){
+    function view_root($view)
+    {
+        return __DIR__ROOT . '/app/views/'.$view.'.view.php';
+    }
+}
