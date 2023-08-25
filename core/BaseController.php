@@ -8,8 +8,8 @@ class BaseController {
             foreach ($names as $name){
                 $variable = str_replace('App\\Models\\','', $name);
                 $model = $name;
-                if(file_exists($model.'.php')){
-                    require_once $model.'.php';
+                if(file_exists(path_root($model.'.php'))){
+                    require_once path_root($model.'.php');
                     if(class_exists($model)){
                         $model = new $model();
                         $this->{$variable} = $model;
@@ -29,8 +29,8 @@ class BaseController {
             }
         }else{
             $model = $names;
-            if(file_exists($model.'.php')){
-                require_once $model.'.php';
+            if(file_exists(path_root($model.'.php'))){
+                require_once path_root($model.'.php');
                 if(class_exists($model)){
                     return new $model();
                 }else{

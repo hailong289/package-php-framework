@@ -6,9 +6,9 @@ use Core\Request;
 use Core\Router;
 
 class App extends BaseController {
-    private $controller;
-    private $action;
-    private $param = [];
+    private $__controller;
+    private $__action;
+    private $__param = [];
     private $router;
     public function __construct()
     {
@@ -22,8 +22,8 @@ class App extends BaseController {
             if (!empty($urlarr[0])) {
                 $this->__controller = $urlarr[0];
                 // Kiểm tra file có tồn tại
-                if (file_exists($urlarr[0] . '.php')) {
-                    require_once $urlarr[0] . '.php';
+                if (file_exists(path_root($urlarr[0] . '.php'))) {
+                    require_once path_root($urlarr[0] . '.php');
                     // Kiểm tra class tồn tại
                     if (class_exists($this->__controller)) {
                         $this->__controller = new $this->__controller();
