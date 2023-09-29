@@ -3,7 +3,7 @@ namespace App\Middleware;
 
 use App\Core\Response;
 use App\Core\Session;
-use Core\Request;
+use App\Core\Request;
 
 class Auth {
     // return boolean function

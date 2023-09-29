@@ -52,15 +52,17 @@ class Router {
 
             } else if ($check_has_params && $check_router_param && !$check_query_string){ // check router with params
                 $path_arr = array_values(array_filter(explode('/',$path_router)));
-                $url_arr = array_filter(explode('/', $url));
+                $url_arr = array_values(array_filter(explode('/', $url)));
                 if(count($path_arr) === count($url_arr)){
-                    $result = array_diff($url_arr,$path_arr);
-                    if(count($result) < count($url_arr) && $method_router === $method){
+                    preg_match_all('/{([a-z]+)}/', $path_router, $params_array);
+                    $result = array_diff($path_arr, $url_arr);
+                    if(count($result) === count($params_array[0]) && $method_router === $method){
                         if ($path === $path_router) {
                             throw new \RuntimeException("Duplicate router", 500);
                         }
                         // $result sẽ là params
-                        $action = array_merge($action_router, $result);
+                        $params = array_diff($url_arr, $path_arr);
+                        $action = array_merge($action_router, $params);
                         $path = $path_router;
                         $current_router = $router;
                     }
