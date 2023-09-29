@@ -211,7 +211,9 @@ class Router {
             if(file_exists($path_middleware.'.php')) {
                 require_once $path_middleware . '.php';
                 $call_middleware = new $class();
-                return $call_middleware->handle(new Request());
+                $handler = $call_middleware->handle(new Request());
+                $return_middleware = is_array($handler) ? (object)$handler:(is_bool($handler) ? $handler:$handler);
+                return $return_middleware;
             }
         }else{
             return (object)[

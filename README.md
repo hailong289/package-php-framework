@@ -206,9 +206,9 @@ class HomeController extends BaseController {
 
 - Get one record buy column with function where
 ```sql
-   Categories::where('id','=', 1)->first(); // get buy id
-   Categories::where('name','=', 1)->first(); // get buy name
-   Categories::where('name','like', '%value%')->first(); // get buy name
+   Categories::where('id','=', 1)->first(); // get by id
+   Categories::where('name','=', 1)->first(); // get by name
+   Categories::where('name','like', '%value%')->first(); // get by name
 ```
 - Get all record in model
 ```sql
@@ -218,14 +218,14 @@ class HomeController extends BaseController {
  
   ``The get() function will return an object. If you want to return an array data type, you can use the getArray() function.``
 ```sql
-   Categories::where('id','=', 1)->get(); // get buy id
-   Categories::where('name','=', 1)->get(); // get buy name
-   Categories::where('name','like', '%value%')->get(); // get buy name
+   Categories::where('id','=', 1)->get(); // get by id
+   Categories::where('name','=', 1)->get(); // get by name
+   Categories::where('name','like', '%value%')->get(); // get by name
        
    // return data type array
-   Categories::where('id','=', 1)->getArray(); // get buy id
-   Categories::where('name','=', 1)->getArray(); // get buy name
-   Categories::where('name','like', '%value%')->getArray(); // get buy name
+   Categories::where('id','=', 1)->getArray(); // get by id
+   Categories::where('name','=', 1)->getArray(); // get by name
+   Categories::where('name','like', '%value%')->getArray(); // get by name
 ```
 - use select()
 ```sql
@@ -472,4 +472,91 @@ class HomeController extends BaseController {
        log_debug(Categories::where('id','=',1)->toSqlRaw());
     }
 }
+```
+### Use middleware
+- The middleware will be the place to check whether the request goes forward to be processed or not. It will often be used to authenticate the user and many other things depending on how you write the code in the middleware.
+- To create middleware you will create it in the middleware folder
+- Folder `` middleware/{name}Middleware.php``
+=== way 1 ===
+```php
+<?php
+namespace App\Middleware;
+
+use App\Core\Response;
+use App\Core\Session;
+use App\Core\Request;
+
+class Auth {
+    // return with key error code in function
+     public function handle(Request $request){
+         if(!$request->session('auth')){
+            return $request->close('Login does not exit');
+         }
+         return $request->next();
+     }
+}
+```
+=== way 2 ===
+```php
+<?php
+namespace App\Middleware;
+
+use App\Core\Response;
+use App\Core\Session;
+use App\Core\Request;
+
+class Auth {
+    // return with key error code in function
+     public function handle(Request $request){
+         if(!$request->session('auth')){
+            return [
+               "error_code" => 1,
+               "msg" => "Login does not exit"
+            ];
+         }
+         return [
+               "error_code" => 0
+         ];
+     }
+}
+```
+=== way 3 ===
+```php
+<?php
+namespace App\Middleware;
+
+use App\Core\Response;
+use App\Core\Session;
+use App\Core\Request;
+
+class Auth {
+    // return boolean in function
+     public function handle(Request $request){
+         if(!$request->session('auth')){
+            return false;
+         }
+         return true;
+     }
+}
+```
+- Declare the middleware name in the Kernel.php file located in the middleware folder
+```php
+<?php
+namespace App\Middleware;
+class Kernel {
+    public $routerMiddleware = [
+        "auth" => \App\Middleware\Auth::class,
+    ];
+}
+```
+- use middleware trong router 
+
+```php
+Router::middleware(['auth'])->group(function (){ // use many middleware
+    Router::get('home', [HomeController::class,'index']);
+});
+// or
+Router::middleware('auth')->group(function (){ // use one middleware
+    Router::get('home', [HomeController::class,'index']);
+});
 ```
