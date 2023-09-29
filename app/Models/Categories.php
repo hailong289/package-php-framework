@@ -11,7 +11,7 @@ class Categories extends Model {
     ];
 
     public static function index(){
-        echo 'index';
+        Categories::first();
     }
 
     public static function store(){

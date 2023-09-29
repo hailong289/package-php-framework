@@ -31,6 +31,18 @@ Router::get('/home/{id}', [HomeController::class,'index']);
 Router::get('/home/detail/{id}', [HomeController::class,'detail']); 
 
 ```
+- Use router with prefix
+```php
+  Router::prefix('home')->group(function (){
+      Router::get('/', [HomeController::class,'index']);
+      Router::get('/detail', [HomeController::class,'detail']);
+      Router::get('/list', [HomeController::class,'list']);
+  }); 
+  // The path will be 
+  // https://domain.com/home
+  // https://domain.com/home/detail
+  // https://domain.com/home/list
+```
 - Parameters in controller
 ```php
 <?php
@@ -59,7 +71,7 @@ class HomeController extends BaseController {
 ```php
 <?php
 namespace App\Controllers;
-use Core\BaseController;
+use App\Core\BaseController;
 
 class HomeController extends BaseController {
     public function __construct()
@@ -186,3 +198,278 @@ class HomeController extends BaseController {
 ```
 
 ### Query Builder
+
+- Get one record in model
+```sql
+   Categories::first();
+```
+
+- Get one record buy column with function where
+```sql
+   Categories::where('id','=', 1)->first(); // get buy id
+   Categories::where('name','=', 1)->first(); // get buy name
+   Categories::where('name','like', '%value%')->first(); // get buy name
+```
+- Get all record in model
+```sql
+   Categories::get();
+```
+- Get all record buy column with function where
+ 
+  ``The get() function will return an object. If you want to return an array data type, you can use the getArray() function.``
+```sql
+   Categories::where('id','=', 1)->get(); // get buy id
+   Categories::where('name','=', 1)->get(); // get buy name
+   Categories::where('name','like', '%value%')->get(); // get buy name
+       
+   // return data type array
+   Categories::where('id','=', 1)->getArray(); // get buy id
+   Categories::where('name','=', 1)->getArray(); // get buy name
+   Categories::where('name','like', '%value%')->getArray(); // get buy name
+```
+- use select()
+```sql
+   Categories::select('*')->get();
+   Categories::select(['*'])->get();
+   Categories::select(['id','name'])->get();
+
+   // with sum and count 
+   Summary::select([
+       'SUM(amount) as amount',
+       'SUM(amount2) as amount2',
+   ])->get();
+   Region::select([
+       'COUNT(id) as number'
+   ])->get();
+```
+- use findById()
+
+```sql
+   Categories::findById(1); 
+```
+- use orWhere()
+```sql
+   Categories::where('id','=', 1)->orWhere('id','=',2)->get(); 
+```
+- use whereLike()
+```sql
+   Categories::whereLike('name', '%long')->get(); 
+   Categories::whereLike('name', 'long%')->get(); 
+   Categories::whereLike('name', '%long%')->get(); 
+```
+- use join
+
+```php
+   // way 1
+   Blog::select('*')->join('categories', function ($q) {
+      $q->on('categories.id','=','category_blogs.category_id');
+   })->get(); 
+   // way 2
+   Blog::select('*')->join('categories')->on('categories.id','=','category_blogs.category_id')->get(); 
+```
+
+- use left join
+
+```php
+   // way 1
+   Blog::select('*')->leftJoin('categories', function ($q) {
+      $q->on('categories.id','=','category_blogs.category_id');
+   })->get(); 
+   // way 2
+   Blog::select('*')->leftJoin('categories')->on('categories.id','=','category_blogs.category_id')->get(); 
+```
+
+
+- use right join
+
+```php
+   // way 1
+   Blog::select('*')->rightJoin('categories', function ($q) {
+      $q->on('categories.id','=','category_blogs.category_id');
+   })->get(); 
+   // way 2
+   Blog::select('*')->rightJoin('categories')->on('categories.id','=','category_blogs.category_id')->get(); 
+```
+
+- use order by
+
+```php
+   News::select('*')->orderBy('id', 'DESC')->get(); // ASC, DESC
+```
+
+- use group by
+
+```php
+   // way 1
+   News::select('*')->groupBy('id')->get(); 
+   // way 2
+   News::select('*')->groupBy(['field1','field2','field3'])->get();
+```
+
+- use limit
+
+```php
+   News::select('*')->limit(100)->get();
+```
+
+- use limit and offset
+
+```sql
+   News::select('*')->page(0)->limit(100)->get(); // offset 0 limit 100
+   News::select('*')->page(1)->limit(100)->get(); // offset 100 limit 100
+   News::select('*')->page(2)->limit(100)->get(); // offset 200 limit 100
+```
+
+- use insert
+```sql
+   News::insert([
+       'name' => 'New',
+       'status' => 1
+   ]);
+       
+   // returns id on successful insert
+   News::insertLastId([
+       'name' => 'New',
+       'status' => 1
+   ]);
+```
+
+- use update
+- ```The second parameter in the update function will default to id```
+- ```If you want to use another column, leave it as an array with the column key and value```
+```sql
+   News::update ([
+       'name' => 'New2',
+       'status' => 1
+   ], 1); // id
+
+   // other key
+   News::update ([
+        'name' => 'New2',
+        'status' => 1
+   ], [
+       'id' => 1,
+       'name' => 'New'
+   ]); // id, name
+```
+
+- Additionally, you can use pure SQL statements with custom functions
+
+```php
+   News::custom("SELECT * FROM news WHERE id = 1")->get();
+   News::custom("SELECT * FROM news")->get();
+```
+
+- In addition to the insert function, you can use the create function to insert data into the table
+- ``Note that the create function will insert the column according to the key you declared the key in the $field variable inside the model. If you have not declared a key, when using the create function when inserting data, that column will be ignored.``
+
+```php
+<?php
+namespace App\Models;
+use App\Core\Database;
+use App\Core\Model\Model;
+
+class News extends Model {
+    protected static $tableName = 'new';
+    protected static $field = [
+        'title',
+        'name',
+        'status',
+        'date'
+    ];
+
+    public static function index(){
+         News::create([
+             'title' => 'title'
+             'name' => 'new',
+             'status' => 1,
+             'date' => '2023-09-28'
+        ]);
+    }
+}
+  
+```
+
+- use table with Database class
+```php
+<?php
+namespace App\Controllers;
+use App\Core\BaseController;
+use App\Core\Database;
+
+class HomeController extends BaseController {
+   
+    public function index(){
+        $all = Database::table('categories')->get();
+        $first = Database::table('categories')->where('id','=',1)->first();
+    }
+
+}
+```
+
+- use transaction
+
+```php
+<?php
+namespace App\Controllers;
+use App\Core\BaseController;
+use App\Core\Database;use App\Models\Categories;
+
+class HomeController extends BaseController {
+    public function __construct()
+    {
+        $this->model([Categories::class]);
+    } 
+   
+    public function index(){
+       Database::beginTransaction();
+       try {
+          Categories::insert(['name' => 'name1']);
+          Database::commit();
+       }catch (\Exception $e) {
+          Database::rollBack();
+       } 
+    }
+}
+```
+- log sql with Database
+
+```php
+<?php
+namespace App\Controllers;
+use App\Core\BaseController;
+use App\Core\Database;use App\Models\Categories;
+
+class HomeController extends BaseController {
+    public function __construct()
+    {
+        $this->model([Categories::class]);
+    } 
+   
+    public function index(){
+       Database::enableQueryLog();
+       Categories::get();
+       log_debug(Database::getQueryLog());
+    }
+}
+```
+
+- log sql with model class
+
+```php
+<?php
+namespace App\Controllers;
+use App\Core\BaseController;
+use App\Core\Database;use App\Models\Categories;
+
+class HomeController extends BaseController {
+    public function __construct()
+    {
+        $this->model([Categories::class]);
+    } 
+   
+    public function index(){
+       log_debug(Categories::where('id','=',1)->toSqlRaw());
+    }
+}
+```
