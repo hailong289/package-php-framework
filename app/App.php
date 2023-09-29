@@ -1,9 +1,9 @@
 <?php
 namespace App;
 use App\Controllers\HomeController;
-use Core\BaseController;
-use Core\Request;
-use Core\Router;
+use App\Core\BaseController;
+use App\Core\Request;
+use App\Core\Router;
 
 class App extends BaseController {
     private $__controller;

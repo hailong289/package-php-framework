@@ -1,5 +1,5 @@
 <?php
-use Core\Router;
+use App\Core\Router;
 use App\Controllers\HomeController;
 
 

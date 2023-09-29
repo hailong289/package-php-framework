@@ -1,5 +1,5 @@
 <?php
-namespace Core;
+namespace App\Core;
 
 class BaseController {
     public function model($names) {

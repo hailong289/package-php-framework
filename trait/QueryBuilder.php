@@ -194,6 +194,11 @@ trait QueryBuilder
         return false;
     }
 
+    public static function toSqlRaw() {
+        $sql = self::sqlQuery();
+        return $sql;
+    }
+
     public static function findById($id) {
         $tableName = self::$tableName ? self::$tableName:static::$tableName;
         $sql = "SELECT * FROM {$tableName} WHERE id = '$id'";

@@ -39,3 +39,12 @@ if(!function_exists('view_root')){
         return __DIR__ROOT . '/app/views/'.$view.'.view.php';
     }
 }
+
+if(!function_exists('log_debug')){
+    function log_debug(...$args) {
+        echo "<pre>";
+        print_r($args);
+        echo "</pre>";
+        exit();
+    }
+}

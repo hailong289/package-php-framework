@@ -1,7 +1,7 @@
 <?php
 namespace App\Models;
-use Core\Database;
-use Core\Model\Model;
+use App\Core\Database;
+use App\Core\Model\Model;
 
 class Categories extends Model {
     protected static $tableName = 'categories';

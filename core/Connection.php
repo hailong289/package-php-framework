@@ -1,5 +1,5 @@
 <?php
-namespace Core;
+namespace App\Core;
 class Connection{
     private static $instance = null, $conn = null;
     private function __construct($environment = "default", $host = "mysql"){

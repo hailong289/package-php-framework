@@ -1,19 +1,22 @@
 <?php
 namespace App\Controllers;
 use App\Models\Categories;
-use Core\BaseController;
-use Core\Database;
-use Core\Request;
+use App\Core\BaseController;
+use App\Core\Database;
+use App\Core\Request;
 
 class HomeController extends BaseController {
     public function __construct()
-    {}
+    {
+        $this->model([Categories::class]);
+    }
 
     public function index(){
         echo 'index';
     }
 
     public function store(Request $request){
+        log_debug(Categories::where('id','=',1)->toSqlRaw());
         echo 'store';
     }
 

@@ -1,5 +1,5 @@
 <?php
-namespace Core;
+namespace App\Core;
 use Core\Builder\QueryBuilder;
 
 class Database {
