@@ -11,7 +11,8 @@
         }
     ],
     "require": {
-        "php": ">=7.4"
+        "php": ">=7.4",
+        "longdhdev/holaframework": "dev-master@dev"
     },
     "minimum-stability": "dev",
     "prefer-stable" : true
