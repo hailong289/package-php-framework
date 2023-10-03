@@ -359,6 +359,11 @@ class HomeController extends BaseController {
    News::custom("SELECT * FROM news WHERE id = 1")->get();
    News::custom("SELECT * FROM news")->get();
 ```
+- Or you can use pure SQL statements with the database class like the example below
+```php
+ (new Database)->query("SELECT * FROM categories")->fetch();
+ (new Database)->query("SELECT * FROM categories")->fetchAll();
+```
 
 - In addition to the insert function, you can use the create function to insert data into the table
 - ``Note that the create function will insert the column according to the key you declared the key in the $field variable inside the model. If you have not declared a key, when using the create function when inserting data, that column will be ignored.``

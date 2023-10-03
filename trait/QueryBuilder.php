@@ -209,7 +209,7 @@ trait QueryBuilder
         return false;
     }
 
-    public static function sqlQuery(){
+    private static function sqlQuery(){
         $select = self::$select;
         $tableName = self::$tableName ? self::$tableName:static::$tableName; // ko có sẽ lấy bên model
         $join = self::$join;
