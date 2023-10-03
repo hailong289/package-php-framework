@@ -11,9 +11,13 @@
         }
     ],
     "require": {
-        "php": ">=7.4",
-        "longdhdev/holaframework": "dev-master@dev"
+        "php": ">=7.4"
     },
     "minimum-stability": "dev",
-    "prefer-stable" : true
+    "prefer-stable" : true,
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.0.0"
+        }
+    }
 }
