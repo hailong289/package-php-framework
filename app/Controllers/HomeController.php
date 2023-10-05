@@ -16,7 +16,6 @@ class HomeController extends BaseController {
     }
 
     public function store(Request $request){
-        log_debug(Categories::where('id','=',1)->toSqlRaw());
         echo 'store';
     }
 
