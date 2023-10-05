@@ -38,6 +38,28 @@ trait QueryBuilder
         return self::$class;
     }
 
+    public static function whereRaw($sql) {
+        if (empty(self::$where)) {
+            self::$operator = " WHERE ";
+        } else {
+            self::$operator = " AND ";
+        }
+        $operator = self::$operator;
+        self::$where .= "{$operator} {$sql}";
+        return self::$class;
+    }
+
+    public static function orWhereRaw($sql) {
+        if (empty(self::$where)) {
+            self::$operator = " WHERE ";
+        } else {
+            self::$operator = " OR ";
+        }
+        $operator = self::$operator;
+        self::$where .= "{$operator} {$sql}";
+        return self::$class;
+    }
+
     public static function orWhere($field, $compare, $value)
     {
         if (is_callable($field)) {
