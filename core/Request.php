@@ -116,4 +116,7 @@ class Request {
             "error_code" => 1
         ];
     }
+    public function has($key){
+        return $this->get($key) ?? false;
+    }
 }

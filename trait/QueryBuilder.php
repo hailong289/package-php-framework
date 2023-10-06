@@ -337,7 +337,7 @@ trait QueryBuilder
         }
     }
 
-    public static function update($data, $fieldOrId){
+    public static function update($data, $fieldOrId = null){
         $tableName = self::$tableName ? self::$tableName:static::$tableName; // ko có sẽ lấy bên model
         if(!empty($data)){
             $compare = '';
@@ -345,16 +345,20 @@ trait QueryBuilder
                 $compare .= $key." = '".$val."', ";
             }
             $where = '';
-            if(is_array($fieldOrId)){
-                foreach ($fieldOrId as $key=>$value){
-                    if (empty($where)) {
-                        $where = " WHERE {$key} = '$value'";
-                    } else {
-                        $where .= " AND {$key} = '$value'";
+            if(empty($fieldOrId)) {
+                $where = self::$where;
+            } else {
+                if(is_array($fieldOrId)){
+                    foreach ($fieldOrId as $key=>$value){
+                        if (empty($where)) {
+                            $where = " WHERE {$key} = '$value'";
+                        } else {
+                            $where .= " AND {$key} = '$value'";
+                        }
                     }
+                }else{
+                    $where = " WHERE id = $fieldOrId";
                 }
-            }else{
-                $where = " WHERE id = $fieldOrId";
             }
             $compare = rtrim($compare, ", ");
             $sql = "UPDATE {$tableName} SET {$compare}{$where}";
