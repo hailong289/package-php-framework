@@ -34,7 +34,7 @@ trait QueryBuilder
         }
         $operator = self::$operator;
         $value = (is_numeric($value) ? $value:"'".$value."'");
-        self::$where .= "{$operator} {$field} {$compare} {$value}";
+        self::$where .= "{$operator}{$field} {$compare} {$value}";
         return self::$class;
     }
 
@@ -45,7 +45,7 @@ trait QueryBuilder
             self::$operator = " AND ";
         }
         $operator = self::$operator;
-        self::$where .= "{$operator} {$sql}";
+        self::$where .= "{$operator}{$sql}";
         return self::$class;
     }
 
@@ -56,7 +56,7 @@ trait QueryBuilder
             self::$operator = " OR ";
         }
         $operator = self::$operator;
-        self::$where .= "{$operator} {$sql}";
+        self::$where .= "{$operator}{$sql}";
         return self::$class;
     }
 
@@ -73,7 +73,7 @@ trait QueryBuilder
         }
         $operator = self::$operator;
         $value = (is_numeric($value) ? $value:"'".$value."'");
-        self::$where .= "{$operator} {$field} {$compare} {$value}";
+        self::$where .= "{$operator}{$field} {$compare} {$value}";
         return self::$class;
     }
 
@@ -90,7 +90,7 @@ trait QueryBuilder
         }
         $operator = self::$operator;
         $value = (is_numeric($value) ? $value:"'".$value."'");
-        self::$where .= "{$operator} {$field} like {$value}";
+        self::$where .= "{$operator}{$field} like {$value}";
         return self::$class;
     }
 
