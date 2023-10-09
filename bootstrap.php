@@ -28,5 +28,15 @@ if (!empty($core_dir)) {
         }
     }
 }
+
+$queue_dir = array_diff(scandir('queue'), array('..', '.'));
+if (!empty($queue_dir)) {
+    foreach($queue_dir as $item){
+        if(file_exists(path_root('queue/'.$item))){
+            require_once path_root("queue/".$item);
+        }
+    }
+}
+
 require_once 'router/web.php';
 require_once 'app/App.php';

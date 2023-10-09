@@ -48,3 +48,10 @@ if(!function_exists('log_debug')){
         exit();
     }
 }
+
+if(!function_exists('log_write')){
+    function log_write($e) {
+        $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
+        file_put_contents(__DIR__ROOT .'/storage/debug.log',$date . $e, FILE_APPEND);
+    }
+}
