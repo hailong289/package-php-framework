@@ -56,5 +56,8 @@ class Database {
         return self::$__conn->rollBack();
     }
 
+    public static function modelInstance() {
+        return new static();
+    }
 }
 
