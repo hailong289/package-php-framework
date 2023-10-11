@@ -18,14 +18,14 @@ trait QueryBuilder
     public static function table($tableName)
     {
         self::$tableName = $tableName;
-        return self::$class;
+        return self::modelInstance();
     }
 
     public static function where($field, $compare = '', $value = '')
     {
         if (is_callable($field)) {
-            $field(self::$class);
-            return self::$class;
+            $field(self::modelInstance());
+            return self::modelInstance();
         }
         if (empty(self::$where)) {
             self::$operator = " WHERE ";
@@ -35,7 +35,7 @@ trait QueryBuilder
         $operator = self::$operator;
         $value = (is_numeric($value) ? $value:"'".$value."'");
         self::$where .= "{$operator}{$field} {$compare} {$value}";
-        return self::$class;
+        return self::modelInstance();
     }
 
     public static function whereRaw($sql) {
@@ -46,7 +46,7 @@ trait QueryBuilder
         }
         $operator = self::$operator;
         self::$where .= "{$operator}{$sql}";
-        return self::$class;
+        return self::modelInstance();
     }
 
     public static function orWhereRaw($sql) {
@@ -57,14 +57,14 @@ trait QueryBuilder
         }
         $operator = self::$operator;
         self::$where .= "{$operator}{$sql}";
-        return self::$class;
+        return self::modelInstance();
     }
 
     public static function orWhere($field, $compare, $value)
     {
         if (is_callable($field)) {
-            $field(self::$class);
-            return self::$class;
+            $field(self::modelInstance());
+            return self::modelInstance();
         }
         if (empty(self::$where)) {
             self::$operator = " WHERE ";
@@ -74,14 +74,14 @@ trait QueryBuilder
         $operator = self::$operator;
         $value = (is_numeric($value) ? $value:"'".$value."'");
         self::$where .= "{$operator}{$field} {$compare} {$value}";
-        return self::$class;
+        return self::modelInstance();
     }
 
     public static function whereLike($field, $value)
     {
         if (is_callable($field)) {
-            $field(self::$class);
-            return self::$class;
+            $field(self::modelInstance());
+            return self::modelInstance();
         }
         if (empty(self::$where)) {
             self::$operator = " WHERE ";
@@ -91,18 +91,18 @@ trait QueryBuilder
         $operator = self::$operator;
         $value = (is_numeric($value) ? $value:"'".$value."'");
         self::$where .= "{$operator}{$field} like {$value}";
-        return self::$class;
+        return self::modelInstance();
     }
 
     public static function select($field){
         $field = (is_array($field)) ? implode(", ", $field):$field;
         self::$select = $field;
-        return self::$class;
+        return self::modelInstance();
     }
 
     public static function orderBy($field, $orderBy = 'ASC'){
         self::$orderBy = " ORDER BY {$field} {$orderBy} ";
-        return self::$class;
+        return self::modelInstance();
     }
 
     public static function join($table, $function = ''){
@@ -112,9 +112,9 @@ trait QueryBuilder
             self::$join .= " INNER JOIN {$table}";
         }
         if (is_callable($function)) {
-            $function(self::$class);
+            $function(self::modelInstance());
         }
-        return self::$class;
+        return self::modelInstance();
     }
 
     public static function leftJoin($table, $function = ''){
@@ -124,9 +124,9 @@ trait QueryBuilder
             self::$join .= " LEFT JOIN {$table}";
         }
         if (is_callable($function)) {
-            $function(self::$class);
+            $function(self::modelInstance());
         }
-        return self::$class;
+        return self::modelInstance();
     }
 
     public static function rightJoin($table, $function = ''){
@@ -136,9 +136,9 @@ trait QueryBuilder
             self::$join .= " RIGHT JOIN {$table}";
         }
         if (is_callable($function)) {
-            $function(self::$class);
+            $function(self::modelInstance());
         }
-        return self::$class;
+        return self::modelInstance();
     }
 
     public static function on($field1, $compare, $field2, $operator = ''){
@@ -150,28 +150,28 @@ trait QueryBuilder
         }
         $operator = self::$operator;
         self::$join .= "{$operator} {$field1} {$compare} {$field2}";
-        return self::$class;
+        return self::modelInstance();
     }
 
     public static function groupBy($field){
         $field = is_array($field) ? implode(',',$field):$field;
         self::$groupBy = " GROUP BY {$field}";
-        return self::$class;
+        return self::modelInstance();
     }
 
     public static function page($page){
         self::$page = $page;
-        return self::$class;
+        return self::modelInstance();
     }
 
     public static function limit($limit){
         self::$limit = $limit;
-        return self::$class;
+        return self::modelInstance();
     }
 
     public static function delete(){
         $sql = self::sqlQuery(true);
-        $query = self::$class->query($sql);
+        $query = self::modelInstance()->query($sql);
         if (!empty($query)) {
             return true;
         }
@@ -186,7 +186,7 @@ trait QueryBuilder
             return $query;
         }
         $sql = self::sqlQuery();
-        $query = self::$class->query($sql);
+        $query = self::modelInstance()->query($sql);
         if (!empty($query)) {
             return $query->fetchAll(\PDO::FETCH_OBJ);
         }
@@ -195,7 +195,7 @@ trait QueryBuilder
 
     public static function first(){
         $sql = self::sqlQuery();
-        $query = self::$class->query($sql);
+        $query = self::modelInstance()->query($sql);
         if (!empty($query)) {
             return $query->fetch(\PDO::FETCH_OBJ);
         }
@@ -209,7 +209,7 @@ trait QueryBuilder
             return $query;
         }
         $sql = self::sqlQuery();
-        $query = self::$class->query($sql);
+        $query = self::modelInstance()->query($sql);
         if (!empty($query)) {
             return $query->fetchAll(\PDO::FETCH_ASSOC);
         }
@@ -218,7 +218,7 @@ trait QueryBuilder
 
     public static function firstArray(){
         $sql = self::sqlQuery();
-        $query = self::$class->query($sql);
+        $query = self::modelInstance()->query($sql);
         if (!empty($query)) {
             return $query->fetch(\PDO::FETCH_ASSOC);
         }
@@ -233,7 +233,7 @@ trait QueryBuilder
     public static function findById($id) {
         $tableName = self::$tableName ? self::$tableName:static::$tableName;
         $sql = "SELECT * FROM {$tableName} WHERE id = '$id'";
-        $query = self::$class->query($sql);
+        $query = self::modelInstance()->query($sql);
         if (!empty($query)) {
             return $query->fetch(\PDO::FETCH_ASSOC);
         }
@@ -296,7 +296,7 @@ trait QueryBuilder
             $field = rtrim($field, ',');
             $value = rtrim($value, ',');
             $sql = "INSERT INTO $tableName($field) VALUES ($value)";
-            $result = self::$class->query($sql, true);
+            $result = self::modelInstance()->query($sql, true);
             if($result){
                 return self::where('id','=', $result)->first();
             }
@@ -316,7 +316,7 @@ trait QueryBuilder
             $field = rtrim($field, ',');
             $value = rtrim($value, ',');
             $sql = "INSERT INTO $tableName($field) VALUES ($value)";
-            $status = self::$class->query($sql);
+            $status = self::modelInstance()->query($sql);
             if($status){
                 return true;
             }
@@ -336,7 +336,7 @@ trait QueryBuilder
             $field = rtrim($field, ',');
             $value = rtrim($value, ',');
             $sql = "INSERT INTO $tableName($field) VALUES ($value)";
-            $result = self::$class->query($sql, true);
+            $result = self::modelInstance()->query($sql, true);
             if($result){
                 return $result;
             }
@@ -369,7 +369,7 @@ trait QueryBuilder
             }
             $compare = rtrim($compare, ", ");
             $sql = "UPDATE {$tableName} SET {$compare}{$where}";
-            $status = self::$class->query($sql);
+            $status = self::modelInstance()->query($sql);
             if($status){
                 return true;
             }

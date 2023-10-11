@@ -21,4 +21,8 @@ abstract class Model extends Database
         return self::$class;
     }
 
+    public static function modelInstance() {
+        return new static();
+    }
+
 }
