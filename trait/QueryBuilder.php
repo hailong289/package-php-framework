@@ -169,6 +169,15 @@ trait QueryBuilder
         return self::$class;
     }
 
+    public static function delete(){
+        $sql = self::sqlQuery(true);
+        $query = self::$class->query($sql);
+        if (!empty($query)) {
+            return true;
+        }
+        return false;
+    }
+
 
     public static function get(){
         if(static::$query){
@@ -231,7 +240,7 @@ trait QueryBuilder
         return false;
     }
 
-    private static function sqlQuery(){
+    private static function sqlQuery($is_delete = false){
         $select = self::$select;
         $tableName = self::$tableName ? self::$tableName:static::$tableName; // ko có sẽ lấy bên model
         $join = self::$join;
@@ -251,19 +260,17 @@ trait QueryBuilder
             $select = $fieldTable;
         }
 
+        if ($is_delete) {
+            $sql = "DELETE FROM {$tableName}{$where}{$whereExit}{$limit}";
+            $sql = trim($sql);
+            self::reset();
+            return $sql;
+        }
+
         $sql = "SELECT {$select} FROM {$tableName}{$join}
         {$where}{$whereExit}{$orderBy}{$limit}{$offset}";
         $sql = trim($sql);
-        // reset
-        self::$where = '';
-        self::$select = '*';
-        self::$orderBy = '';
-        self::$operator = '';
-        self::$join = '';
-        self::$on = '';
-        self::$whereExit = '';
-        self::$page = '';
-        self::$limit = '';
+        self::reset();
         return $sql;
     }
 
@@ -368,6 +375,20 @@ trait QueryBuilder
             }
             return false;
         }
+    }
+
+    private static function reset() {
+        // reset
+        self::$tableName = '';
+        self::$where = '';
+        self::$select = '*';
+        self::$orderBy = '';
+        self::$operator = '';
+        self::$join = '';
+        self::$on = '';
+        self::$whereExit = '';
+        self::$page = '';
+        self::$limit = '';
     }
 
 }
