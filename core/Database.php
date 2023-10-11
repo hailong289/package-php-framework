@@ -5,7 +5,7 @@ use Core\Builder\QueryBuilder;
 class Database {
     private static $__conn;
     private static $enableLog = false;
-    private static $log;
+    private static $log = [];
     private static $class;
     use QueryBuilder;
     public function __construct()
@@ -18,7 +18,7 @@ class Database {
         try {
             $statement = self::$__conn->prepare($sql);
             $statement->execute();
-            if(self::$enableLog) self::$log = $statement;
+            if(self::$enableLog) self::$log[] = $statement;
             if($last_id) return self::$__conn->lastInsertId();
             return $statement;
         } catch (\Throwable $th) {
@@ -35,7 +35,9 @@ class Database {
             if(empty(self::$log)){
                 throw new \RuntimeException("No sql result",500);
             }
+            echo "<pre>";
             print_r(self::$log);
+            echo "</pre>";
             exit();
         } catch (\Throwable $th) {
             throw $th;
