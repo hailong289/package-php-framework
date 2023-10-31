@@ -194,6 +194,11 @@ trait QueryBuilder
     }
 
     public static function first(){
+        if(static::$query){
+            $query = static::$query->fetch(\PDO::FETCH_OBJ);
+            static::$query = '';
+            return $query;
+        }
         $sql = self::sqlQuery();
         $query = self::modelInstance()->query($sql);
         if (!empty($query)) {
@@ -217,6 +222,11 @@ trait QueryBuilder
     }
 
     public static function firstArray(){
+        if(static::$query){
+            $query = static::$query->fetch(\PDO::FETCH_ASSOC);
+            static::$query = '';
+            return $query;
+        }
         $sql = self::sqlQuery();
         $query = self::modelInstance()->query($sql);
         if (!empty($query)) {
