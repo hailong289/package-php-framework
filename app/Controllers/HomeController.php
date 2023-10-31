@@ -12,19 +12,7 @@ class HomeController extends BaseController {
     }
 
     public function index(){
-        echo 'index';
-    }
-
-    public function store(Request $request){
-        echo 'store';
-    }
-
-    public function home(){
-        echo 'home';
-    }
-
-    public function detail($id){
-        echo $id;
+        echo 'index page';
     }
 
 }
