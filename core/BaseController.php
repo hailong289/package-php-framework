@@ -1,7 +1,7 @@
 <?php
 namespace App\Core;
 
-class BaseController {
+class BaseController extends \stdClass {
     public function model($names) {
         $result = [];
         if (is_array($names)) {
@@ -47,6 +47,7 @@ class BaseController {
     public function render_view($views, $data = [])
     {
         // Đổi key mảng thành biến
+        if(count($data)) $GLOBALS['share_date_view'] = $data;
         extract($data);
         $views = preg_replace('/([.]+)/', '/' , $views);
         if(file_exists(__DIR__ROOT . '/app/views/'.$views.'.view.php')){

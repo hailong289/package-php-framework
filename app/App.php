@@ -72,6 +72,9 @@ class App extends BaseController {
         }catch (\Exception $e){
             if(DEBUG_LOG) {
                 $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
+                if (!file_exists(__DIR__ROOT .'/storage')) {
+                    mkdir(__DIR__ROOT .'/storage', 0777, true);
+                }
                 file_put_contents(__DIR__ROOT .'/storage/debug.log',$date . $e, FILE_APPEND);
             }
            return $this->render_view("error.index",[

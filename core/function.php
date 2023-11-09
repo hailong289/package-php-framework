@@ -52,6 +52,18 @@ if(!function_exists('log_debug')){
 if(!function_exists('log_write')){
     function log_write($e) {
         $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
+        if (!file_exists(__DIR__ROOT .'/storage')) {
+            mkdir(__DIR__ROOT .'/storage', 0777, true);
+        }
         file_put_contents(__DIR__ROOT .'/storage/debug.log',$date . $e, FILE_APPEND);
+    }
+}
+
+if(!function_exists('get_view')){
+    function get_view($name)
+    {
+        if(isset($GLOBALS['share_date_view']) && count($GLOBALS['share_date_view'])) extract($GLOBALS['share_date_view']);
+        $view = preg_replace('/([.]+)/', '/' , $name);
+        require_once __DIR__ROOT . '/app/views/'.$view.'.view.php';
     }
 }
