@@ -67,3 +67,11 @@ if(!function_exists('get_view')){
         require_once __DIR__ROOT . '/app/views/'.$view.'.view.php';
     }
 }
+
+if(!function_exists('__')){
+    function __($key)
+    {
+        $data = $GLOBALS['data_lang'];
+        return $data[$key] ?? $key;
+    }
+}
