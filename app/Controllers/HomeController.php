@@ -12,7 +12,7 @@ class HomeController extends BaseController {
     }
 
     public function index(){
-        echo 'index page';
+        echo 'Welcome';
     }
 
 }

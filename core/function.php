@@ -69,9 +69,21 @@ if(!function_exists('get_view')){
 }
 
 if(!function_exists('__')){
-    function __($key)
+    function __($key, $data_key = [])
     {
         $data = $GLOBALS['data_lang'];
-        return $data[$key] ?? $key;
+        $convert = $data[$key] ?? $key;
+        foreach ($data_key as $k=>$value) {
+            $convert = str_replace("{{".$k."}}", $value, $convert);
+        }
+        return $convert;
+    }
+}
+
+if(!function_exists('lang_has')){
+    function lang_has($key)
+    {
+        $data = $GLOBALS['data_lang'];
+        return isset($data[$key]);
     }
 }
