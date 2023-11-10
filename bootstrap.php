@@ -39,8 +39,8 @@ if (!empty($queue_dir)) {
 }
 
 $language = glob('language/*.php');
-if (!empty($queue_dir)) {
-    foreach($queue_dir as $item){
+if (!empty($language)) {
+    foreach($language as $item){
         if(file_exists(path_root($item))){
             $GLOBALS['data_lang'] = require(path_root($item));
         }
