@@ -5,7 +5,7 @@
 ## Getting started
 
 ```
-composer create-project longdhdev/holaframework:dev-master@dev
+composer create-project longdhdev/holaframework
 ```
 
 ## Router 
