@@ -17,7 +17,7 @@
     "prefer-stable" : true,
     "extra": {
         "branch-alias": {
-            "dev-main": "v1.0.2-dev"
+            "dev-main": "v1.0.0-dev"
         }
     }
 }
