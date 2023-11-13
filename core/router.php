@@ -21,7 +21,11 @@ class Router {
         }
     }
 
-    public function handle($url, $method){
+    public function url() {
+        return $this->handle($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);
+    }
+
+    private function handle($url, $method){
         $routers = self::$routers;
         $action = '';
         $path = '';
@@ -97,7 +101,7 @@ class Router {
         return $action;
     }
 
-    public static function get($name,  $action): void
+    public static function get($name,  $action): Router
     {
         self::$method = 'GET';
         self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
@@ -108,8 +112,9 @@ class Router {
             'action' => self::$action,
             'middleware' => self::$name_middleware ?? null
         ];
+        return new static();
     }
-    public static function post($name, $action): void{
+    public static function post($name, $action): Router {
         self::$method = 'POST';
         self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
         self::$action = $action;
@@ -119,8 +124,9 @@ class Router {
             'action' => self::$action,
             'middleware' => self::$name_middleware ?? null
         ];
+        return new static();
     }
-    public static function put($name, $action): void{
+    public static function put($name, $action): Router {
         self::$method = 'PUT';
         self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
         self::$action = $action;
@@ -130,8 +136,9 @@ class Router {
             'action' => self::$action,
             'middleware' => self::$name_middleware ?? null
         ];
+        return new static();
     }
-    public static function patch($name, $action): void{
+    public static function patch($name, $action): Router {
         self::$method = 'PATH';
         self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
         self::$action = $action;
@@ -141,8 +148,9 @@ class Router {
             'action' => self::$action,
             'middleware' => self::$name_middleware ?? null
         ];
+        return new static();
     }
-    public static function delete($name, $action): void{
+    public static function delete($name, $action): Router {
         self::$method = 'DELETE';
         self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
         self::$action = $action;
@@ -152,8 +160,9 @@ class Router {
             'action' => self::$action,
             'middleware' => self::$name_middleware ?? null
         ];
+        return new static();
     }
-    public static function head($name, $action): void{
+    public static function head($name, $action): Router {
         self::$method = 'HEAD';
         self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
         self::$action = $action;
@@ -163,8 +172,9 @@ class Router {
             'action' => self::$action,
             'middleware' => self::$name_middleware ?? null
         ];
+        return new static();
     }
-    public static function options($name, $action): void{
+    public static function options($name, $action): Router {
         self::$method = 'OPTIONS';
         self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
         self::$action = $action;
@@ -174,6 +184,7 @@ class Router {
             'action' => self::$action,
             'middleware' => self::$name_middleware ?? null
         ];
+        return new static();
     }
 
     public static function middleware($name){
@@ -184,7 +195,7 @@ class Router {
         return new static($path, true);
     }
 
-    public static function group($function)
+    public function group($function)
     {
         $function();
         self::clear();
@@ -198,7 +209,7 @@ class Router {
         }
     }
 
-    public function middlewareWork($names){
+    private function middlewareWork($names){
         require_once 'middleware/Kernel.php';
         $kernel = new Kernel();
         if(!empty($kernel->routerMiddleware[$names])){

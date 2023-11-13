@@ -17,7 +17,7 @@ class App extends BaseController {
     }
     public function handleUrl(){
         try {
-            $url = $this->router->handle($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);
+            $url = $this->router->url();
             $urlarr = array_values($url);
             if (!empty($urlarr[0])) {
                 $this->__controller = $urlarr[0];
