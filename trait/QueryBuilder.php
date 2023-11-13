@@ -298,6 +298,12 @@ trait QueryBuilder
                 $field .= $key . ',';
                 $value .= "'".$val."'". ",";
             }
+            if (isset(static::$times_auto) && static::$times_auto) {
+                $date_create = static::$date_create ?? 'date_created';
+                $now = date('Y-m-d H:i:s');
+                $field .= "{$date_create},";
+                $value .= "'".$now."'". ",";
+            }
             if(count($fieldTableNone) > 0){
                 $class = get_class(new static());
                 $fieldTableNone = implode(',', $fieldTableNone);
@@ -323,6 +329,12 @@ trait QueryBuilder
                 $field .= $key . ',';
                 $value .= "'".$val."'". ",";
             }
+            if (isset(static::$times_auto) && static::$times_auto) {
+                $date_create = static::$date_create ?? 'date_created';
+                $now = date('Y-m-d H:i:s');
+                $field .= "{$date_create},";
+                $value .= "'".$now."'". ",";
+            }
             $field = rtrim($field, ',');
             $value = rtrim($value, ',');
             $sql = "INSERT INTO $tableName($field) VALUES ($value)";
@@ -343,6 +355,12 @@ trait QueryBuilder
                 $field .= $key . ',';
                 $value .= "'".$val."'". ",";
             }
+            if (isset(static::$times_auto) && static::$times_auto) {
+                $date_create = static::$date_create ?? 'date_created';
+                $now = date('Y-m-d H:i:s');
+                $field .= "{$date_create},";
+                $value .= "'".$now."'". ",";
+            }
             $field = rtrim($field, ',');
             $value = rtrim($value, ',');
             $sql = "INSERT INTO $tableName($field) VALUES ($value)";
@@ -360,6 +378,11 @@ trait QueryBuilder
             $compare = '';
             foreach($data as $key=>$val){
                 $compare .= $key." = '".$val."', ";
+            }
+            if (isset(static::$times_auto) && static::$times_auto) {
+                $date_update = static::$date_update ?? 'date_updated';
+                $now = date('Y-m-d H:i:s');
+                $compare .= $date_update." = '".$now."', ";
             }
             $where = '';
             if(empty($fieldOrId)) {

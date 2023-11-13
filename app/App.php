@@ -22,18 +22,18 @@ class App extends BaseController {
             if (!empty($urlarr[0])) {
                 $this->__controller = $urlarr[0];
                 // Kiểm tra file có tồn tại
-                if (file_exists(path_root($urlarr[0] . '.php'))) {
-                    require_once path_root($urlarr[0] . '.php');
+                if (file_exists(path_root($this->__controller . '.php'))) {
+                    require_once path_root($this->__controller . '.php');
                     // Kiểm tra class tồn tại
                     if (class_exists($this->__controller)) {
                         $this->__controller = new $this->__controller();
                     } else {
-                         throw new \RuntimeException('Page not found',404);
+                         throw new \RuntimeException("{$this->__controller} does not exit",500);
                     }
                     //   xóa phần tử khi thực hiện xong
                     unset($urlarr[0]);
                 } else {
-                    throw new \RuntimeException('Page not found',404);
+                    throw new \RuntimeException("{$this->__controller} does not exit",500);
                 }
             } else {
                 throw new \RuntimeException('Page not found', 404);
@@ -67,21 +67,24 @@ class App extends BaseController {
                 exit();
             }else{
                 $controller = serialize($this->__controller);
-                throw new \RuntimeException("Method {$this->__action} does not exit in controller {$controller}",400);
+                throw new \RuntimeException("Method {$this->__action} does not exit in controller {$controller}",500);
             }
-        }catch (\Exception $e){
+        }catch (\Throwable $e){
+            $code = (int)$e->getCode();
+            $code = $code ? $code:500;
             if(DEBUG_LOG) {
                 $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
                 if (!file_exists(__DIR__ROOT .'/storage')) {
                     mkdir(__DIR__ROOT .'/storage', 0777, true);
                 }
                 file_put_contents(__DIR__ROOT .'/storage/debug.log',$date . $e, FILE_APPEND);
-            }
+           }
+           http_response_code($code);
            return $this->render_view("error.index",[
                "message" => $e->getMessage(),
                "line" => $e->getLine(),
                "file" => $e->getFile(),
-               "code" => $e->getCode() ?? 500
+               "code" => $code
            ]);
         }
     }

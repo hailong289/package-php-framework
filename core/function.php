@@ -60,9 +60,10 @@ if(!function_exists('log_write')){
 }
 
 if(!function_exists('get_view')){
-    function get_view($name)
+    function get_view($name, $data = [])
     {
-        if(isset($GLOBALS['share_date_view']) && count($GLOBALS['share_date_view'])) extract($GLOBALS['share_date_view']);
+        if(isset($GLOBALS['share_date_view']) && count($GLOBALS['share_date_view'])) $data = array_merge($data, $GLOBALS['share_date_view']);
+        extract($data);
         $view = preg_replace('/([.]+)/', '/' , $name);
         require_once __DIR__ROOT . '/app/views/'.$view.'.view.php';
     }

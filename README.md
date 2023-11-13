@@ -95,6 +95,9 @@ File in folder app/Controllers/{name_folder} -> namespace App\Controllers\{name_
 
 - Create model 
 - To create a function in the model, make it a static function
+- The variable $times_auto set true when you use the `create()`,`insert()`, `insertLastId()` function will automatically create a date with the `date_created` column and using the `update()` function will create a date with the `date_updated` column set false, you can turn this function off
+- You can change the 2 default date columns with the `$date_create` and `$date_update` variables
+- You may not need to declare the 3 variables `$times_auto`, `$date_create`, `$date_update` if you do not use them.
 
 ```php
 <?php
@@ -103,6 +106,9 @@ use Core\Model\Model;
 
 class Categories extends Model {
     protected static $tableName = 'categories';
+//    protected static $times_auto = false;
+//    protected static $date_create = "date_created";
+//    protected static $date_update = "date_updated";
     protected static $field = [
         'id',
         'name'
@@ -367,7 +373,6 @@ class HomeController extends BaseController {
 
 - In addition to the insert function, you can use the create function to insert data into the table
 - ``Note that the create function will insert the column according to the key you declared the key in the $field variable inside the model. If you have not declared a key, when using the create function when inserting data, that column will be ignored.``
-
 ```php
 <?php
 namespace App\Models;
