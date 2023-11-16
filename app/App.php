@@ -21,20 +21,12 @@ class App extends BaseController {
             $urlarr = array_values($url);
             if (!empty($urlarr[0])) {
                 $this->__controller = $urlarr[0];
-                // Kiểm tra file có tồn tại
-                if (file_exists(path_root($this->__controller . '.php'))) {
-                    require_once path_root($this->__controller . '.php');
-                    // Kiểm tra class tồn tại
-                    if (class_exists($this->__controller)) {
-                        $this->__controller = new $this->__controller();
-                    } else {
-                         throw new \RuntimeException("{$this->__controller} does not exit",500);
-                    }
-                    //   xóa phần tử khi thực hiện xong
-                    unset($urlarr[0]);
+                if (class_exists($this->__controller)) {
+                    $this->__controller = new $this->__controller();
                 } else {
-                    throw new \RuntimeException("{$this->__controller} does not exit",500);
+                    throw new \RuntimeException("{$this->__controller} does not exit", 500);
                 }
+                unset($urlarr[0]);
             } else {
                 throw new \RuntimeException('Page not found', 404);
             }

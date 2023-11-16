@@ -2,6 +2,6 @@
 namespace App\Middleware;
 class Kernel {
     public $routerMiddleware = [
-        "auth" => \App\Middleware\Auth::class,
+        "auth" => \App\Middleware\AuthMiddleware::class,
     ];
 }

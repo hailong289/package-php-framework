@@ -7,9 +7,7 @@ use App\Core\Request;
 
 class HomeController extends BaseController {
     public function __construct()
-    {
-        $this->model([Categories::class]);
-    }
+    {}
 
     public function index(){
         echo 'Welcome';

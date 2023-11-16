@@ -210,22 +210,25 @@ class Router {
     }
 
     private function middlewareWork($names){
-        require_once 'middleware/Kernel.php';
         $kernel = new Kernel();
-        if(!empty($kernel->routerMiddleware[$names])){
-            $class = $kernel->routerMiddleware[$names];
-            $path_middleware = __DIR__ROOT . '/middleware/'. $names. 'Middleware';
-            if(file_exists($path_middleware.'.php')) {
-                require_once $path_middleware . '.php';
+        try {
+            if(!empty($kernel->routerMiddleware[$names])){
+                $class = $kernel->routerMiddleware[$names];
                 $call_middleware = new $class();
                 $handler = $call_middleware->handle(new Request());
                 $return_middleware = is_array($handler) ? (object)$handler:(is_bool($handler) ? $handler:$handler);
                 return $return_middleware;
+            }else{
+                return (object)[
+                    'error_code' => 1,
+                    'message' => "Middleware $names does not exist",
+                    'middleware_not_exist' => 1
+                ];
             }
-        }else{
+        }catch (\Throwable $e) {
             return (object)[
                 'error_code' => 1,
-                'message' => "Middleware $names does not exist",
+                'message' => $e->getMessage(),
                 'middleware_not_exist' => 1
             ];
         }
