@@ -181,6 +181,27 @@ class Controller extends BaseController {
     }
 }
 ```
+
+### Use view
+- Create view in folder app/views with name {name_file}.view.php
+- Use view controller
+```php
+<?php
+namespace App\Controllers;
+use App\Models\Categories;
+use Core\BaseController;
+use Core\Request;
+
+class HomeController extends BaseController {
+    public function __construct()
+    {}
+
+    public function index(){
+        return $this->render_view('name_file', ["title" => "Home"]);
+    }
+}
+```
+
 ### Use Request
 ```php
 use App\Core\Request;
@@ -207,22 +228,25 @@ class Controller extends BaseController {
     }
 }
 ```
-### Use view
-- Create view in folder app/views with name {name_file}.view.php
-- Use view controller
-```php
-<?php
-namespace App\Controllers;
-use App\Models\Categories;
-use Core\BaseController;
-use Core\Request;
+### Use response
 
-class HomeController extends BaseController {
+```php
+use App\Core\Response;
+class Controller extends BaseController {
     public function __construct()
     {}
-
-    public function index(){
-        return $this->render_view('name_file', ["title" => "Home"]);
+    public function index(Request $request){
+        $data = [];
+        return Response::view('name_view', $data);
+    }
+    
+    public function json(Request $request){
+        $data = [];
+        return Response::json($data, $status ?? 200);
+    }
+    public function redirectTo(Request $request){
+        $data = [];
+        return Response::redirectTo('/login');
     }
 }
 ```
