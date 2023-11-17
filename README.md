@@ -57,7 +57,22 @@ class HomeController extends BaseController {
     }
 }
 ```
+- Request and parameters in controller
 
+```php
+<?php
+namespace App\Controllers;
+use App\Core\Request;
+
+class HomeController extends BaseController {
+    public function index(Request $request, $id){
+        echo $id;
+    }
+    public function detail(Request $request, $id){
+        echo $id;
+    }
+}
+```
 ## App
 
 - Create controller in folder app/Controllers
@@ -166,7 +181,32 @@ class Controller extends BaseController {
     }
 }
 ```
-
+### Use Request
+```php
+use App\Core\Request;
+class Controller extends BaseController {
+    public function __construct()
+    {}
+    public function index(Request $request){
+         $name = $request->get('name');
+         $name = $request->name; // or
+         $name = $request->value('name');
+         $file = $request->get_file('file');
+         $set_file = $request->file('file'); // use set file
+         $extension = $request->extension(); // get extension file
+         $extension = $request->extension(); // get extension file
+         $size = $request->size(); // get size file
+         $type = $request->type(); // get type file
+         $originName = $request->originName(); // get originName file
+         $isFile = $request->isFile(); // check file
+         $all = $request->all(); // get all data request
+         $session = $request->session('name'); // get session 
+         $cookie = $request->cookie('name'); // get cookie 
+         $cookie = $request->headers('name'); // get headers 
+         $has = $request->has('name'); // check key 
+    }
+}
+```
 ### Use view
 - Create view in folder app/views with name {name_file}.view.php
 - Use view controller

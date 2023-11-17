@@ -9,7 +9,7 @@ class HomeController extends BaseController {
     public function __construct()
     {}
 
-    public function index(){
+    public function index(Request $request){
         echo 'Welcome';
     }
 

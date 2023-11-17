@@ -1,7 +1,15 @@
 <?php
 namespace App\Core;
-class Request {
-    public $file = '';
+class Request extends \stdClass {
+    private $file = '';
+
+    public function __construct()
+    {
+        $all_data = $this->all();
+        foreach ($all_data as $key=>$item) {
+            if(!isset($this->{$key})) $this->{$key} = $item;
+        }
+    }
     
     public function get($key = ''){
         $method = $_SERVER['REQUEST_METHOD'];
@@ -10,14 +18,55 @@ class Request {
         $is_patch = $method == 'PATCH' ? true:false;
         $is_put = $method == 'PUT' ? true:false;
         if($is_get){
-            return $_GET[$key] ?? null;
+            return $this->get_data($key);
         }elseif($is_post){
-            return $_POST[$key] ?? null;
+            return $this->post($key);
         }elseif($is_patch){
             return $this->patch($key);
         }else{
             return $this->put($key);
         }
+    }
+
+    public function value($key = '') {
+        $data = file_get_contents('php://input');
+        if (is_string($data)) {
+            $data = json_decode($data, true);
+            return $data[$key] ?? null;
+        }
+        return $data[$key] ?? null;
+    }
+
+    private function get_data($key = '', $all = false){
+        $name = $_GET[$key] ?? null;
+        if($name) {
+            if($all) return $_GET;
+            return $name;
+        }
+        $data = file_get_contents('php://input');
+        if (is_string($data)) {
+            $data = json_decode($data, true);
+            if($all) return $data;
+            return $data[$key] ?? null;
+        }
+        if($all) return $data;
+        return $data[$key] ?? null;
+    }
+
+    private function post($key = '', $all = false){
+        $name = $_POST[$key] ?? null;
+        if($name) {
+            if($all) return $_POST;
+            return $name;
+        }
+        $data = file_get_contents('php://input');
+        if (is_string($data)) {
+            $data = json_decode($data, true);
+            if($all) return $data;
+            return $data[$key] ?? null;
+        }
+        if($all) return $data;
+        return $data[$key] ?? null;
     }
 
     private function patch($key = '', $all = false){
@@ -36,6 +85,12 @@ class Request {
         if(!array_key_exists($key, $_FILES)) die('key not exit');
         $this->file = $_FILES[$key];
     }
+    public function get_file($key = ''){
+        if(!array_key_exists($key, $_FILES)) die('key not exit');
+        $this->file = $_FILES[$key];
+        return  $this->file;
+    }
+
     public function tmp_name(){
         if(empty($this->file)) die('key not exit');
         return $this->file['tmp_name'];
@@ -58,13 +113,13 @@ class Request {
 
     public function originName(){
         if(empty($this->file)) die('key not exit');
-        $array_file = explode(".", $this->file['name']);
-        return end($array_file);
+        return current((explode(".", $this->file['name'])));
     }
 
     public function extension(){
         if(empty($this->file)) die('key not exit');
-        return current((explode(".", $this->file['name'])));
+        $array_file = explode(".", $this->file['name']);
+        return end($array_file);
     }
 
     public function isFile($key = ''){
@@ -80,9 +135,9 @@ class Request {
         $is_patch = $method == 'PATCH' ? true:false;
         $is_put = $method == 'PUT' ? true:false;
         if($is_get){
-            return $_GET;
+            return $this->get_data('', true);
         }elseif($is_post){
-            return $_POST;
+            return $this->post('', true);
         }elseif($is_patch){
             return $this->patch('', true);
         }else{
