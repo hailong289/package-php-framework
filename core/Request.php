@@ -38,35 +38,35 @@ class Request extends \stdClass {
     }
 
     private function get_data($key = '', $all = false){
-        $name = $_GET[$key] ?? null;
-        if($name) {
+        if(!empty($_GET)) {
             if($all) return $_GET;
-            return $name;
-        }
-        $data = file_get_contents('php://input');
-        if (is_string($data)) {
-            $data = json_decode($data, true);
+            return $_GET[$key] ?? null;
+        } else {
+            $data = file_get_contents('php://input');
+            if (is_string($data)) {
+                $data = json_decode($data, true);
+                if($all) return $data;
+                return $data[$key] ?? null;
+            }
             if($all) return $data;
             return $data[$key] ?? null;
         }
-        if($all) return $data;
-        return $data[$key] ?? null;
     }
 
     private function post($key = '', $all = false){
-        $name = $_POST[$key] ?? null;
-        if($name) {
+        if(!empty($_POST)) {
             if($all) return $_POST;
-            return $name;
-        }
-        $data = file_get_contents('php://input');
-        if (is_string($data)) {
-            $data = json_decode($data, true);
+            return $_POST[$key] ?? null;
+        } else {
+            $data = file_get_contents('php://input');
+            if (is_string($data)) {
+                $data = json_decode($data, true);
+                if($all) return $data;
+                return $data[$key] ?? null;
+            }
             if($all) return $data;
             return $data[$key] ?? null;
         }
-        if($all) return $data;
-        return $data[$key] ?? null;
     }
 
     private function patch($key = '', $all = false){
