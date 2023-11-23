@@ -21,7 +21,7 @@ trait QueryBuilder
         return self::modelInstance();
     }
 
-    public static function where($field, $compare = '', $value = '')
+    public static function where($field, $compare = '=', $value = '')
     {
         if (is_callable($field)) {
             $field(self::modelInstance());
@@ -33,6 +33,10 @@ trait QueryBuilder
             self::$operator = " AND ";
         }
         $operator = self::$operator;
+        if(empty($value)) {
+            $value = $compare;
+            $compare = '=';
+        }
         $value = (is_numeric($value) ? $value:"'".$value."'");
         self::$where .= "{$operator}{$field} {$compare} {$value}";
         return self::modelInstance();
@@ -60,7 +64,7 @@ trait QueryBuilder
         return self::modelInstance();
     }
 
-    public static function orWhere($field, $compare, $value)
+    public static function orWhere($field, $compare = '=', $value = '')
     {
         if (is_callable($field)) {
             $field(self::modelInstance());
@@ -72,6 +76,10 @@ trait QueryBuilder
             self::$operator = " OR ";
         }
         $operator = self::$operator;
+        if(empty($value)) {
+            $value = $compare;
+            $compare = '=';
+        }
         $value = (is_numeric($value) ? $value:"'".$value."'");
         self::$where .= "{$operator}{$field} {$compare} {$value}";
         return self::modelInstance();
@@ -79,10 +87,6 @@ trait QueryBuilder
 
     public static function whereLike($field, $value)
     {
-        if (is_callable($field)) {
-            $field(self::modelInstance());
-            return self::modelInstance();
-        }
         if (empty(self::$where)) {
             self::$operator = " WHERE ";
         } else {
@@ -93,6 +97,36 @@ trait QueryBuilder
         self::$where .= "{$operator}{$field} like {$value}";
         return self::modelInstance();
     }
+
+    public static function orWhereLike($field, $value)
+    {
+        if (empty(self::$where)) {
+            self::$operator = " WHERE ";
+        } else {
+            self::$operator = " OR ";
+        }
+        $operator = self::$operator;
+        $value = (is_numeric($value) ? $value:"'".$value."'");
+        self::$where .= "{$operator}{$field} like {$value}";
+        return self::modelInstance();
+    }
+
+    public static function whereIn($field, $value)
+    {
+        if(!is_array($value)) {
+            throw new \RuntimeException("Params of {$field} is not array");
+        }
+        if (empty(self::$where)) {
+            self::$operator = " WHERE ";
+        } else {
+            self::$operator = " AND ";
+        }
+        $operator = self::$operator;
+        $value = implode(',', $value);
+        self::$where .= "{$operator}{$field} in ({$value})";
+        return self::modelInstance();
+    }
+
 
     public static function select($field){
         $field = (is_array($field)) ? implode(", ", $field):$field;
