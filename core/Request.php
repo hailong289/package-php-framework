@@ -6,8 +6,10 @@ class Request extends \stdClass {
     public function __construct()
     {
         $all_data = $this->all();
-        foreach ($all_data as $key=>$item) {
-            if(!isset($this->{$key})) $this->{$key} = $item;
+        if(count((array)$all_data)) {
+            foreach ($all_data as $key=>$item) {
+                if(!isset($this->{$key})) $this->{$key} = $item;
+            }
         }
     }
     
@@ -143,6 +145,7 @@ class Request extends \stdClass {
         }else{
             return $this->put('', true);
         }
+        return [];
     }
 
     public function session($key = ''){
