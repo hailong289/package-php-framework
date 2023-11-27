@@ -30,14 +30,10 @@ class App extends BaseController {
             } else {
                 throw new \RuntimeException('Page not found', 404);
             }
-            // xử lý action
             if (isset($urlarr[1])) {
                 $this->__action = $urlarr[1];
-                //   xóa phần tử khi thực hiện xong
                 unset($urlarr[1]);
             }
-            // xử lý param
-
             $this->__param = array_values($urlarr);
             if (method_exists($this->__controller, $this->__action)) {
                 // xử lý method

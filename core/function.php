@@ -42,6 +42,7 @@ if(!function_exists('view_root')){
 
 if(!function_exists('log_debug')){
     function log_debug(...$args) {
+        http_response_code(500);
         echo "<pre>";
         print_r($args);
         echo "</pre>";

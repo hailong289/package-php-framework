@@ -14,12 +14,39 @@ trait QueryBuilder
     protected static $on = '';
     protected static $page = '';
     protected static $limit = '';
+    protected static $subQuery = '';
+    protected static $union = '';
 
     public static function table($tableName)
     {
         self::$tableName = $tableName;
         return self::modelInstance();
     }
+
+    public static function from($tableName)
+    {
+        self::$tableName = $tableName;
+        return self::modelInstance();
+    }
+
+    public static function subQuery($sql, $name)
+    {
+        self::$tableName = "($sql) as $name";
+        return self::modelInstance();
+    }
+
+    public static function union($sql)
+    {
+        self::$union = "UNION $sql";
+        return self::modelInstance();
+    }
+
+    public static function union_all($sql)
+    {
+        self::$union = "UNION ALL $sql";
+        return self::modelInstance();
+    }
+
 
     public static function where($field, $compare = '=', $value = '')
     {
@@ -274,6 +301,11 @@ trait QueryBuilder
         return $sql;
     }
 
+    public static function clone() {
+        $sql = self::sqlQuery();
+        return $sql;
+    }
+
     public static function findById($id) {
         $tableName = self::$tableName ? self::$tableName:static::$tableName;
         $sql = "SELECT * FROM {$tableName} WHERE id = '$id'";
@@ -294,6 +326,7 @@ trait QueryBuilder
         $fieldTable = static::$field ?? '';
         $offset = !empty(self::$page) && !empty(self::$limit) ? ' OFFSET '.self::$page * self::$limit:'';
         $limit = !empty(self::$limit) ? "LIMIT ".self::$limit:'';
+        $union = self::$union;
 
         if (empty($select)) {
             if (empty($fieldTable)) {
@@ -312,7 +345,7 @@ trait QueryBuilder
         }
 
         $sql = "SELECT {$select} FROM {$tableName}{$join}
-        {$where}{$whereExit}{$orderBy}{$limit}{$offset}";
+        {$where}{$whereExit}{$orderBy}{$limit}{$offset}{$union}";
         $sql = trim($sql);
         self::reset();
         return $sql;

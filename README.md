@@ -7,6 +7,9 @@
 ```
 composer create-project longdhdev/holaframework
 ```
+```
+composer install
+```
 
 ## Router 
 - Set up in router/web.php 
@@ -546,6 +549,33 @@ class HomeController extends BaseController {
        log_debug(Categories::where('id','=',1)->toSqlRaw());
     }
 }
+```
+- use union
+```php
+    Categories::union_all(Categories::clone())->get();
+    /*
+     * SELECT * FROM categories 
+     * UNION ALL
+     * SELECT * FROM categories
+     * */
+    Categories::union(Categories::clone())->get();
+    /*
+     * SELECT * FROM categories 
+     * UNION 
+     * SELECT * FROM categories
+     */
+```
+
+- use subquery
+```php
+    Categories::subQuery(Categories::clone(), 'sub')->get();
+    /*
+     * SELECT * FROM (SELECT * FROM categories) as sub 
+     */
+    Categories::subQuery(Categories::select('id')->clone(), 'sub')->get();
+     /*
+     * SELECT * FROM (SELECT id FROM categories) as sub 
+     */
 ```
 ### Use middleware
 - The middleware will be the place to check whether the request goes forward to be processed or not. It will often be used to authenticate the user and many other things depending on how you write the code in the middleware.
