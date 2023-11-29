@@ -37,13 +37,13 @@ trait QueryBuilder
 
     public static function union($sql)
     {
-        self::$union = "UNION $sql";
+        self::$union = " UNION $sql";
         return self::modelInstance();
     }
 
     public static function union_all($sql)
     {
-        self::$union = "UNION ALL $sql";
+        self::$union = " UNION ALL $sql";
         return self::modelInstance();
     }
 
@@ -139,6 +139,22 @@ trait QueryBuilder
     }
 
     public static function whereIn($field, $value)
+    {
+        if(!is_array($value)) {
+            throw new \RuntimeException("Params of {$field} is not array");
+        }
+        if (empty(self::$where)) {
+            self::$operator = " WHERE ";
+        } else {
+            self::$operator = " AND ";
+        }
+        $operator = self::$operator;
+        $value = implode(',', $value);
+        self::$where .= "{$operator}{$field} in ({$value})";
+        return self::modelInstance();
+    }
+
+    public static function whereNotIn($field, $value)
     {
         if(!is_array($value)) {
             throw new \RuntimeException("Params of {$field} is not array");
@@ -324,8 +340,8 @@ trait QueryBuilder
         $whereExit = self::$whereExit;
         $orderBy = self::$orderBy;
         $fieldTable = static::$field ?? '';
-        $offset = !empty(self::$page) && !empty(self::$limit) ? ' OFFSET '.self::$page * self::$limit:'';
-        $limit = !empty(self::$limit) ? "LIMIT ".self::$limit:'';
+        $offset = is_numeric(self::$page) && is_numeric(self::$limit) ? ' OFFSET '.self::$page * self::$limit:'';
+        $limit = is_numeric(self::$limit) ? " LIMIT ".self::$limit:'';
         $union = self::$union;
 
         if (empty($select)) {
