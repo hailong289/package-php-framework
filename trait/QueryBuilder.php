@@ -141,7 +141,7 @@ trait QueryBuilder
     public static function whereIn($field, $value)
     {
         if(!is_array($value)) {
-            throw new \RuntimeException("Params of {$field} is not array");
+            throw new \RuntimeException("Params of {$field} is not array function whereIn");
         }
         if (empty(self::$where)) {
             self::$operator = " WHERE ";
@@ -157,7 +157,7 @@ trait QueryBuilder
     public static function whereNotIn($field, $value)
     {
         if(!is_array($value)) {
-            throw new \RuntimeException("Params of {$field} is not array");
+            throw new \RuntimeException("Params of {$field} is not array function whereNotIn");
         }
         if (empty(self::$where)) {
             self::$operator = " WHERE ";
@@ -167,6 +167,25 @@ trait QueryBuilder
         $operator = self::$operator;
         $value = implode(',', $value);
         self::$where .= "{$operator}{$field} in ({$value})";
+        return self::modelInstance();
+    }
+
+    public static function whereBetween($field, $value)
+    {
+        if(!is_array($value)) {
+            throw new \RuntimeException("Params of {$field} is not array function whereBetween");
+        }
+        if(count($value) > 2) {
+            throw new \RuntimeException("The value in the array is more than 2 function whereBetween");
+        }
+        if (empty(self::$where)) {
+            self::$operator = " WHERE ";
+        } else {
+            self::$operator = " AND ";
+        }
+        $operator = self::$operator;
+        $value = implode(',', $value);
+        self::$where .= "{$operator}{$field} BETWEEN '{$value[0]}' AND '{$value[1]}'";
         return self::modelInstance();
     }
 
