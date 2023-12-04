@@ -30,15 +30,16 @@ class Router {
         $action = '';
         $path = '';
         $current_router = [];
+        $url = preg_replace('/(&|\?)([a-z_]+)=([a-z0-9]+)/i','', $url);
         $method = $_REQUEST['_method'] ?? $method;
         foreach ($routers as $router){
             $path_router = $router['path'];
             $method_router = $router['method'];
             $action_router = $router['action'];
             $check_has_params = preg_match('/\d+/', $url);
-            $check_query_string = preg_match('/(&|\?)([a-z_]+)=([a-z0-9]+)/i', $url);
+//            $check_query_string = preg_match('/(&|\?)([a-z_]+)=([a-z0-9]+)/i', $url);
             $check_router_param = preg_match('/{([a-z]+)}/',$path_router);
-            if ((!$check_has_params || $check_query_string) && !$check_router_param) {
+            if (!$check_has_params && !$check_router_param) {
                 $path_arr = array_values(array_filter(explode('/',$path_router)));
                 $url_arr = array_filter(explode('/', $url));
                 if(
@@ -54,7 +55,7 @@ class Router {
                     $current_router = $router;
                 }
 
-            } else if ($check_has_params && $check_router_param && !$check_query_string){ // check router with params
+            } else if ($check_has_params && $check_router_param){ // check router with params
                 $path_arr = array_values(array_filter(explode('/',$path_router)));
                 $url_arr = array_values(array_filter(explode('/', $url)));
                 if(count($path_arr) === count($url_arr)){
