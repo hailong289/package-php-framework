@@ -100,7 +100,13 @@ class BaseController extends \stdClass {
                 'function' => function(...$value) {
                     return ($value[1] != 'none' && preg_match($value[1], $value[0])) ? true:false;
                 },
-                'text' => '{{field} is invalid'
+                'text' => '{{field}} is invalid'
+            ],
+            'email' => [
+                'function' => function(...$value) {
+                    return !filter_var($value[0], FILTER_VALIDATE_EMAIL) ? true:false;
+                },
+                'text' => '{{field}} is invalid'
             ],
         ];
         if(!empty($rules[$name]) && count($rules[$name])) {
