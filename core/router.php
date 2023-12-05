@@ -30,7 +30,7 @@ class Router {
         $action = '';
         $path = '';
         $current_router = [];
-        $url = preg_replace('/(&|\?)([a-z_]+)=([a-z0-9]+)/i','', $url);
+        $url = preg_replace('/((&|\?)([a-z_]+)=([a-z0-9]+)|(&|\?)([a-z_]+)=)/i','', $url);
         $method = $_REQUEST['_method'] ?? $method;
         foreach ($routers as $router){
             $path_router = $router['path'];

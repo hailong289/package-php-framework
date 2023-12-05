@@ -231,6 +231,106 @@ class Controller extends BaseController {
     }
 }
 ```
+### Use validate request
+=== way 1 ===
+```php
+       $validate = $this->validateRequest(
+            $request->all(),
+            [
+                'username' => [
+                    'required',
+                    'number',
+                ],
+                'password' => [
+                    'required',
+                    'number',
+                    'max:6',
+                    'min:6'
+                ],
+            ]
+       );
+
+```
+=== way 2 ===
+```php
+       $validate = $this->validateRequest(
+            [
+                'username' => $request->username,
+                'password' => $request->password
+            ],
+            [
+                'username' => [
+                    'required',
+                    'number',
+                ],
+                'password' => [
+                    'required',
+                    'number',
+                    'max:6',
+                    'min:6'
+                ],
+            ]
+       );
+```
+You can return your error message with the code below
+```php
+       $validate = $this->validateRequest(
+            [
+                'username' => $request->username,
+                'password' => $request->password
+            ],
+            [
+                'username' => [
+                    'required' => 'Username is required',
+                    'number' => 'username is number',
+                ],
+                'password' => [
+                    'required',
+                    'number',
+                    'max:6',
+                    'min:6'
+                ],
+            ]
+       );
+```
+Use ``validateRequest`` in controller. This ``validateRequest`` function will return an error if there are coder-identified fields. If the condition is met, the ``validateRequest`` function will return the data that the user submitted
+```php
+<?php
+namespace App\Controllers;
+use App\Core\BaseController;
+use App\Core\Request;
+use App\Core\Response;
+
+class HomeController extends BaseController {
+    public function __construct()
+    {}
+
+    public function index(Request $request){
+        $validate = $this->validateRequest(
+            $request->all(),
+            [
+                'username' => [
+                    'required'=>'Không để trống',
+                    'number',
+                ],
+                'password' => [
+                    'required',
+                    'number',
+                    'max:6' => 'Pass phải lớn hơn hoặc bằng {{password}}',
+                    'min:6'
+                ],
+            ]
+        );
+        if(isset($validate->errors)) {
+            return false;
+        }
+        return [
+           'data_request' => $validate
+        ];
+    }
+
+}
+```
 ### Use response
 
 ```php
