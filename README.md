@@ -293,6 +293,16 @@ You can return your error message with the code below
             ]
        );
 ```
+Use with regex
+```php
+      $this->validateRequest([
+            'username' => 'long'
+        ], [
+            'username' => [
+                'pattern:/([0-9]+)/'=> 'You must be a number',
+            ]
+      ]);
+```
 Use ``validateRequest`` in controller. This ``validateRequest`` function will return an error if there are coder-identified fields. If the condition is met, the ``validateRequest`` function will return the data that the user submitted
 ```php
 <?php
@@ -331,6 +341,14 @@ class HomeController extends BaseController {
 
 }
 ```
+#### Rules can be used
+
+- ``required`` 
+- ``number``
+- ``max``
+- ``min``
+- ``pattern``
+- ``boolean``
 ### Use response
 
 ```php
