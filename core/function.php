@@ -103,3 +103,18 @@ if(!function_exists('isDate')){
         }
     }
 }
+if(!function_exists('convert_to_array')){
+    function convert_to_array($value)
+    {
+        if (!is_object($value)) die('The convert_to_array function parameter is not object');
+        return json_decode(json_encode($value), true);
+    }
+}
+
+if(!function_exists('convert_to_object')){
+    function convert_to_object($value)
+    {
+        if (!is_array($value)) die('The convert_to_object function parameter is not array');
+        return json_decode(json_encode($value));
+    }
+}

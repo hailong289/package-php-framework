@@ -785,3 +785,39 @@ Router::middleware('auth')->group(function (){ // use one middleware
     Router::get('home', [HomeController::class,'index']);
 });
 ```
+### Use function
+- Use ``convert_to_array``
+- The ``convert_to_array`` function will convert object data to an array
+```php
+<?php 
+     $data = new stdClass();
+     $data->name = 'Long';
+     $data->age = '22';
+     $data = convert_to_array($data);   
+      /* return
+       * Array
+        (
+            [name] => Long
+            [age] => 22
+        )
+       * */
+?>
+```
+
+- Use ``convert_to_object``
+- The ``convert_to_object`` function will convert array data to an object
+```php
+<?php 
+      $data = array();
+      $data['name'] = 'Long';
+      $data['age'] = '22';
+      $data = convert_to_object($data);
+      /* return
+       * stdClass Object
+        (
+            [name] => Long
+            [age] => 22
+        )
+       * */
+?>
+```

@@ -147,22 +147,19 @@ class BaseController extends \stdClass {
                         $errors->errors->{$name}->{$key} = str_replace("{{" . $name . "}}", $data_key[1] ?? '', $errors->errors->{$name}->{$key});
                     } else {
                         unset($errors->errors->{$name}->{$key});
-                        if (!count((array)$errors->errors->{$name})) unset($errors->errors->{$name});
                     }
                 } else if (isset($list_rule[$rule[0]])) {
                     $data_rule = $rule;
                     $rule = $data_rule[0];
                     $errors->errors->{$name}->{$rule} = call_user_func($list_rule[$rule]['function'], $value, $data_rule[1] ?? 'none');
                     if ($errors->errors->{$name}->{$rule}) {
-                        $errors->errors->{$name}->{$rule} = str_replace("{{field}}", $name, $list_rule[$rule]['text']);
-                        $errors->errors->{$name}->{$rule} = str_replace("{{max}}", $data_rule[1] ?? '', $errors->errors->{$name}->{$rule});
-                        $errors->errors->{$name}->{$rule} = str_replace("{{min}}", $data_rule[1] ?? '', $errors->errors->{$name}->{$rule});
+                        $errors->errors->{$name}->{$rule} = preg_replace("({{field}}|{{max}}|{{min}})", $name, $list_rule[$rule]['text']);
                     } else {
                         unset($errors->errors->{$name}->{$rule});
-                        if (!count((array)$errors->errors->{$name})) unset($errors->errors->{$name});
                     }
                 }
             }
+            if (!count((array)$errors->errors->{$name})) unset($errors->errors->{$name});
         }
         return $errors;
     }
