@@ -89,3 +89,17 @@ if(!function_exists('lang_has')){
         return isset($data[$key]);
     }
 }
+if(!function_exists('isDate')){
+    function isDate($value)
+    {
+        if (!$value) {
+            return false;
+        }
+        try {
+            new \DateTime($value);
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+}

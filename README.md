@@ -343,12 +343,15 @@ class HomeController extends BaseController {
 ```
 #### Rules can be used
 
-- ``required`` 
-- ``number``
-- ``max``
-- ``min``
-- ``pattern``
-- ``boolean``
+- ``required`` // check empty
+- ``number``  // check number
+- ``max`` // check max
+- ``min`` // check min
+- ``pattern``// check with regex
+- ``boolean`` // check boolean
+- ``array`` // check array
+- ``date`` // check date
+- ``not_pattern`` // check with regex
 ### Use response
 
 ```php

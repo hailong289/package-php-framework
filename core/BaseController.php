@@ -102,6 +102,12 @@ class BaseController extends \stdClass {
                 },
                 'text' => '{{field}} is invalid'
             ],
+            'not_pattern' => [
+                'function' => function (...$value) {
+                    return ($value[1] != 'none' && preg_match($value[1], $value[0])) ? true : false;
+                },
+                'text' => '{{field}} is invalid'
+            ],
             'email' => [
                 'function' => function (...$value) {
                     return !filter_var($value[0], FILTER_VALIDATE_EMAIL) ? true : false;
@@ -113,7 +119,19 @@ class BaseController extends \stdClass {
                     return !is_bool(filter_var($value[0], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE)) ? true : false;
                 },
                 'text' => 'Field {{field}} is boolean'
-            ]
+            ],
+            'array' => [
+                'function' => function (...$value) {
+                    return !is_array($value[0]) ? true : false;
+                },
+                'text' => 'Field {{field}} is array'
+            ],
+            'date' => [
+                'function' => function (...$value) {
+                    return !(is_string($value[0]) && !isDate($value[0])) ? true : false;
+                },
+                'text' => 'Field {{field}} is date'
+            ],
         ];
         if (!empty($rules[$name]) && count($rules[$name])) {
             $errors->errors->{$name} = new \stdClass();
