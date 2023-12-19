@@ -234,7 +234,7 @@ class Controller extends BaseController {
 ### Use validate request
 === way 1 ===
 ```php
-       $validate = $this->validateRequest(
+       $validate = Validation::create(
             $request->all(),
             [
                 'username' => [
@@ -253,7 +253,7 @@ class Controller extends BaseController {
 ```
 === way 2 ===
 ```php
-       $validate = $this->validateRequest(
+       $validate = Validation::create(
             [
                 'username' => $request->username,
                 'password' => $request->password
@@ -274,7 +274,7 @@ class Controller extends BaseController {
 ```
 You can return your error message with the code below
 ```php
-       $validate = $this->validateRequest(
+       $validate = Validation::create(
             [
                 'username' => $request->username,
                 'password' => $request->password
@@ -295,7 +295,7 @@ You can return your error message with the code below
 ```
 Use with regex
 ```php
-      $this->validateRequest([
+      Validation::create([
             'username' => 'long'
         ], [
             'username' => [
@@ -310,13 +310,14 @@ namespace App\Controllers;
 use App\Core\BaseController;
 use App\Core\Request;
 use App\Core\Response;
+use App\Core\Validation;
 
 class HomeController extends BaseController {
     public function __construct()
     {}
 
     public function index(Request $request){
-        $validate = $this->validateRequest(
+        $validate = Validation::create(
             $request->all(),
             [
                 'username' => [
@@ -331,11 +332,13 @@ class HomeController extends BaseController {
                 ],
             ]
         );
-        if(isset($validate->errors)) {
+        if(!empty($validate->errors())) { // show error
             return false;
         }
+        $data = $validate->data(); // get data access
+        
         return [
-           'data_request' => $validate
+           'data_request' => $data
         ];
     }
 
