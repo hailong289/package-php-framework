@@ -10,6 +10,7 @@ class Router {
     protected static $routers;
     private static $name_middleware = '';
     private static $prefix = '';
+    protected static $path_load_file;
 
     public function __construct($name = null, $is_prefix = false){
         if($name) {
@@ -33,7 +34,7 @@ class Router {
         $url = preg_replace('/((&|\?)([a-z_]+)=(.*)|(&|\?)([a-z_]+)=)/i','', $url);
         $method = $_REQUEST['_method'] ?? $method;
         foreach ($routers as $router){
-            $path_router = $router['path'];
+            $path_router = $router['path_load_file'] && endsWith($router['path'], '/') ? substr($router['path'], 0, -1):$router['path'];
             $method_router = $router['method'];
             $action_router = $router['action'];
             $check_has_params = preg_match('/\d+/', $url);
@@ -106,10 +107,12 @@ class Router {
     {
         self::$method = 'GET';
         self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
+        self::$path = self::$path_load_file . self::$path;
         self::$action = $action;
         self::$routers[] = [
             'method' => self::$method,
             'path' => self::$prefix && endsWith(self::$path, '/') ? substr(self::$path, 0, -1):self::$path,
+            'path_load_file' => self::$path_load_file,
             'action' => self::$action,
             'middleware' => self::$name_middleware ?? null
         ];
@@ -118,10 +121,12 @@ class Router {
     public static function post($name, $action): Router {
         self::$method = 'POST';
         self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
+        self::$path = self::$path_load_file . self::$path;
         self::$action = $action;
         self::$routers[] =[
             'method' => self::$method,
             'path' => self::$prefix && endsWith(self::$path, '/') ? substr(self::$path, 0, -1):self::$path,
+            'path_load_file' => self::$path_load_file,
             'action' => self::$action,
             'middleware' => self::$name_middleware ?? null
         ];
@@ -130,10 +135,12 @@ class Router {
     public static function put($name, $action): Router {
         self::$method = 'PUT';
         self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
+        self::$path = self::$path_load_file . self::$path;
         self::$action = $action;
         self::$routers[] =[
             'method' => self::$method,
             'path' => self::$prefix && endsWith(self::$path, '/') ? substr(self::$path, 0, -1):self::$path,
+            'path_load_file' => self::$path_load_file,
             'action' => self::$action,
             'middleware' => self::$name_middleware ?? null
         ];
@@ -142,10 +149,12 @@ class Router {
     public static function patch($name, $action): Router {
         self::$method = 'PATH';
         self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
+        self::$path = self::$path_load_file . self::$path;
         self::$action = $action;
         self::$routers[] =[
             'method' => self::$method,
             'path' => self::$prefix && endsWith(self::$path, '/') ? substr(self::$path, 0, -1):self::$path,
+            'path_load_file' => self::$path_load_file,
             'action' => self::$action,
             'middleware' => self::$name_middleware ?? null
         ];
@@ -154,10 +163,12 @@ class Router {
     public static function delete($name, $action): Router {
         self::$method = 'DELETE';
         self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
+        self::$path = self::$path_load_file . self::$path;
         self::$action = $action;
         self::$routers[] =[
             'method' => self::$method,
             'path' => self::$prefix && endsWith(self::$path, '/') ? substr(self::$path, 0, -1):self::$path,
+            'path_load_file' => self::$path_load_file,
             'action' => self::$action,
             'middleware' => self::$name_middleware ?? null
         ];
@@ -166,10 +177,12 @@ class Router {
     public static function head($name, $action): Router {
         self::$method = 'HEAD';
         self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
+        self::$path = self::$path_load_file . self::$path;
         self::$action = $action;
         self::$routers[] =[
             'method' => self::$method,
             'path' => self::$prefix && endsWith(self::$path, '/') ? substr(self::$path, 0, -1):self::$path,
+            'path_load_file' => self::$path_load_file,
             'action' => self::$action,
             'middleware' => self::$name_middleware ?? null
         ];
@@ -178,10 +191,12 @@ class Router {
     public static function options($name, $action): Router {
         self::$method = 'OPTIONS';
         self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
+        self::$path = self::$path_load_file . self::$path;
         self::$action = $action;
         self::$routers[] =[
             'method' => self::$method,
             'path' => self::$prefix && endsWith(self::$path, '/') ? substr(self::$path, 0, -1):self::$path,
+            'path_load_file' => self::$path_load_file,
             'action' => self::$action,
             'middleware' => self::$name_middleware ?? null
         ];

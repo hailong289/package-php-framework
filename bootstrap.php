@@ -48,5 +48,5 @@ if (!empty($language)) {
     }
 }
 
-require_once 'router/web.php';
+require_once 'router/index.php';
 require_once 'app/App.php';
