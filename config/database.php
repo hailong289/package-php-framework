@@ -1,12 +1,13 @@
 <?php
 define('DB_CONNECTION', 'mysql'); // chỉ hỗ trợ mysql, pgsql
 define('DB_ENVIRONMENT', 'default'); // environment
+define('REDIS_CONNECTION', 'redis'); // chỉ hỗ trợ mysql, pgsql
 define('DATABASE',[
     "mysql" => [
         "default" => [
             "HOST" => '127.0.0.1',
             "PORT" => '3306',
-            "DATABASE_NAME" => 'music',
+            "DATABASE_NAME" => 'blog',
             "USERNAME" => 'root',
             "PASSWORD" => ''
         ],

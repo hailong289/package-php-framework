@@ -1,20 +1,17 @@
 <?php
 namespace App\Core;
+
 class Redis {
-    public function connect() {
-       $redis = new \Redis();
+    private static $redis;
+
+    public function __construct()
+    {
+        self::$redis = Connection::getInstanceRedis(DB_ENVIRONMENT, REDIS_CONNECTION);
     }
 
-    public function set() {
-
-    }
-
-    public function get() {
-
-    }
-
-    public function disconnect() {
-
+    public static function work() {
+        self::$redis = Connection::getInstanceRedis(DB_ENVIRONMENT, REDIS_CONNECTION);
+        return self::$redis;
     }
 
 }

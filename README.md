@@ -46,6 +46,13 @@ Router::get('/home/detail/{id}', [HomeController::class,'detail']);
   // https://domain.com/home/detail
   // https://domain.com/home/list
 ```
+- When you want to create another router file, you can create it in the router folder and then add the code below in router/index.php
+- The ``add()`` function will identify your path and the ``loadFile()`` function will load the router file you just created
+
+```php
+$configRouter->add('api')->loadFile('api'); // https://domain.com/api
+$configRouter->add('api_v2')->loadFile('api_v2'); // https://domain.com/api_2
+```
 - Parameters in controller
 ```php
 <?php
