@@ -40,13 +40,19 @@ define('DATABASE',[
             'host' => '127.0.0.1',
             'password' => null,
             'port' =>  6379,
-            'database' => 0
+            'timeout' => 0,
+            'reserved' => null,
+            'retryInterval' => 0,
+            'readTimeout' => 0.0
         ],
         'production' => [
             'host' => '127.0.0.1',
             'password' => null,
             'port' =>  6379,
-            'database' => 0
+            'timeout' => 0,
+            'reserved' => null,
+            'retryInterval' => 0,
+            'readTimeout' => 0.0
         ],
     ]
 ]);
