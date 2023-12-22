@@ -20,7 +20,7 @@ class Connection{
 
             }catch (PDOException $e){
                 $mess = $e->getMessage();
-                die($mess);
+                throw new \RuntimeException($mess, $e->getCode() ?? 503);
             }
         } else if($type == 2) {
             // connect redis
@@ -29,7 +29,11 @@ class Connection{
                 $connection = DATABASE[$host][$environment];
                 $host = $connection['host'];
                 $port = $connection['port'];
-                self::$redis->connect($host, $port);
+                $timeout = $connection['timeout'];
+                $reserved = $connection['reserved'];
+                $retryInterval = $connection['retryInterval'];
+                $readTimeout = $connection['readTimeout'];
+                self::$redis->connect($host, $port, $timeout, $reserved, $retryInterval, $readTimeout);
             }catch (\Throwable $e) {
                 throw new \RuntimeException("Connect redis failed ".$e->getMessage(), 503);
             }
