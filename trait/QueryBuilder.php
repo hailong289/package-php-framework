@@ -409,7 +409,7 @@ trait QueryBuilder
             if(count($fieldTableNone) > 0){
                 $class = get_class(new static());
                 $fieldTableNone = implode(',', $fieldTableNone);
-                die("Missing $fieldTableNone in fieldTable class $class");
+                throw new \RuntimeException("Missing $fieldTableNone in fieldTable class $class");
             }
             $field = rtrim($field, ',');
             $value = rtrim($value, ',');
