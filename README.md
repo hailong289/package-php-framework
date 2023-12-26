@@ -831,3 +831,54 @@ Router::middleware('auth')->group(function (){ // use one middleware
        * */
 ?>
 ```
+### Use translate
+- When you want to create a translation, you can create a file in the language folder and write the language conversion key in the file as shown below.
+- Create files ``vi.php``
+- You can change the language in the config/constant.php file
+```php
+define('LANGUAGE', 'vi');
+```
+```php
+<?php
+
+return [
+    "home" => "Trang chủ",
+    "login" => "Đăng nhập"
+];
+```
+- Create files ``ja.php``
+```php
+<?php
+
+return [
+    "home" => "家",
+    "login" => "サインイン"
+];
+```
+- After creating and adding the key in the file you can convert the language based on the key with the function ``__()``, ``translate()``
+```php
+<?php
+echo __('home');
+echo translate('home');
+```
+- You can change the language with the 3rd parameter in the ``__()`` and ``translate()`` functions
+```php
+<?php
+echo __('home', [], 'vi'); // print Trang chủ
+echo __('home', [], 'ja'); // print 家
+echo translate('home', [], 'vi'); // print Trang chủ
+echo translate('home', [], 'ja'); // print 家
+```
+- Identifies the key in the translation file
+```php
+<?php
+
+return [
+    "number" => "Total: {{value}}"
+];
+```
+```php
+<?php
+
+echo __('number', ['value' => 10]); // print Total: 10
+```

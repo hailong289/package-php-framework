@@ -71,9 +71,29 @@ if(!function_exists('get_view')){
 }
 
 if(!function_exists('__')){
-    function __($key, $data_key = [])
+    function __($key, $data_key = [], $lang = '')
     {
-        $data = $GLOBALS['data_lang'];
+        if(!empty($lang)) {
+            $data = require(path_root("language/$lang.php"));
+        } else {
+            $data = $GLOBALS['data_lang'];
+        }
+        $convert = $data[$key] ?? $key;
+        foreach ($data_key as $k=>$value) {
+            $convert = str_replace("{{".$k."}}", $value, $convert);
+        }
+        return $convert;
+    }
+}
+
+if(!function_exists('translate')){
+    function translate($key, $data_key = [], $lang = '')
+    {
+        if(!empty($lang)) {
+            $data = require(path_root("language/$lang.php"));
+        } else {
+            $data = $GLOBALS['data_lang'];
+        }
         $convert = $data[$key] ?? $key;
         foreach ($data_key as $k=>$value) {
             $convert = str_replace("{{".$k."}}", $value, $convert);

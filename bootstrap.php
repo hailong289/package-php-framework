@@ -43,7 +43,9 @@ $language = glob('language/*.php');
 if (!empty($language)) {
     foreach($language as $item){
         if(file_exists(path_root($item))){
-            $GLOBALS['data_lang'] = require(path_root($item));
+            if($item === "language/".LANGUAGE.".php") {
+                $GLOBALS['data_lang'] = require(path_root($item));
+            }
         }
     }
 }
