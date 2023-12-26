@@ -141,7 +141,7 @@ trait QueryBuilder
     public static function whereIn($field, $value)
     {
         if(!is_array($value)) {
-            throw new \RuntimeException("Params of {$field} is not array function whereIn");
+            throw new \RuntimeException("Params of {$field} is not array function whereIn", 500);
         }
         if (empty(self::$where)) {
             self::$operator = " WHERE ";
@@ -157,7 +157,7 @@ trait QueryBuilder
     public static function whereNotIn($field, $value)
     {
         if(!is_array($value)) {
-            throw new \RuntimeException("Params of {$field} is not array function whereNotIn");
+            throw new \RuntimeException("Params of {$field} is not array function whereNotIn", 500);
         }
         if (empty(self::$where)) {
             self::$operator = " WHERE ";
@@ -173,10 +173,10 @@ trait QueryBuilder
     public static function whereBetween($field, $value)
     {
         if(!is_array($value)) {
-            throw new \RuntimeException("Params of {$field} is not array function whereBetween");
+            throw new \RuntimeException("Params of {$field} is not array function whereBetween", 500);
         }
         if(count($value) > 2) {
-            throw new \RuntimeException("The value in the array is more than 2 function whereBetween");
+            throw new \RuntimeException("The value in the array is more than 2 function whereBetween", 500);
         }
         if (empty(self::$where)) {
             self::$operator = " WHERE ";
@@ -409,7 +409,7 @@ trait QueryBuilder
             if(count($fieldTableNone) > 0){
                 $class = get_class(new static());
                 $fieldTableNone = implode(',', $fieldTableNone);
-                throw new \RuntimeException("Missing $fieldTableNone in fieldTable class $class");
+                throw new \RuntimeException("Missing $fieldTableNone in fieldTable class $class", 500);
             }
             $field = rtrim($field, ',');
             $value = rtrim($value, ',');
