@@ -13,18 +13,10 @@ class BaseController extends \stdClass {
                     if(class_exists($model)){
                         $model = new $model();
                         $this->{$variable} = $model;
+                        return $model;
                     }else{
-                        $result[] = (object)[
-                            'error_code' => 1,
-                            'message' => "Model $name does not exits"
-                        ];
+                        throw new \RuntimeException("Model $name does not exits", 500);
                     }
-                }
-            }
-            if (count($result) > 0) {
-                if($result[0]->error_code){
-                    echo json_encode($result[0]);
-                    exit();
                 }
             }
         }else{
@@ -33,12 +25,8 @@ class BaseController extends \stdClass {
                 require_once path_root($model.'.php');
                 if(class_exists($model)){
                     return new $model();
-                }else{
-                    echo json_encode([
-                        'error_code' => 1,
-                        'message' => "Model $names does not exits"
-                    ]);
-                    exit();
+                } else {
+                    throw new \RuntimeException("Model $names does not exits", 500);
                 }
             }
         }
@@ -53,6 +41,7 @@ class BaseController extends \stdClass {
         if(file_exists(__DIR__ROOT . '/app/views/'.$views.'.view.php')){
             require_once __DIR__ROOT . '/app/views/'.$views.'.view.php';
         }
+        return $this;
     }
 
 }
