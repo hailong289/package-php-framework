@@ -3,19 +3,16 @@ namespace App;
 use App\Controllers\HomeController;
 use App\Core\BaseController;
 use App\Core\Request;
+use App\Core\Response;
 use App\Core\Router;
 
-class App extends BaseController {
+class App {
     private $__controller;
     private $__action;
     private $__param = [];
     private $router;
-    public function __construct()
-    {
-        $this->router = new Router();
-        $this->handleUrl();
-    }
-    public function handleUrl(){
+    public function __construct(){}
+    private function handleUrl(){
         try {
             $url = $this->router->url();
             $urlarr = array_values($url);
@@ -70,12 +67,21 @@ class App extends BaseController {
                 file_put_contents(__DIR__ROOT .'/storage/debug.log',$date . $e, FILE_APPEND);
            }
            http_response_code($code);
-           return $this->render_view("error.index",[
+           return Response::view("error.index",[
                "message" => $e->getMessage(),
                "line" => $e->getLine(),
                "file" => $e->getFile(),
                "code" => $code
            ]);
+        }
+    }
+    public function run() {
+        try {
+            date_default_timezone_set(TIMEZONE);
+            $this->router = new Router();
+            $this->handleUrl();
+        }catch (\Throwable $e) {
+            throw $e;
         }
     }
 }

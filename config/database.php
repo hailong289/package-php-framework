@@ -1,7 +1,5 @@
 <?php
-define('DB_CONNECTION', 'mysql'); // chỉ hỗ trợ mysql, pgsql
-define('DB_ENVIRONMENT', 'default'); // environment
-define('REDIS_CONNECTION', 'redis'); // chỉ hỗ trợ mysql, pgsql
+
 define('DATABASE',[
     "mysql" => [
         "default" => [

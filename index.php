@@ -4,7 +4,8 @@ use App\App;
 try {
     require 'vendor/autoload.php';
     require_once "bootstrap.php";
-    $app = new App;
+    $app = new App();
+    $app->run();
 }catch (Throwable $e) {
     $code = (int)$e->getCode();
     $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
