@@ -33,6 +33,13 @@ if(!function_exists('path_root')){
     }
 }
 
+if(!function_exists('url')){
+    function url($path = '')
+    {
+        return (!empty($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . '/' . $path;
+    }
+}
+
 if(!function_exists('view_root')){
     function view_root($view)
     {

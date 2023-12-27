@@ -22,6 +22,6 @@ class Response {
         extract($data);
         $views = preg_replace('/([.]+)/', '/' , $view);
         require_once __DIR__ROOT . '/app/views/'.$views.'.view.php';
-        return true;
+        return;
     }
 }
