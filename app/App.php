@@ -44,44 +44,60 @@ class App {
                     }
                 }
                 $result = $this->__controller->{$this->__action}(...$agr);
-                if (is_array($result) || is_object($result)) {
-                    echo json_encode($result);
-                } else {
-                    echo $result;
-                }
-                exit();
+                return [
+                    "error_code" => 0,
+                    "return" => $result
+                ];
             }else{
                 $controller = serialize($this->__controller);
                 throw new \RuntimeException("Method {$this->__action} does not exit in controller {$controller}",500);
             }
         }catch (\Throwable $e){
             $code = (int)$e->getCode();
-            $code = $code ? $code:500;
-            if(DEBUG_LOG) {
-                $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
-                if (!file_exists(__DIR__ROOT .'/storage')) {
-                    if (!mkdir($concurrentDirectory = __DIR__ROOT . '/storage', 0777, true) && !is_dir($concurrentDirectory)) {
-                        throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
-                    }
-                }
-                file_put_contents(__DIR__ROOT .'/storage/debug.log',$date . $e, FILE_APPEND);
-           }
-           http_response_code($code);
-           return Response::view("error.index",[
-               "message" => $e->getMessage(),
-               "line" => $e->getLine(),
-               "file" => $e->getFile(),
-               "code" => $code
-           ]);
+            $code = $code ? $code : 500;
+            if (DEBUG_LOG) $this->write_logs_error($e);
+            http_response_code($code);
+            return [
+                "error_code" => 1,
+                "return" => [
+                    "message" => $e->getMessage(),
+                    "line" => $e->getLine(),
+                    "file" => $e->getFile(),
+                    "code" => $code
+                ],
+                "view" => "error.index"
+            ];
         }
     }
     public function run() {
         try {
             date_default_timezone_set(TIMEZONE);
             $this->router = new Router();
-            $this->handleUrl();
+            $resultHandle = $this->handleUrl();
+            if($resultHandle['error_code'] === 0){
+                if(is_array($resultHandle['return']) || is_object($resultHandle['return'])) {
+                    echo json_encode($resultHandle['return']);
+                } else {
+                    echo $resultHandle['return'];
+                }
+                return $this;
+            }
+
+            if ($resultHandle['error_code'] === 1) {
+                return Response::view($resultHandle['view'], $resultHandle['return']);
+            }
         }catch (\Throwable $e) {
             throw $e;
         }
+    }
+
+    private function write_logs_error($e): void {
+        $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
+        if (!file_exists(__DIR__ROOT .'/storage')) {
+            if (!mkdir($concurrentDirectory = __DIR__ROOT . '/storage', 0777, true) && !is_dir($concurrentDirectory)) {
+                throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
+            }
+        }
+        file_put_contents(__DIR__ROOT .'/storage/debug.log',$date . $e, FILE_APPEND);
     }
 }

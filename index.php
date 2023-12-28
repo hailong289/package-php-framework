@@ -16,5 +16,6 @@ try {
     }
     file_put_contents(__DIR__ROOT .'/storage/debug.log',$date . $e, FILE_APPEND);
     http_response_code($code ? $code:500);
+    echo $e;
     throw $e;
 }

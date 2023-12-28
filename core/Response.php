@@ -8,12 +8,8 @@ class Response {
         exit();
     }
     public static function json($data = [], $status = 200, $headers = [], $options = 0){
-        if(is_array($data) || is_object($data)) {
-            http_response_code($status);
-            header('Content-Type: application/json; charset=utf-8');
-            return $data;
-        }
-        throw new \RuntimeException('Data is not an array or object');
+        http_response_code($status);
+        return $data;
     }
 
     public static function view($view, $data = [], $status = 200){
