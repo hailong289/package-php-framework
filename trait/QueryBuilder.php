@@ -16,6 +16,7 @@ trait QueryBuilder
     protected static $limit = '';
     protected static $subQuery = '';
     protected static $union = '';
+    protected static $groupBy = '';
 
     public static function table($tableName)
     {
@@ -276,7 +277,7 @@ trait QueryBuilder
 
 
     public static function get(){
-        if(static::$query){
+        if(!empty(static::$query)){
             $query = static::$query->fetchAll(\PDO::FETCH_OBJ);
             static::$query = '';
             return $query;
@@ -290,7 +291,7 @@ trait QueryBuilder
     }
 
     public static function first(){
-        if(static::$query){
+        if(!empty(static::$query)){
             $query = static::$query->fetch(\PDO::FETCH_OBJ);
             static::$query = '';
             return $query;
@@ -304,7 +305,7 @@ trait QueryBuilder
     }
 
     public static function getArray(){
-        if(static::$query){
+        if(!empty(static::$query)){
             $query = static::$query->fetchAll(\PDO::FETCH_ASSOC);
             static::$query = '';
             return $query;
@@ -318,7 +319,7 @@ trait QueryBuilder
     }
 
     public static function firstArray(){
-        if(static::$query){
+        if(!empty(static::$query)){
             $query = static::$query->fetch(\PDO::FETCH_ASSOC);
             static::$query = '';
             return $query;
@@ -358,6 +359,7 @@ trait QueryBuilder
         $where = self::$where;
         $whereExit = self::$whereExit;
         $orderBy = self::$orderBy;
+        $groupBy = self::$groupBy;
         $fieldTable = static::$field ?? '';
         $offset = is_numeric(self::$page) && is_numeric(self::$limit) ? ' OFFSET '.self::$page * self::$limit:'';
         $limit = is_numeric(self::$limit) ? " LIMIT ".self::$limit:'';
@@ -380,7 +382,7 @@ trait QueryBuilder
         }
 
         $sql = "SELECT {$select} FROM {$tableName}{$join}
-        {$where}{$whereExit}{$orderBy}{$limit}{$offset}{$union}";
+        {$where}{$whereExit}{$groupBy}{$orderBy}{$limit}{$offset}{$union}";
         $sql = trim($sql);
         self::reset();
         return $sql;
