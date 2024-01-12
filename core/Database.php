@@ -70,7 +70,7 @@ class Database {
         return new static();
     }
 
-    public static function getData($data) {
+    public function getCollection($data) {
         $collection = new Collection($data);
         return $collection;
     }

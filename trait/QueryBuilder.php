@@ -285,7 +285,7 @@ trait QueryBuilder
         $sql = self::sqlQuery();
         $query = self::modelInstance()->query($sql);
         if (!empty($query)) {
-            return self::modelInstance()->getData($query->fetchAll(\PDO::FETCH_OBJ));
+            return self::modelInstance()->getCollection($query->fetchAll(\PDO::FETCH_OBJ));
         }
         return false;
     }
@@ -299,7 +299,7 @@ trait QueryBuilder
         $sql = self::sqlQuery();
         $query = self::modelInstance()->query($sql);
         if (!empty($query)) {
-            return self::modelInstance()->getData($query->fetch(\PDO::FETCH_OBJ));
+            return self::modelInstance()->getCollection($query->fetch(\PDO::FETCH_OBJ));
         }
         return false;
     }
@@ -347,7 +347,7 @@ trait QueryBuilder
         $sql = "SELECT * FROM {$tableName} WHERE id = '$id'";
         $query = self::modelInstance()->query($sql);
         if (!empty($query)) {
-            return self::modelInstance()->getData($query->fetch(\PDO::FETCH_OBJ));
+            return self::modelInstance()->getCollection($query->fetch(\PDO::FETCH_OBJ));
         }
         return false;
     }
@@ -357,7 +357,7 @@ trait QueryBuilder
         $sql = "SELECT * FROM {$tableName} WHERE id = '$id'";
         $query = self::modelInstance()->query($sql);
         if (!empty($query)) {
-            return self::modelInstance()->getData($query->fetch(\PDO::FETCH_OBJ));
+            return self::modelInstance()->getCollection($query->fetch(\PDO::FETCH_OBJ));
         }
         return false;
     }
