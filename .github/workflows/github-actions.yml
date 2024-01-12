@@ -1,6 +1,9 @@
 name: New version announcement
 run-name: ${{ github.actor }} release new version of php-framework 🚀
-on: [push]
+on:
+  push:
+    branches:
+      - master
 jobs:
   release-noti-discord:
     runs-on: ubuntu-latest
