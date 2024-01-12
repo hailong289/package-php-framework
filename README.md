@@ -164,10 +164,10 @@ class Controller extends BaseController {
         ]);
     }
     public function listCategories(){
-         $data = $this->Categories::get();
+         $data = $this->Categories::get()->values();
     }
     public function listProduct(){
-         $data = $this->Product::get();
+         $data = $this->Product::get()->values();
          return $data;
     }
 }
@@ -183,10 +183,10 @@ class Controller extends BaseController {
         ]);
     }
     public function listCategories(){
-         $data = Categories::get();
+         $data = Categories::get()->values();
     }
     public function listProduct(){
-         $data = Product::get();
+         $data = Product::get()->values();
          return $data;
     }
 }
@@ -405,46 +405,50 @@ class Controller extends BaseController {
 
 - Get one record in model
 ```sql
-   Categories::first();
+   Categories::first()->values();
 ```
 
 - Get one record buy column with function where
 ```sql
-   Categories::where('id','=', 1)->first(); // get by id
-   Categories::where('name','=', 1)->first(); // get by name
-   Categories::where('name','like', '%value%')->first(); // get by name
+   Categories::where('id','=', 1)->first()->values(); // get by id
+   Categories::where('name','=', 1)->first()->values(); // get by name
+   Categories::where('name','like', '%value%')->first()->values(); // get by name
 ```
 - Get all record in model
 ```sql
-   Categories::get();
+   Categories::get()->values();
 ```
 - Get all record buy column with function where
  
   ``The get() function will return an object. If you want to return an array data type, you can use the getArray() function.``
 ```sql
-   Categories::where('id','=', 1)->get(); // get by id
-   Categories::where('name','=', 1)->get(); // get by name
-   Categories::where('name','like', '%value%')->get(); // get by name
+   Categories::where('id','=', 1)->get()->values(); // get by id
+   Categories::where('name','=', 1)->get()->values(); // get by name
+   Categories::where('name','like', '%value%')->get()->values(); // get by name
        
    // return data type array
    Categories::where('id','=', 1)->getArray(); // get by id
    Categories::where('name','=', 1)->getArray(); // get by name
    Categories::where('name','like', '%value%')->getArray(); // get by name
+   // version 1.0.6
+   Categories::where('id','=', 1)->get()->toArray(); // get by id
+   Categories::where('name','=', 1)->get()->toArray(); // get by name
+   Categories::where('name','like', '%value%')->get()->toArray(); // get by name
 ```
 - use select()
 ```sql
-   Categories::select('*')->get();
-   Categories::select(['*'])->get();
-   Categories::select(['id','name'])->get();
+   Categories::select('*')->get()->values();
+   Categories::select(['*'])->get()->values();
+   Categories::select(['id','name'])->get()->values();
 
    // with sum and count 
    Summary::select([
        'SUM(amount) as amount',
        'SUM(amount2) as amount2',
-   ])->get();
+   ])->get()->values();
    Region::select([
        'COUNT(id) as number'
-   ])->get();
+   ])->get()->values();
 ```
 - use findById()
 
@@ -453,13 +457,13 @@ class Controller extends BaseController {
 ```
 - use orWhere()
 ```sql
-   Categories::where('id','=', 1)->orWhere('id','=',2)->get(); 
+   Categories::where('id','=', 1)->orWhere('id','=',2)->get()->values(); 
 ```
 - use whereLike()
 ```sql
-   Categories::whereLike('name', '%long')->get(); 
-   Categories::whereLike('name', 'long%')->get(); 
-   Categories::whereLike('name', '%long%')->get(); 
+   Categories::whereLike('name', '%long')->get()->values(); 
+   Categories::whereLike('name', 'long%')->get()->values(); 
+   Categories::whereLike('name', '%long%')->get()->values(); 
 ```
 - use join
 
@@ -467,9 +471,9 @@ class Controller extends BaseController {
    // way 1
    Blog::select('*')->join('categories', function ($q) {
       $q->on('categories.id','=','category_blogs.category_id');
-   })->get(); 
+   })->get()->values(); 
    // way 2
-   Blog::select('*')->join('categories')->on('categories.id','=','category_blogs.category_id')->get(); 
+   Blog::select('*')->join('categories')->on('categories.id','=','category_blogs.category_id')->get()->values(); 
 ```
 
 - use left join
@@ -478,9 +482,9 @@ class Controller extends BaseController {
    // way 1
    Blog::select('*')->leftJoin('categories', function ($q) {
       $q->on('categories.id','=','category_blogs.category_id');
-   })->get(); 
+   })->get()->values(); 
    // way 2
-   Blog::select('*')->leftJoin('categories')->on('categories.id','=','category_blogs.category_id')->get(); 
+   Blog::select('*')->leftJoin('categories')->on('categories.id','=','category_blogs.category_id')->get()->values(); 
 ```
 
 
@@ -490,38 +494,38 @@ class Controller extends BaseController {
    // way 1
    Blog::select('*')->rightJoin('categories', function ($q) {
       $q->on('categories.id','=','category_blogs.category_id');
-   })->get(); 
+   })->get()->values(); 
    // way 2
-   Blog::select('*')->rightJoin('categories')->on('categories.id','=','category_blogs.category_id')->get(); 
+   Blog::select('*')->rightJoin('categories')->on('categories.id','=','category_blogs.category_id')->get()->values(); 
 ```
 
 - use order by
 
 ```php
-   News::select('*')->orderBy('id', 'DESC')->get(); // ASC, DESC
+   News::select('*')->orderBy('id', 'DESC')->get()->values(); // ASC, DESC
 ```
 
 - use group by
 
 ```php
    // way 1
-   News::select('*')->groupBy('id')->get(); 
+   News::select('*')->groupBy('id')->get()->values(); 
    // way 2
-   News::select('*')->groupBy(['field1','field2','field3'])->get();
+   News::select('*')->groupBy(['field1','field2','field3'])->get()->values();
 ```
 
 - use limit
 
 ```php
-   News::select('*')->limit(100)->get();
+   News::select('*')->limit(100)->get()->values();
 ```
 
 - use limit and offset
 
 ```sql
-   News::select('*')->page(0)->limit(100)->get(); // offset 0 limit 100
-   News::select('*')->page(1)->limit(100)->get(); // offset 100 limit 100
-   News::select('*')->page(2)->limit(100)->get(); // offset 200 limit 100
+   News::select('*')->page(0)->limit(100)->get()->values(); // offset 0 limit 100
+   News::select('*')->page(1)->limit(100)->get()->values(); // offset 100 limit 100
+   News::select('*')->page(2)->limit(100)->get()->values(); // offset 200 limit 100
 ```
 
 - use insert
@@ -560,13 +564,14 @@ class Controller extends BaseController {
 - Additionally, you can use pure SQL statements with custom functions
 
 ```php
-   News::custom("SELECT * FROM news WHERE id = 1")->get();
-   News::custom("SELECT * FROM news")->get();
+   News::custom("SELECT * FROM news WHERE id = 1")->get()->values();
+   News::custom("SELECT * FROM news")->get()->values();
 ```
 - Or you can use pure SQL statements with the database class like the example below
 ```php
- (new Database)->query("SELECT * FROM categories")->fetch();
- (new Database)->query("SELECT * FROM categories")->fetchAll();
+  $database = new Database();
+  $database->query("SELECT * FROM categories")->fetch();
+  $database->query("SELECT * FROM categories")->fetchAll();
 ```
 
 - In addition to the insert function, you can use the create function to insert data into the table
@@ -608,8 +613,8 @@ use App\Core\Database;
 class HomeController extends BaseController {
    
     public function index(){
-        $all = Database::table('categories')->get();
-        $first = Database::table('categories')->where('id','=',1)->first();
+        $all = Database::table('categories')->get()->values();
+        $first = Database::table('categories')->where('id','=',1)->first()->values();
     }
 
 }
@@ -656,7 +661,7 @@ class HomeController extends BaseController {
    
     public function index(){
        Database::enableQueryLog();
-       Categories::get();
+       Categories::get()->values();
        log_debug(Database::getQueryLog());
     }
 }
@@ -683,13 +688,13 @@ class HomeController extends BaseController {
 ```
 - use union
 ```php
-    Categories::union_all(Categories::clone())->get();
+    Categories::union_all(Categories::clone())->get()->values();
     /*
      * SELECT * FROM categories 
      * UNION ALL
      * SELECT * FROM categories
      * */
-    Categories::union(Categories::clone())->get();
+    Categories::union(Categories::clone())->get()->values();
     /*
      * SELECT * FROM categories 
      * UNION 
@@ -699,14 +704,63 @@ class HomeController extends BaseController {
 
 - use subquery
 ```php
-    Categories::subQuery(Categories::clone(), 'sub')->get();
+    Categories::subQuery(Categories::clone(), 'sub')->get()->values();
     /*
      * SELECT * FROM (SELECT * FROM categories) as sub 
      */
-    Categories::subQuery(Categories::select('id')->clone(), 'sub')->get();
+    Categories::subQuery(Categories::select('id')->clone(), 'sub')->get()->values();
      /*
      * SELECT * FROM (SELECT id FROM categories) as sub 
      */
+```
+
+- use collection
+- With collections you can use functions ``toArray``, ``toObject``, ``values``, ``value``, ``count``, ``map``, ``filter``, ``push``, ``add`` to manipulate the query builder
+```php
+    Categories::get()->values(); // get all value
+    Categories::get()->toArray(); // get all value type array
+    Categories::get()->toObject(); // get all value type object
+    Categories::get()->value(); // get first value, use with map and filter functions
+    Categories::get()->count(); // Count the amount of data
+    Categories::get()->map(function ($item) {
+       return $item->id;
+    })->values(); // Map the data
+    Categories::get()->filter(function ($item) {
+       return $item->id === 1;
+    })->values(); // filter data
+
+    Categories::get()->map(function ($item) {
+       return $item->id;
+    })->value(); // Map the data and get one
+    Categories::get()->filter(function ($item) {
+       return $item->id === 1;
+    })->value(); // filter data and get one
+```
+
+- use collection with array
+```php
+    $array = [
+       ["id" => 1, "name" => "Name 1"],
+       ["id" => 2, "name" => "Name 2"],
+    ];
+    $data = new \App\Core\Collection($array);
+    $data->values(); // get all value
+    $data->toArray(); // get all value type array
+    $data->toObject(); // get all value type object
+    $data->value(); // get first value, use with map and filter functions
+    $data->count(); // Count the amount of data
+    $data->map(function ($item) {
+       return $item->id;
+    })->values(); // Map the data and get all
+    $data->filter(function ($item) {
+       return $item->id === 1;
+    })->values(); // filter data and get all
+    $data->map(function ($item) {
+       return $item->id;
+    })->value(); // Map the data and get one
+    $data->filter(function ($item) {
+       return $item->id === 1;
+    })->value(); // filter data and get one
 ```
 ### Use middleware
 - The middleware will be the place to check whether the request goes forward to be processed or not. It will often be used to authenticate the user and many other things depending on how you write the code in the middleware.

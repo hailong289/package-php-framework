@@ -7,6 +7,7 @@ class Database {
     private static $enableLog = false;
     private static $log = [];
     private static $class;
+    private static $collection;
     use QueryBuilder;
     public function __construct()
     {
@@ -67,6 +68,11 @@ class Database {
 
     public static function modelInstance() {
         return new static();
+    }
+
+    public static function getData($data) {
+        $collection = new Collection($data);
+        return $collection;
     }
 }
 
