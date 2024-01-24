@@ -1,7 +1,7 @@
 <?php
 namespace App\Models;
 use App\Core\Database;
-use App\Core\Model\Model;
+use App\Core\Model;
 
 class Categories extends Model {
     protected static $tableName = 'categories';
@@ -12,6 +12,15 @@ class Categories extends Model {
         'name',
         'view'
     ];
+
+    public function setAttributeName($value) {
+        return $value;
+    }
+
+    public function getAttributeName($value) {
+        return $value;
+    }
+
 
     public static function index(){
         Categories::first();

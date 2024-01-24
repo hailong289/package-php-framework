@@ -41,6 +41,11 @@ class Collection
         return $this;
     }
 
+    public function mapFirst($fn) {
+        $this->data = $fn($this->data);
+        return $this;
+    }
+
     public function filter($fn) {
         foreach ($this->data as $key => $data) {
             if($fn($data)) $this->data[$key] = $data;

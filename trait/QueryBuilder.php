@@ -283,11 +283,11 @@ trait QueryBuilder
             return $query;
         }
         $sql = self::sqlQuery();
-        $query = self::modelInstance()->query($sql);
-        if (!empty($query)) {
-            return self::modelInstance()->getCollection($query->fetchAll(\PDO::FETCH_OBJ));
+        $data = self::modelInstance()->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+        if (!empty($data)) {
+            return self::modelInstance()->getCollection($data)->map(fn ($item) => self::getAttribute($item));
         }
-        return false;
+        return self::modelInstance()->getCollection([]);
     }
 
     public static function first(){
@@ -297,9 +297,9 @@ trait QueryBuilder
             return $query;
         }
         $sql = self::sqlQuery();
-        $query = self::modelInstance()->query($sql);
-        if (!empty($query)) {
-            return self::modelInstance()->getCollection($query->fetch(\PDO::FETCH_OBJ));
+        $data = self::modelInstance()->query($sql)->fetch(\PDO::FETCH_OBJ);
+        if (!empty($data)) {
+            return self::modelInstance()->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
         }
         return false;
     }
@@ -536,6 +536,23 @@ trait QueryBuilder
         self::$whereExit = '';
         self::$page = '';
         self::$limit = '';
+        self::$union = '';
+        self::$groupBy = '';
+    }
+
+    private static function getAttribute($item)
+    {
+        $keys = array_keys(get_object_vars($item));
+        foreach ($keys as $key) {
+            $name = ucfirst($key);
+            if(method_exists(self::modelInstance(), "getAttribute$name")) {
+                $item->{$key} = self::modelInstance()->{"getAttribute$name"}($item->{$key});
+            }
+        }
+        return $item;
+    }
+    private static function setAttribute($item){
+
     }
 
 }
