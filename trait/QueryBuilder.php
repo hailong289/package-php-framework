@@ -409,6 +409,7 @@ trait QueryBuilder
                 if (!in_array($key, $fieldTable)) {
                     $fieldTableNone[] = $key;
                 }
+                $val = self::setAttribute($key, $val);
                 $field .= $key . ',';
                 $value .= "'".$val."'". ",";
             }
@@ -440,6 +441,7 @@ trait QueryBuilder
             $field = '';
             $value = '';
             foreach($data as $key=>$val){
+                $val = self::setAttribute($key, $val);
                 $field .= $key . ',';
                 $value .= "'".$val."'". ",";
             }
@@ -466,6 +468,7 @@ trait QueryBuilder
             $field = '';
             $value = '';
             foreach($data as $key=>$val){
+                $val = self::setAttribute($key, $val);
                 $field .= $key . ',';
                 $value .= "'".$val."'". ",";
             }
@@ -491,6 +494,7 @@ trait QueryBuilder
         if(!empty($data)){
             $compare = '';
             foreach($data as $key=>$val){
+                $val = self::setAttribute($key, $val);
                 $compare .= $key." = '".$val."', ";
             }
             if (isset(static::$times_auto) && static::$times_auto) {
@@ -551,8 +555,11 @@ trait QueryBuilder
         }
         return $item;
     }
-    private static function setAttribute($item){
-
+    private static function setAttribute($key, $val){
+        if(method_exists(self::modelInstance(), "setAttribute$key")) {
+            $val = self::modelInstance()->{"setAttribute$key"}($val);
+        }
+        return $val;
     }
 
 }

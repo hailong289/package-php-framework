@@ -31,7 +31,7 @@ class Collection
 
     public function count(): int
     {
-        return count($this->data);
+        return is_countable($this->data) && count($this->data);
     }
 
     public function map($fn) {

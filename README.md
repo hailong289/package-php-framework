@@ -191,6 +191,34 @@ class Controller extends BaseController {
     }
 }
 ```
+Use attribute in module
+- Attribute in the model will include set and get functions. For example, if you want to set a column name in the table, the set and get functions will have the structure setAttribute{column_table} and getAttribute{column_table}
+- Example code below:
+```php
+namespace App\Models;
+use App\Core\Database;
+use App\Core\Model;
+
+class Categories extends Model {
+    protected static $tableName = 'categories';
+    protected static $times_auto = false;
+    protected static $date_create = "date_created";
+    protected static $date_update = "date_update";
+    protected static $field = [
+        'name',
+        'view',
+        'invalid'
+    ];
+
+    public function setAttributeName($value) {
+        return json_encode($value);
+    }
+
+    public function getAttributeName($value) {
+        return json_decode($value);
+    }
+}
+```
 
 ### Use view
 - Create view in folder app/views with name {name_file}.view.php
