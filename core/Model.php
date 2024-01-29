@@ -17,8 +17,8 @@ abstract class Model extends Database
     }
 
     public static function custom($sql = ''){
-        self::$query = self::$DB->query($sql);
-        return self::$class;
+        self::$query = self::modelInstance()->query($sql);
+        return self::modelInstance();
     }
 
     public static function modelInstance() {

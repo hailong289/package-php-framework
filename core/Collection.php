@@ -5,7 +5,7 @@ namespace App\Core;
 class Collection
 {
     private $data = [];
-    public function __construct(array|object $data)
+    public function __construct($data)
     {
         $this->data = $data;
         return json_decode(json_encode($this->data));

@@ -280,7 +280,7 @@ trait QueryBuilder
         if(!empty(static::$query)){
             $query = static::$query->fetchAll(\PDO::FETCH_OBJ);
             static::$query = '';
-            return $query;
+            return self::modelInstance()->getCollection($query)->map(fn ($item) => self::getAttribute($item));
         }
         $sql = self::sqlQuery();
         $data = self::modelInstance()->query($sql)->fetchAll(\PDO::FETCH_OBJ);
@@ -294,7 +294,7 @@ trait QueryBuilder
         if(!empty(static::$query)){
             $query = static::$query->fetch(\PDO::FETCH_OBJ);
             static::$query = '';
-            return $query;
+            return self::modelInstance()->getCollection($query)->mapFirst(fn ($item) => self::getAttribute($item));
         }
         $sql = self::sqlQuery();
         $data = self::modelInstance()->query($sql)->fetch(\PDO::FETCH_OBJ);
@@ -306,28 +306,32 @@ trait QueryBuilder
 
     public static function getArray(){
         if(!empty(static::$query)){
-            $query = static::$query->fetchAll(\PDO::FETCH_ASSOC);
+            $data = static::$query->fetchAll(\PDO::FETCH_ASSOC);
             static::$query = '';
-            return $query;
+            return array_map(function ($item){
+                return self::getAttribute($item, true);
+            }, $data ?? []);
         }
         $sql = self::sqlQuery();
-        $query = self::modelInstance()->query($sql);
-        if (!empty($query)) {
-            return $query->fetchAll(\PDO::FETCH_ASSOC);
+        $data = self::modelInstance()->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
+        if (!empty($data)) {
+            return array_map(function ($item){
+               return self::getAttribute($item, true);
+            }, $data ?? []);
         }
         return false;
     }
 
     public static function firstArray(){
         if(!empty(static::$query)){
-            $query = static::$query->fetch(\PDO::FETCH_ASSOC);
+            $data = static::$query->fetch(\PDO::FETCH_ASSOC);
             static::$query = '';
-            return $query;
+            return self::getAttribute($data, true);
         }
         $sql = self::sqlQuery();
-        $query = self::modelInstance()->query($sql);
-        if (!empty($query)) {
-            return $query->fetch(\PDO::FETCH_ASSOC);
+        $data = self::modelInstance()->query($sql)->fetch(\PDO::FETCH_ASSOC);
+        if (!empty($data)) {
+            return self::getAttribute($data, true);
         }
         return false;
     }
@@ -345,9 +349,9 @@ trait QueryBuilder
     public static function findById($id) {
         $tableName = self::$tableName ? self::$tableName:static::$tableName;
         $sql = "SELECT * FROM {$tableName} WHERE id = '$id'";
-        $query = self::modelInstance()->query($sql);
-        if (!empty($query)) {
-            return self::modelInstance()->getCollection($query->fetch(\PDO::FETCH_OBJ));
+        $data = self::modelInstance()->query($sql)->fetch(\PDO::FETCH_OBJ);
+        if (!empty($data)) {
+            return self::modelInstance()->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
         }
         return false;
     }
@@ -355,9 +359,9 @@ trait QueryBuilder
     public static function find($id) {
         $tableName = self::$tableName ? self::$tableName:static::$tableName;
         $sql = "SELECT * FROM {$tableName} WHERE id = '$id'";
-        $query = self::modelInstance()->query($sql);
-        if (!empty($query)) {
-            return self::modelInstance()->getCollection($query->fetch(\PDO::FETCH_OBJ));
+        $data = self::modelInstance()->query($sql)->fetch(\PDO::FETCH_OBJ);
+        if (!empty($data)) {
+            return self::modelInstance()->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
         }
         return false;
     }
@@ -544,13 +548,17 @@ trait QueryBuilder
         self::$groupBy = '';
     }
 
-    private static function getAttribute($item)
+    private static function getAttribute($item, $is_array = false)
     {
-        $keys = array_keys(get_object_vars($item));
+        $keys = array_keys($is_array ? $item:get_object_vars($item));
         foreach ($keys as $key) {
             $name = ucfirst($key);
             if(method_exists(self::modelInstance(), "getAttribute$name")) {
-                $item->{$key} = self::modelInstance()->{"getAttribute$name"}($item->{$key});
+                if($is_array) {
+                    $item[$key] = self::modelInstance()->{"getAttribute$name"}($item[$key]);
+                } else {
+                    $item->{$key} = self::modelInstance()->{"getAttribute$name"}($item->{$key});
+                }
             }
         }
         return $item;
