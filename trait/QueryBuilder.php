@@ -17,6 +17,8 @@ trait QueryBuilder
     protected static $subQuery = '';
     protected static $union = '';
     protected static $groupBy = '';
+    protected static $isSub = false;
+    protected static $sqlSub = '';
 
     public static function table($tableName)
     {
@@ -32,6 +34,7 @@ trait QueryBuilder
 
     public static function subQuery($sql, $name)
     {
+        if(empty($name)) throw new \RuntimeException("table subQuery is not null", 500);
         self::$tableName = "($sql) as $name";
         return self::modelInstance();
     }
@@ -48,19 +51,13 @@ trait QueryBuilder
         return self::modelInstance();
     }
 
-
     public static function where($field, $compare = '=', $value = '')
     {
         if (is_callable($field)) {
             $field(self::modelInstance());
             return self::modelInstance();
         }
-        if (empty(self::$where)) {
-            self::$operator = " WHERE ";
-        } else {
-            self::$operator = " AND ";
-        }
-        $operator = self::$operator;
+        $operator = self::operator('AND');
         if(empty($value)) {
             $value = $compare;
             $compare = '=';
@@ -70,40 +67,13 @@ trait QueryBuilder
         return self::modelInstance();
     }
 
-    public static function whereRaw($sql) {
-        if (empty(self::$where)) {
-            self::$operator = " WHERE ";
-        } else {
-            self::$operator = " AND ";
-        }
-        $operator = self::$operator;
-        self::$where .= "{$operator}{$sql}";
-        return self::modelInstance();
-    }
-
-    public static function orWhereRaw($sql) {
-        if (empty(self::$where)) {
-            self::$operator = " WHERE ";
-        } else {
-            self::$operator = " OR ";
-        }
-        $operator = self::$operator;
-        self::$where .= "{$operator}{$sql}";
-        return self::modelInstance();
-    }
-
     public static function orWhere($field, $compare = '=', $value = '')
     {
         if (is_callable($field)) {
             $field(self::modelInstance());
             return self::modelInstance();
         }
-        if (empty(self::$where)) {
-            self::$operator = " WHERE ";
-        } else {
-            self::$operator = " OR ";
-        }
-        $operator = self::$operator;
+        $operator = self::operator("OR");
         if(empty($value)) {
             $value = $compare;
             $compare = '=';
@@ -115,12 +85,7 @@ trait QueryBuilder
 
     public static function whereLike($field, $value)
     {
-        if (empty(self::$where)) {
-            self::$operator = " WHERE ";
-        } else {
-            self::$operator = " AND ";
-        }
-        $operator = self::$operator;
+        $operator = self::operator("AND");
         $value = (is_numeric($value) ? $value:"'".$value."'");
         self::$where .= "{$operator}{$field} like {$value}";
         return self::modelInstance();
@@ -128,12 +93,7 @@ trait QueryBuilder
 
     public static function orWhereLike($field, $value)
     {
-        if (empty(self::$where)) {
-            self::$operator = " WHERE ";
-        } else {
-            self::$operator = " OR ";
-        }
-        $operator = self::$operator;
+        $operator = self::operator("OR");
         $value = (is_numeric($value) ? $value:"'".$value."'");
         self::$where .= "{$operator}{$field} like {$value}";
         return self::modelInstance();
@@ -144,12 +104,7 @@ trait QueryBuilder
         if(!is_array($value)) {
             throw new \RuntimeException("Params of {$field} is not array function whereIn", 500);
         }
-        if (empty(self::$where)) {
-            self::$operator = " WHERE ";
-        } else {
-            self::$operator = " AND ";
-        }
-        $operator = self::$operator;
+        $operator = self::operator("AND");
         $value = implode(',', $value);
         self::$where .= "{$operator}{$field} in ({$value})";
         return self::modelInstance();
@@ -160,12 +115,7 @@ trait QueryBuilder
         if(!is_array($value)) {
             throw new \RuntimeException("Params of {$field} is not array function whereNotIn", 500);
         }
-        if (empty(self::$where)) {
-            self::$operator = " WHERE ";
-        } else {
-            self::$operator = " AND ";
-        }
-        $operator = self::$operator;
+        $operator =  self::operator("AND");
         $value = implode(',', $value);
         self::$where .= "{$operator}{$field} in ({$value})";
         return self::modelInstance();
@@ -179,17 +129,23 @@ trait QueryBuilder
         if(count($value) > 2) {
             throw new \RuntimeException("The value in the array is more than 2 function whereBetween", 500);
         }
-        if (empty(self::$where)) {
-            self::$operator = " WHERE ";
-        } else {
-            self::$operator = " AND ";
-        }
-        $operator = self::$operator;
+        $operator =  self::operator("AND");
         $value = implode(',', $value);
         self::$where .= "{$operator}{$field} BETWEEN '{$value[0]}' AND '{$value[1]}'";
         return self::modelInstance();
     }
 
+    public static function whereRaw($sql) {
+        $operator = self::operator("AND");
+        self::$where .= "{$operator}{$sql}";
+        return self::modelInstance();
+    }
+
+    public static function orWhereRaw($sql) {
+        $operator = self::operator("OR");
+        self::$where .= "{$operator}{$sql}";
+        return self::modelInstance();
+    }
 
     public static function select($field){
         $field = (is_array($field)) ? implode(", ", $field):$field;
@@ -546,6 +502,15 @@ trait QueryBuilder
         self::$limit = '';
         self::$union = '';
         self::$groupBy = '';
+    }
+
+    private static function operator($name) {
+        if (empty(self::$where)) {
+            self::$operator = " WHERE ";
+        } else {
+            self::$operator = " $name ";
+        }
+        return self::$operator;
     }
 
     private static function getAttribute($item, $is_array = false)
