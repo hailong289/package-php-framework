@@ -145,3 +145,10 @@ if(!function_exists('convert_to_object')){
         return json_decode(json_encode($value));
     }
 }
+
+if(!function_exists('config_env')){
+    function config_env($value, $default = '')
+    {
+        return constant($value) ?? $default;
+    }
+}

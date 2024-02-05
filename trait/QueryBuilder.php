@@ -172,7 +172,7 @@ trait QueryBuilder
         return self::modelInstance();
     }
 
-    public static function whereIn($field, $value)
+    public static function whereIn($field, array $value)
     {
         if(!is_array($value)) {
             throw new \RuntimeException("Params of {$field} is not array function whereIn", 500);
@@ -459,6 +459,12 @@ trait QueryBuilder
         return $sql;
     }
 
+    public static function showSqlRaw() {
+        $sql = self::sqlQuery();
+        log_debug($sql);
+    }
+
+
     public static function clone() {
         $sql = self::sqlQuery();
         return $sql;
@@ -705,6 +711,15 @@ trait QueryBuilder
                     $item[$key] = self::modelInstance()->{"getAttribute$name"}($item[$key]);
                 } else {
                     $item->{$key} = self::modelInstance()->{"getAttribute$name"}($item->{$key});
+                }
+            }
+            if(!empty(static::$hiddenField)) {
+                foreach (static::$hiddenField as $key_hidden) {
+                    if($is_array) {
+                        if(array_key_exists($key_hidden,$item)) unset($item[$key_hidden]);
+                    } else {
+                        if(key_exists($key_hidden,$item)) unset($item->{$key_hidden});
+                    }
                 }
             }
         }

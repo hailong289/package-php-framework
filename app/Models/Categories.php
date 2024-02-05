@@ -12,8 +12,11 @@ class Categories extends Model {
         'name',
         'view'
     ];
+    protected static $hiddenField = [
+        'invalid',
+    ];
 
-    public function setAttributeName($value) {
+    public function setAttributeName($value){
         return $value;
     }
 
