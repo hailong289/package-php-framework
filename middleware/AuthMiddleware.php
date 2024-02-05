@@ -1,8 +1,5 @@
 <?php
 namespace App\Middleware;
-
-use App\Core\Response;
-use App\Core\Session;
 use App\Core\Request;
 
 class AuthMiddleware {

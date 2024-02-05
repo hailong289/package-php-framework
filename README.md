@@ -116,6 +116,13 @@ class HomeController extends BaseController {
 File in folder app/Controllers -> namespace App\Controllers 
 File in folder app/Controllers/{name_folder} -> namespace App\Controllers\{name_folder} 
 ```
+- Run command create controller
+```cmd
+- cd scripts
+- php controller.php create:NameController
+// or
+- php controller.php create:folder/folder/NameController
+```
 ### Use model
 
 - Create model 
@@ -123,7 +130,11 @@ File in folder app/Controllers/{name_folder} -> namespace App\Controllers\{name_
 - The variable $times_auto set true when you use the `create()`,`insert()`, `insertLastId()` function will automatically create a date with the `date_created` column and using the `update()` function will create a date with the `date_updated` column set false, you can turn this function off
 - You can change the 2 default date columns with the `$date_create` and `$date_update` variables
 - You may not need to declare the 3 variables `$times_auto`, `$date_create`, `$date_update` if you do not use them.
-
+- Run command create controller
+```cmd
+- cd scripts
+- php model.php create:nameModel --table=name
+```
 ```php
 <?php
 namespace App\Models;
@@ -239,6 +250,13 @@ class HomeController extends BaseController {
     }
 }
 ```
+- Run command create view
+```cmd
+- cd scripts
+- php view.php create:name_view
+// or
+- php view.php create:folder/folder/name_view
+```
 
 ### Use Request
 ```php
@@ -252,7 +270,6 @@ class Controller extends BaseController {
          $name = $request->value('name');
          $file = $request->get_file('file');
          $set_file = $request->file('file'); // use set file
-         $extension = $request->extension(); // get extension file
          $extension = $request->extension(); // get extension file
          $size = $request->size(); // get size file
          $type = $request->type(); // get type file
@@ -840,6 +857,11 @@ class HomeController extends BaseController {
 - The middleware will be the place to check whether the request goes forward to be processed or not. It will often be used to authenticate the user and many other things depending on how you write the code in the middleware.
 - To create middleware you will create it in the middleware folder
 - Folder `` middleware/{name}Middleware.php``
+- Run command create middleware
+```cmd
+cd scripts
+php middleware.php create:Test
+```
 === way 1 ===
 ```php
 <?php
