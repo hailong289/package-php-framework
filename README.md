@@ -463,6 +463,17 @@ class Controller extends BaseController {
    Categories::where('name','=', 1)->get()->toArray(); // get by name
    Categories::where('name','like', '%value%')->get()->toArray(); // get by name
 ```
+```php
+    $data1 = Categories::select('*')->where(function (Database $q){
+        $q->where('id',3)->orWhere('id',2);
+    })->get()->toArray();
+    
+    $data2 = Categories::select('*')->where(function (Database $q){
+        $q->where('id',3);
+    })->orWhere(function (Database $q){
+        $q->where('id',2);
+    })->get()->toArray();
+```
 - use select()
 ```sql
    Categories::select('*')->get()->values();
@@ -492,6 +503,41 @@ class Controller extends BaseController {
    Categories::whereLike('name', '%long')->get()->values(); 
    Categories::whereLike('name', 'long%')->get()->values(); 
    Categories::whereLike('name', '%long%')->get()->values(); 
+```
+
+- use orWhereLike()
+```sql
+   Categories::orWhereLike('name', '%long')->get()->values(); 
+   Categories::orWhereLike('name', 'long%')->get()->values(); 
+   Categories::orWhereLike('name', '%long%')->get()->values(); 
+```
+- use whereIn()
+```sql
+   Categories::whereIn('id', [1,2])->get()->values(); 
+```
+- use orWhereIn()
+```sql
+   Categories::orWhereIn('id', [1,2])->get()->values(); 
+```
+- use whereNotIn()
+```sql
+   Categories::whereNotIn('id', [1,2])->get()->values(); 
+```
+- use orWhereNotIn()
+```sql
+   Categories::orWhereNotIn('name', [1,2])->get()->values(); 
+```
+- use whereBetween()
+```sql
+   Categories::whereBetween('date', ['2023-01-01 00:00:01','2023-12-31 23:59:59'])->get()->values(); 
+```
+- use whereRaw()
+```sql
+   Categories::whereRaw('id = 1 and age = 18')->get()->values(); 
+```
+- use orWhereRaw()
+```sql
+   Categories::where('id', 1)->orWhereRaw('id = 2')->get()->values(); 
 ```
 - use join
 
