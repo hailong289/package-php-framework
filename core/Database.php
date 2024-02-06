@@ -32,17 +32,10 @@ class Database {
     }
 
     public static function getQueryLog(){
-        try {
-            if(empty(self::$log)){
-                throw new \RuntimeException("No sql result",500);
-            }
-            echo "<pre>";
-            print_r(self::$log);
-            echo "</pre>";
-            exit();
-        } catch (\Throwable $th) {
-            throw $th;
+        if(!self::$enableLog){
+            throw new \RuntimeException("Not enable sql log",500);
         }
+        return self::$log ?? '';
     }
 
     public static function beginTransaction(){
