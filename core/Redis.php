@@ -16,15 +16,30 @@ class Redis {
 
     public function cache($tags, $data, $time = 3600)
     {
-        self::$redis->set($tags, serialize($data));
-        self::$redis->expire($tags, $time);
+        self::$redis->set($tags, json_encode($data));
+        if($time > 0) self::$redis->expire($tags, $time);
         return $data;
     }
+
+    public function cacheRPush($tags, $data, $time = 3600)
+    {
+        self::$redis->rPush($tags, json_encode($data));
+        if($time > 0) self::$redis->expire($tags, $time);
+        return $data;
+    }
+
+    public function cacheLPush($tags, $data, $time = 3600)
+    {
+        self::$redis->lPush($tags, json_encode($data));
+        if($time > 0) self::$redis->expire($tags, $time);
+        return $data;
+    }
+
 
     public function data($tags)
     {
         if(!self::$redis->get($tags)) return [];
-        return unserialize(self::$redis->get($tags));
+        return json_decode(self::$redis->get($tags));
     }
 
 }
