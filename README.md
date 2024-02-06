@@ -16,7 +16,7 @@ composer install
 - Router will receive 2 parameters, 1st parameter will be url, 2nd parameter will be array including controller and function in controller
 
 ```php
-use Core\Router;
+use App\Core\Router;
 use App\Controllers\HomeController;
 
 Router::get('/', [HomeController::class,'index']);
@@ -24,7 +24,7 @@ Router::get('/home', [HomeController::class,'index']);
 ```
 - Use parameters
 ```php
-use Core\Router;
+use App\Core\Router;
 use App\Controllers\HomeController;
 
 // url {domain}/home/1
@@ -138,7 +138,7 @@ File in folder app/Controllers/{name_folder} -> namespace App\Controllers\{name_
 ```php
 <?php
 namespace App\Models;
-use Core\Model\Model;
+use App\Core\Model;
 
 class Categories extends Model {
     protected static $tableName = 'categories';
@@ -238,8 +238,8 @@ class Categories extends Model {
 <?php
 namespace App\Controllers;
 use App\Models\Categories;
-use Core\BaseController;
-use Core\Request;
+use App\Core\BaseController;
+use App\Core\Request;
 
 class HomeController extends BaseController {
     public function __construct()
