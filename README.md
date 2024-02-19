@@ -449,24 +449,24 @@ class Controller extends BaseController {
 ### Query Builder
 
 - Get one record in model
-```sql
+```php
    Categories::first()->values();
 ```
 
 - Get one record buy column with function where
-```sql
+```php
    Categories::where('id','=', 1)->first()->values(); // get by id
    Categories::where('name','=', 1)->first()->values(); // get by name
    Categories::where('name','like', '%value%')->first()->values(); // get by name
 ```
 - Get all record in model
-```sql
+```php
    Categories::get()->values();
 ```
 - Get all record buy column with function where
  
   ``The get() function will return an object. If you want to return an array data type, you can use the getArray() function.``
-```sql
+```php
    Categories::where('id','=', 1)->get()->values(); // get by id
    Categories::where('name','=', 1)->get()->values(); // get by name
    Categories::where('name','like', '%value%')->get()->values(); // get by name
@@ -492,7 +492,7 @@ class Controller extends BaseController {
     })->get()->toArray();
 ```
 - use select()
-```sql
+```php
    Categories::select('*')->get()->values();
    Categories::select(['*'])->get()->values();
    Categories::select(['id','name'])->get()->values();
@@ -508,52 +508,52 @@ class Controller extends BaseController {
 ```
 - use findById()
 
-```sql
+```php
    Categories::findById(1); 
 ```
 - use orWhere()
-```sql
+```php
    Categories::where('id','=', 1)->orWhere('id','=',2)->get()->values(); 
 ```
 - use whereLike()
-```sql
+```php
    Categories::whereLike('name', '%long')->get()->values(); 
    Categories::whereLike('name', 'long%')->get()->values(); 
    Categories::whereLike('name', '%long%')->get()->values(); 
 ```
 
 - use orWhereLike()
-```sql
+```php
    Categories::orWhereLike('name', '%long')->get()->values(); 
    Categories::orWhereLike('name', 'long%')->get()->values(); 
    Categories::orWhereLike('name', '%long%')->get()->values(); 
 ```
 - use whereIn()
-```sql
+```php
    Categories::whereIn('id', [1,2])->get()->values(); 
 ```
 - use orWhereIn()
-```sql
+```php
    Categories::orWhereIn('id', [1,2])->get()->values(); 
 ```
 - use whereNotIn()
-```sql
+```php
    Categories::whereNotIn('id', [1,2])->get()->values(); 
 ```
 - use orWhereNotIn()
-```sql
+```php
    Categories::orWhereNotIn('name', [1,2])->get()->values(); 
 ```
 - use whereBetween()
-```sql
+```php
    Categories::whereBetween('date', ['2023-01-01 00:00:01','2023-12-31 23:59:59'])->get()->values(); 
 ```
 - use whereRaw()
-```sql
+```php
    Categories::whereRaw('id = 1 and age = 18')->get()->values(); 
 ```
 - use orWhereRaw()
-```sql
+```php
    Categories::where('id', 1)->orWhereRaw('id = 2')->get()->values(); 
 ```
 - use join
@@ -613,14 +613,14 @@ class Controller extends BaseController {
 
 - use limit and offset
 
-```sql
+```php
    News::select('*')->page(0)->limit(100)->get()->values(); // offset 0 limit 100
    News::select('*')->page(1)->limit(100)->get()->values(); // offset 100 limit 100
    News::select('*')->page(2)->limit(100)->get()->values(); // offset 200 limit 100
 ```
 
 - use insert
-```sql
+```php
    News::insert([
        'name' => 'New',
        'status' => 1
@@ -636,7 +636,7 @@ class Controller extends BaseController {
 - use update
 - ```The second parameter in the update function will default to id```
 - ```If you want to use another column, leave it as an array with the column key and value```
-```sql
+```php
    News::update ([
        'name' => 'New2',
        'status' => 1
@@ -793,7 +793,7 @@ class HomeController extends BaseController {
      */
 ```
 
-- use subquery
+- use subQuery
 ```php
     Categories::subQuery(Categories::clone(), 'sub')->get()->values();
     /*
