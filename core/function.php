@@ -149,6 +149,6 @@ if(!function_exists('convert_to_object')){
 if(!function_exists('config_env')){
     function config_env($value, $default = '')
     {
-        return constant($value) ?? $default;
+        return defined($value) && constant($value) ?  constant($value):$default;
     }
 }

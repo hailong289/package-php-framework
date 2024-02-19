@@ -1032,3 +1032,52 @@ return [
 
 echo __('number', ['value' => 10]); // print Total: 10
 ```
+### Queue
+- Use queue with redis
+- To use queue, create a file in the queue folder and declare it as below
+- Create file Job1.php
+```php
+
+<?php
+namespace Queue;
+class Job1 {
+   public $params1 = 0;
+   public $params2 = 0;
+   public function __construct($params1, $params2)
+   {
+       $this->params1 = $params1;
+       $this->params2 = $params2;
+   }
+   public function handle(){
+       // code 
+   }
+}
+```
+- Used in controllers
+
+```php 
+<?php
+namespace App\Controllers;
+use App\Core\BaseController;
+use App\Core\Request;
+use App\Core\Response;
+use Queue\CreateQueue;
+use Queue\Job1;
+
+class HomeController extends BaseController {
+    public function __construct()
+    {}
+
+    public function index(Request $request){
+        (new CreateQueue())->enQueue(new Job1(5,6));
+        return Response::view('welcome');
+    }
+
+}
+```
+- Run job queue
+```cmd
+ - php queue.php --queue=work
+ // or
+ - php queue.php --queue=live
+```

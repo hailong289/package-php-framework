@@ -27,6 +27,16 @@ class CreateQueue
         }
     }
 
+    public function deQueue($class) {
+        $redis = Redis::work();
+        $redis->del('queue:job');
+    }
+
+    public function deQueueList($value, $index) {
+        $redis = Redis::work();
+        $redis->lRem('queue:job', $value, $index);
+    }
+
     public function connection($connection = 'redis') {
         $this->connection = $connection;
         return $this;

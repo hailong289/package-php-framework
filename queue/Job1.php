@@ -9,6 +9,6 @@ class Job1 {
        $this->params2 = $params2;
    }
    public function handle(){
-       echo 'job1';
+       // code here
    }
 }
