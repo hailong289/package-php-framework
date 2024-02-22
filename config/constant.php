@@ -16,5 +16,6 @@ define('DB_PASSWORD', '');
 define('REDIS_CONNECTION', 'redis');
 define('REDIS_HOST', '127.0.0.1');
 define('REDIS_PORT', '6379');
+define('REDIS_USER', 'default');
 define('REDIS_PASSWORD', null);
 // end db

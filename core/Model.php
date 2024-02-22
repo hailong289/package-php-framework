@@ -8,11 +8,9 @@ abstract class Model extends Database
     use QueryBuilder;
     private static $DB;
     private static $query = '';
-    private static $class;
 
     public function __construct()
     {
-        self::$class = $this;
         self::$DB = new Database();
     }
 

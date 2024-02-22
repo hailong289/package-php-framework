@@ -20,7 +20,7 @@ class CreateQueue
                    ], 0);
                 }
             } catch (\Exception $exception) {
-                die('class does not exit');
+                die($exception->getMessage());
             }
         } else {
             die('class handle does not exit');

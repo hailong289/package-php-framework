@@ -6,13 +6,11 @@ class Database {
     private static $__conn;
     private static $enableLog = false;
     private static $log = [];
-    private static $class;
     private static $collection;
     use QueryBuilder;
     public function __construct()
     {
         self::$__conn = Connection::getInstance(DB_ENVIRONMENT, DB_CONNECTION);
-        self::$class = $this;
     }
 
     public function query($sql, $last_id = false){
