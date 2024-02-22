@@ -36,7 +36,7 @@ if(isset($options['queue'])) {
         while (true) {
             if($first_live) sleep(5);
             if(!$first_live) $first_live = true;
-            passthru('php queue.php --queue=work_live');
+            passthru('php CreateQueue.php --queue=work_live');
         }
     } else if ($options['queue'] === 'work_live') {
        $queue_list = $redis->lrange('queue:job',0,-1);
