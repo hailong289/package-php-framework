@@ -1,6 +1,6 @@
 <?php
-namespace Queue;
-use App\Core\Redis;
+namespace System\Queue;
+use System\Core\Redis;
 
 class CreateQueue
 {

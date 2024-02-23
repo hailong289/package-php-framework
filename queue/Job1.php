@@ -1,5 +1,5 @@
 <?php
-namespace Queue;
+namespace System\Queue;
 class Job1 {
    public $params1 = 0;
    public $params2 = 0;

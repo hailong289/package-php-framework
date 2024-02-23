@@ -1,5 +1,5 @@
 <?php
-use App\Core\Router;
+use System\Core\Router;
 
 class ConfigRouter extends Router {
     protected $default = 'web';

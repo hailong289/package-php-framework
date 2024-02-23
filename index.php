@@ -1,6 +1,6 @@
 <?php
 session_start();
-use App\App;
+use System\App;
 try {
     require 'vendor/autoload.php';
     require_once "bootstrap.php";

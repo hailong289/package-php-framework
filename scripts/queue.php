@@ -12,7 +12,7 @@ $options = getopt("", ['queue::']);
 if(count($argv)) unset($argv[0]);
 $argv = array_values($argv);
 if(isset($options['queue'])) {
-    $redis = \App\Core\Redis::work();
+    $redis = \System\Core\Redis::work();
     $first_live = false;
     if($options['queue'] === 'work') {
         $queue_list = $redis->lrange('queue:job',0,-1);

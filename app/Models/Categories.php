@@ -1,7 +1,7 @@
 <?php
 namespace App\Models;
-use App\Core\Database;
-use App\Core\Model;
+use System\Core\Model;
+use System\Core\Redis;
 
 class Categories extends Model {
     protected static $tableName = 'categories';
@@ -26,7 +26,11 @@ class Categories extends Model {
 
 
     public static function index(){
-        Categories::first();
+       $redis = Redis::work();
+       $key = 'data:categories';
+       $category = Redis::data($key);
+       if(empty($category)) $category = Redis::cacheRPush($key, Categories::get()->values(), 500);
+       return $category;
     }
 
     public static function store(){

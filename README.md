@@ -16,7 +16,7 @@ composer install
 - Router will receive 2 parameters, 1st parameter will be url, 2nd parameter will be array including controller and function in controller
 
 ```php
-use App\Core\Router;
+use System\Core\Router;
 use App\Controllers\HomeController;
 
 Router::get('/', [HomeController::class,'index']);
@@ -24,7 +24,7 @@ Router::get('/home', [HomeController::class,'index']);
 ```
 - Use parameters
 ```php
-use App\Core\Router;
+use System\Core\Router;
 use App\Controllers\HomeController;
 
 // url {domain}/home/1
@@ -72,7 +72,7 @@ class HomeController extends BaseController {
 ```php
 <?php
 namespace App\Controllers;
-use App\Core\Request;
+use System\Core\Request;
 
 class HomeController extends BaseController {
     public function index(Request $request, $id){
@@ -96,7 +96,7 @@ class HomeController extends BaseController {
 ```php
 <?php
 namespace App\Controllers;
-use App\Core\BaseController;
+use System\Core\BaseController;
 
 class HomeController extends BaseController {
     public function __construct()
@@ -138,7 +138,7 @@ File in folder app/Controllers/{name_folder} -> namespace App\Controllers\{name_
 ```php
 <?php
 namespace App\Models;
-use App\Core\Model;
+use System\Core\Model;
 
 class Categories extends Model {
     protected static $tableName = 'categories';
@@ -207,8 +207,8 @@ Use attribute in module
 - Example code below:
 ```php
 namespace App\Models;
-use App\Core\Database;
-use App\Core\Model;
+use System\Core\Database;
+use System\Core\Model;
 
 class Categories extends Model {
     protected static $tableName = 'categories';
@@ -238,8 +238,8 @@ class Categories extends Model {
 <?php
 namespace App\Controllers;
 use App\Models\Categories;
-use App\Core\BaseController;
-use App\Core\Request;
+use System\Core\BaseController;
+use System\Core\Request;
 
 class HomeController extends BaseController {
     public function __construct()
@@ -260,7 +260,7 @@ class HomeController extends BaseController {
 
 ### Use Request
 ```php
-use App\Core\Request;
+use System\Core\Request;
 class Controller extends BaseController {
     public function __construct()
     {}
@@ -359,10 +359,10 @@ Use ``validateRequest`` in controller. This ``validateRequest`` function will re
 ```php
 <?php
 namespace App\Controllers;
-use App\Core\BaseController;
-use App\Core\Request;
-use App\Core\Response;
-use App\Core\Validation;
+use System\Core\BaseController;
+use System\Core\Request;
+use System\Core\Response;
+use System\Core\Validation;
 
 class HomeController extends BaseController {
     public function __construct()
@@ -410,7 +410,7 @@ class HomeController extends BaseController {
 ### Use response
 
 ```php
-use App\Core\Response;
+use System\Core\Response;
 class Controller extends BaseController {
     public function __construct()
     {}
@@ -670,8 +670,8 @@ class Controller extends BaseController {
 ```php
 <?php
 namespace App\Models;
-use App\Core\Database;
-use App\Core\Model\Model;
+use System\Core\Database;
+use System\Core\Model;
 
 class News extends Model {
     protected static $tableName = 'new';
@@ -698,8 +698,8 @@ class News extends Model {
 ```php
 <?php
 namespace App\Controllers;
-use App\Core\BaseController;
-use App\Core\Database;
+use System\Core\BaseController;
+use System\Core\Database;
 
 class HomeController extends BaseController {
    
@@ -716,8 +716,9 @@ class HomeController extends BaseController {
 ```php
 <?php
 namespace App\Controllers;
-use App\Core\BaseController;
-use App\Core\Database;use App\Models\Categories;
+use System\Core\BaseController;
+use System\Core\Database;
+use App\Models\Categories;
 
 class HomeController extends BaseController {
     public function __construct()
@@ -741,8 +742,9 @@ class HomeController extends BaseController {
 ```php
 <?php
 namespace App\Controllers;
-use App\Core\BaseController;
-use App\Core\Database;use App\Models\Categories;
+use System\Core\BaseController;
+use System\Core\Database;
+use App\Models\Categories;
 
 class HomeController extends BaseController {
     public function __construct()
@@ -763,8 +765,9 @@ class HomeController extends BaseController {
 ```php
 <?php
 namespace App\Controllers;
-use App\Core\BaseController;
-use App\Core\Database;use App\Models\Categories;
+use System\Core\BaseController;
+use System\Core\Database;
+use App\Models\Categories;
 
 class HomeController extends BaseController {
     public function __construct()
@@ -834,7 +837,7 @@ class HomeController extends BaseController {
        ["id" => 1, "name" => "Name 1"],
        ["id" => 2, "name" => "Name 2"],
     ];
-    $data = new \App\Core\Collection($array);
+    $data = new \System\Core\Collection($array);
     $data->values(); // get all value
     $data->toArray(); // get all value type array
     $data->toObject(); // get all value type object
@@ -865,11 +868,11 @@ php middleware.php create:Test
 === way 1 ===
 ```php
 <?php
-namespace App\Middleware;
+namespace System\Middleware;
 
-use App\Core\Response;
-use App\Core\Session;
-use App\Core\Request;
+use System\Core\Response;
+use System\Core\Session;
+use System\Core\Request;
 
 class Auth {
     // return with key error code in function
@@ -884,11 +887,11 @@ class Auth {
 === way 2 ===
 ```php
 <?php
-namespace App\Middleware;
+namespace System\Middleware;
 
-use App\Core\Response;
-use App\Core\Session;
-use App\Core\Request;
+use System\Core\Response;
+use System\Core\Session;
+use System\Core\Request;
 
 class Auth {
     // return with key error code in function
@@ -908,11 +911,11 @@ class Auth {
 === way 3 ===
 ```php
 <?php
-namespace App\Middleware;
+namespace System\Middleware;
 
-use App\Core\Response;
-use App\Core\Session;
-use App\Core\Request;
+use System\Core\Response;
+use System\Core\Session;
+use System\Core\Request;
 
 class Auth {
     // return boolean in function
@@ -927,10 +930,10 @@ class Auth {
 - Declare the middleware name in the Kernel.php file located in the middleware folder
 ```php
 <?php
-namespace App\Middleware;
+namespace System\Middleware;
 class Kernel {
     public $routerMiddleware = [
-        "auth" => \App\Middleware\Auth::class,
+        "auth" => \System\Middleware\Auth::class,
     ];
 }
 ```
@@ -1058,11 +1061,11 @@ class Job1 {
 ```php 
 <?php
 namespace App\Controllers;
-use App\Core\BaseController;
-use App\Core\Request;
-use App\Core\Response;
-use Queue\CreateQueue;
-use Queue\Job1;
+use System\Core\BaseController;
+use System\Core\Request;
+use System\Core\Response;
+use System\Queue\CreateQueue;
+use System\Queue\Job1;
 
 class HomeController extends BaseController {
     public function __construct()

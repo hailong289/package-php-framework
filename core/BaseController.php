@@ -1,5 +1,5 @@
 <?php
-namespace App\Core;
+namespace System\Core;
 
 class BaseController extends \stdClass {
     public function model($names) {

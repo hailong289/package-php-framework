@@ -1,6 +1,5 @@
 <?php
-namespace App\Core;
-
+namespace System\Core;
 class Redis {
     private static $redis;
 

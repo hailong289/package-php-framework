@@ -1,5 +1,5 @@
 <?php
-namespace Core\Builder;
+namespace System\Trait;
 
 trait QueryBuilder
 {
@@ -718,7 +718,7 @@ trait QueryBuilder
                     if($is_array) {
                         if(array_key_exists($key_hidden,$item)) unset($item[$key_hidden]);
                     } else {
-                        if(key_exists($key_hidden,$item)) unset($item->{$key_hidden});
+                        if(array_key_exists($key_hidden,(array)$item)) unset($item->{$key_hidden});
                     }
                 }
             }

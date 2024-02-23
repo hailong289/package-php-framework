@@ -15,8 +15,8 @@ if(!empty($argv[0])) {
         }
         if(!file_exists(dirname(__DIR__, 1) ."/middleware/$command[1].php")) {
             file_put_contents(dirname(__DIR__, 1) ."/middleware/$command[1].php",'<?php
-namespace App\Middleware;
-use App\Core\Request;
+namespace System\Middleware;
+use System\Core\Request;
 
 class '.$command[1].' {
      public function handle(Request $request){

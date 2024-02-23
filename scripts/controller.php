@@ -21,7 +21,7 @@ if(!empty($argv[0])) {
         if(!file_exists(dirname(__DIR__, 1) ."/app/Controllers/$command[1].php")) {
             file_put_contents(dirname(__DIR__, 1) ."/app/Controllers/$command[1].php","<?php
 namespace App\Controllers;
-use App\Core\BaseController;
+use System\Core\BaseController;
 class {$command[1]} extends BaseController {
     public function __construct(){}
 } 

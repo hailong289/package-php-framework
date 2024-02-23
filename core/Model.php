@@ -1,7 +1,6 @@
 <?php
-namespace App\Core;
-use Core\Builder\QueryBuilder;
-use App\Core\Database;
+namespace System\Core;
+use System\Trait\QueryBuilder;
 
 abstract class Model extends Database
 {

@@ -1,7 +1,7 @@
 <?php
-namespace App\Middleware;
+namespace System\Middleware;
 class Kernel {
     public $routerMiddleware = [
-        "auth" => \App\Middleware\AuthMiddleware::class,
+        "auth" => \System\Middleware\AuthMiddleware::class,
     ];
 }

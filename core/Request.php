@@ -1,5 +1,5 @@
 <?php
-namespace App\Core;
+namespace System\Core;
 class Request extends \stdClass {
     private $file = '';
 

@@ -1,10 +1,8 @@
 <?php
-namespace App;
-use App\Controllers\HomeController;
-use App\Core\BaseController;
-use App\Core\Request;
-use App\Core\Response;
-use App\Core\Router;
+namespace System;
+use System\Core\Request;
+use System\Core\Response;
+use System\Core\Router;
 
 class App {
     private $__controller;

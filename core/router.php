@@ -1,7 +1,7 @@
 <?php
-namespace App\Core;
+namespace System\Core;
 
-use App\Middleware\Kernel;
+use System\Middleware\Kernel;
 
 class Router {
     protected static $method = 'GET';
