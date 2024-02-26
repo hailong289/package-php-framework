@@ -12,34 +12,6 @@ if (!empty($config_dir)) {
     }
 }
 
-$trait_dir = glob('trait/*.php');
-if (!empty($trait_dir)) {
-    foreach($trait_dir as $item){
-        if(file_exists(path_root($item))){
-            require_once path_root($item);
-        }
-    }
-}
-
-//$core_dir = glob('core/*.php');
-//if (!empty($core_dir)) {
-//    foreach($core_dir as $item){
-//        if ($item == 'core/function.php') continue;
-//        if(file_exists(path_root($item))){
-//            require_once path_root($item);
-//        }
-//    }
-//}
-
-//$queue_dir = glob('queue/*.php');
-//if (!empty($queue_dir)) {
-//    foreach($queue_dir as $item){
-//        if(file_exists(path_root($item))){
-//            require_once path_root($item);
-//        }
-//    }
-//}
-
 $language = glob('language/*.php');
 if (!empty($language)) {
     foreach($language as $item){
