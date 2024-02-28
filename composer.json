@@ -15,7 +15,6 @@
     },
     "autoload": {
         "psr-4": {
-            "App\\": "app/",
             "System\\Trait\\": "trait/",
             "System\\Core\\": "core/",
             "System\\Middleware\\": "middleware/",
