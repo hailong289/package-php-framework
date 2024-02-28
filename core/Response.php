@@ -17,7 +17,7 @@ class Response {
         if(count($data)) $GLOBALS['share_date_view'] = $data;
         extract($data);
         $views = preg_replace('/([.]+)/', '/' , $view);
-        require_once __DIR__ROOT . '/app/views/'.$views.'.view.php';
+        require_once __DIR__ROOT . '/App/Views/'.$views.'.view.php';
         return;
     }
 }
