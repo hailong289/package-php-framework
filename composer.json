@@ -1,7 +1,7 @@
 {
     "name": "longdhdev/holaframework",
     "type": "package",
-    "description": "A simple php framework",
+    "description": "A package php support for hola framework",
     "homepage": "https://github.com/hailong289/php-framework.git",
     "license": "MIT",
     "authors": [
