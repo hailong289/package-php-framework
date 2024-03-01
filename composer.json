@@ -1,5 +1,5 @@
 {
-    "name": "longdhdev/holaframework",
+    "name": "longdhdev/holapackage",
     "type": "package",
     "description": "A package php support for hola framework",
     "homepage": "https://github.com/hailong289/php-framework.git",
