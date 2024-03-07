@@ -1,79 +1,93 @@
 <?php
 ini_set('error_reporting', E_STRICT);
-require_once '../core/function.php';
-require_once('../config/constant.php');
-require_once('../config/database.php');
-require_once '../trait/QueryBuilder.php';
-require_once '../core/Connection.php';
-require_once '../core/Redis.php';
-require_once '../trait/QueryBuilder.php';
-
-$options = getopt("", ['queue::']);
-if(count($argv)) unset($argv[0]);
-$argv = array_values($argv);
-if(isset($options['queue'])) {
-    $redis = \System\Core\Redis::work();
-    $first_live = false;
-    if($options['queue'] === 'work') {
-        $queue_list = $redis->lrange('queue:job',0,-1);
-        $queue_list = array_reverse($queue_list);
-        foreach ($queue_list as $key=>$value) {
-            $queue = json_decode($value, true);
-            $class = $queue['class'];
-            $payload = $queue['payload'];
-            if(file_exists('../'.$class.'.php')){
-                require_once '../'.$class.'.php';
-                if (method_exists($class,'handle')) {
-                    runQueue($redis, $value, $key, $class, $payload);
-                } else {
-                    throw new Exception('class handle does not exit');
-                }
+$redis = \System\Core\Redis::work();
+if(!$redis->isConnected()) {
+    die('Redis connection is failed');
+}
+if ($type_queue === 'work') {
+    $queue_list = $redis->lrange("queue:$job_queue", 0, -1);
+    foreach ($queue_list as $key => $value) {
+        $queue = json_decode($value, true);
+        $uid = $queue['uid'];
+        $class = $queue['class'];
+        $payload = $queue['payload'];
+        $directory = __DIR__ROOT ."/$class.php";
+        echo "$class running \n";
+        try {
+            if (method_exists($class, 'handle')) {
+                runQueue($redis, $value, $key, $class, $payload, $uid, $job_queue);
             } else {
-                throw new Exception("File $class not exit");
+                failedQueue($redis, $payload, $class, $uid, new Exception('class handle does not exit'));
+                removeQueue($redis, $value, $key, $job_queue);
+                echo "$class failed \n";
             }
+        }catch (\Throwable $e) {
+            removeQueue($redis, $value, $key, $job_queue);
+            failedQueue($redis, $payload, $class, $uid, $e);
+            echo "$class failed \n";
         }
-    } else if ($options['queue'] === 'live') {
-        while (true) {
-            if($first_live) sleep(5);
-            if(!$first_live) $first_live = true;
-            passthru('php CreateQueue.php --queue=work_live');
+    }
+
+} else if ($type_queue === 'live') {
+    $queue_list = $redis->lrange("queue:$job_queue", 0, -1);
+    foreach ($queue_list as $key => $value) {
+        $queue = json_decode($value, true);
+        $uid = $queue['uid'];
+        $class = $queue['class'];
+        $payload = $queue['payload'];
+        $directory = __DIR__ROOT ."/$class.php";
+        echo "$class running \n";
+        try {
+            if (method_exists($class, 'handle')) {
+                runQueue($redis, $value, $key, $class, $payload, $uid, $job_queue);
+            } else {
+                removeQueue($redis, $value, $key, $job_queue);
+                failedQueue($redis, $payload, $class, $uid, new Exception('class handle does not exit'));
+                echo "$class failed \n";
+            }
+        }catch (\Throwable $e) {
+            removeQueue($redis, $value, $key, $job_queue);
+            failedQueue($redis, $payload, $class, $uid, $e);
+            echo "$class failed \n";
         }
-    } else if ($options['queue'] === 'work_live') {
-       $queue_list = $redis->lrange('queue:job',0,-1);
-       $index = count($queue_list) - 1;
-       $queue_first = $queue_list[$index];
-       if(count($queue_list)) {
-           $queue = json_decode($queue_first, true);
-           $class = $queue['class'];
-           $payload = $queue['payload'];
-           if(file_exists('../'.$class.'.php')){
-               require_once '../'.$class.'.php';
-               if (method_exists($class,'handle')) {
-                   runQueue($redis, $queue_first, $index, $class, $payload);
-               } else {
-                   throw new Exception('class handle does not exit');
-               }
-           } else {
-               throw new Exception("File $class not exit");
-           }
-       }
+    }
+    while(true) {
+        sleep(5);
+        passthru('php cli.php run:queue work');
     }
 }
 
-function runQueue($redis, $queue_first, $index, $class, $payload)
+
+function runQueue($redis, $queue_first, $index, $class, $payload, $uid, $job_queue)
 {
+    $start = new DateTime();
     try {
         $work_class = new $class(...array_values($payload));
         $work_class->handle();
-        echo "$class work success \n";
+        $end = new DateTime();
+        $time = $end->diff($start)->format('%H:%I:%S');
+        echo "$class work success ---- Time: $time".PHP_EOL;
     }catch (\Throwable $e) {
-        $redis->rPush('queue:job_failed', json_encode([
-            'payload' => $payload,
-            'class' => $class,
-            'error' => $e->getMessage(),
-            'failed' => $e->getTraceAsString()
-        ]));
-        echo "$class work failed \n";
+        failedQueue($redis, $payload, $class, $uid, $e);
+        $end = new DateTime();
+        $time = $end->diff($start)->format('%H:%I:%S');
+        echo "$class work failed ----  Time: $time".PHP_EOL;
     }
-    $redis->lRem('queue:job',$queue_first, $index);
+    removeQueue($redis, $queue_first, $index, $job_queue);
+}
+
+function removeQueue($redis, $queue_first, $index, $job_queue)
+{
+    $redis->lRem("queue:$job_queue",$queue_first, $index);
+}
+
+function failedQueue($redis, $payload, $class, $uid, $e)
+{
+    $redis->rPush('queue:job_failed', json_encode([
+        'uid' => $uid,
+        'payload' => $payload,
+        'class' => $class,
+        'error' => $e->getMessage(),
+        'failed' => $e->getTraceAsString()
+    ]));
 }

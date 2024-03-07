@@ -4,7 +4,7 @@ use System\Core\Redis;
 
 class CreateQueue
 {
-    public $queue = array();
+    private $queue = array();
     public $connection = 'redis';
     function __construct() {}
     //create a function to add new element
@@ -13,11 +13,15 @@ class CreateQueue
         if (method_exists($class,'handle')) {
             try {
                 if($this->connection === 'redis') {
-                   $redis = Redis::work();
-                   Redis::cacheRPush($tag_queue, [
-                       'payload' => $class,
-                       'class' => get_class($class)
-                   ], 0);
+                    $redis = Redis::work();
+                    if(!$redis->isConnected()) {
+                        throw new \RuntimeException('Redis connection is failed');
+                    }
+                    Redis::cacheRPush($tag_queue, [
+                        'uid' => uid(),
+                        'payload' => $class,
+                        'class' => get_class($class)
+                    ], 0);
                 }
             } catch (\Exception $exception) {
                 die($exception->getMessage());
@@ -25,16 +29,6 @@ class CreateQueue
         } else {
             die('class handle does not exit');
         }
-    }
-
-    public function deQueue($class) {
-        $redis = Redis::work();
-        $redis->del('queue:job');
-    }
-
-    public function deQueueList($value, $index) {
-        $redis = Redis::work();
-        $redis->lRem('queue:job', $value, $index);
     }
 
     public function connection($connection = 'redis') {
