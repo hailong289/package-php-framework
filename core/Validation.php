@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Core;
+namespace System\Core;
 
 class Validation {
      private static $errors;

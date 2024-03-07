@@ -1,17 +1,16 @@
 <?php
-namespace App\Core;
-use Core\Builder\QueryBuilder;
+namespace System\Core;
+use System\Trait\QueryBuilder;
 
 class Database {
     private static $__conn;
     private static $enableLog = false;
     private static $log = [];
-    private static $class;
+    private static $collection;
     use QueryBuilder;
     public function __construct()
     {
         self::$__conn = Connection::getInstance(DB_ENVIRONMENT, DB_CONNECTION);
-        self::$class = $this;
     }
 
     public function query($sql, $last_id = false){
@@ -31,17 +30,10 @@ class Database {
     }
 
     public static function getQueryLog(){
-        try {
-            if(empty(self::$log)){
-                throw new \RuntimeException("No sql result",500);
-            }
-            echo "<pre>";
-            print_r(self::$log);
-            echo "</pre>";
-            exit();
-        } catch (\Throwable $th) {
-            throw $th;
+        if(!self::$enableLog){
+            throw new \RuntimeException("Not enable sql log",500);
         }
+        return self::$log ?? '';
     }
 
     public static function beginTransaction(){
@@ -67,6 +59,11 @@ class Database {
 
     public static function modelInstance() {
         return new static();
+    }
+
+    public function getCollection($data) {
+        $collection = new Collection($data);
+        return $collection;
     }
 }
 

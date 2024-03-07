@@ -1,7 +1,7 @@
 {
     "name": "longdhdev/holaframework",
-    "type": "project",
-    "description": "A simple php framework",
+    "type": "package",
+    "description": "A package php support for hola framework",
     "homepage": "https://github.com/hailong289/php-framework.git",
     "license": "MIT",
     "authors": [
@@ -15,8 +15,10 @@
     },
     "autoload": {
         "psr-4": {
-            "App\\": "app/",
-            "App\\Middleware\\": "middleware/"
+            "System\\Trait\\": "trait/",
+            "System\\Core\\": "core/",
+            "System\\Middleware\\": "middleware/",
+            "System\\Queue\\": "queue/"
         }
     },
     "scripts": {

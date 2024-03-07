@@ -1,5 +1,5 @@
 <?php
-namespace App\Core;
+namespace System\Core;
 class Connection{
     private static $instance = null, $conn = null,$instance_redis = null, $redis = null;
     private function __construct($environment = "default", $host = "mysql", $type = 1){

@@ -1,9 +1,6 @@
 <?php
-namespace App\Middleware;
-
-use App\Core\Response;
-use App\Core\Session;
-use App\Core\Request;
+namespace System\Middleware;
+use System\Core\Request;
 
 class AuthMiddleware {
     // return boolean function

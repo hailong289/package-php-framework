@@ -1,5 +1,5 @@
 <?php
-namespace App\Core;
+namespace System\Core;
 
 class BaseController extends \stdClass {
     public function model($names) {
@@ -38,8 +38,8 @@ class BaseController extends \stdClass {
         if(count($data)) $GLOBALS['share_date_view'] = $data;
         extract($data);
         $views = preg_replace('/([.]+)/', '/' , $views);
-        if(file_exists(__DIR__ROOT . '/app/views/'.$views.'.view.php')){
-            require_once __DIR__ROOT . '/app/views/'.$views.'.view.php';
+        if(file_exists(__DIR__ROOT . '/App/Views/'.$views.'.view.php')){
+            require_once __DIR__ROOT . '/App/Views/'.$views.'.view.php';
         }
         return $this;
     }
