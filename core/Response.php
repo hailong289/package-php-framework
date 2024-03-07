@@ -13,13 +13,13 @@ class Response {
     }
 
     public static function view($view, $data = [], $status = 200){
+        if(count($data)) $GLOBALS['share_date_view'] = $data;
+        extract($data);
+        $views = preg_replace('/([.]+)/', '/' , $view);
         if(!file_exists(__DIR__ROOT . '/App/Views/'.$views.'.view.php')){
             throw new \RuntimeException("File App/Views/$view.view.php does not exist", 500);
         }
         http_response_code($status);
-        if(count($data)) $GLOBALS['share_date_view'] = $data;
-        extract($data);
-        $views = preg_replace('/([.]+)/', '/' , $view);
         require_once __DIR__ROOT . '/App/Views/'.$views.'.view.php';
         return;
     }
