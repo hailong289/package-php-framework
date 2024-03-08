@@ -81,7 +81,8 @@ class Router {
         if($names && is_string($names)) {
             $result = $this->middlewareWork($names);
             if($result->error_code){
-                return (new Response())->json($result);
+                echo json_encode($result);
+                exit();
             }
         }elseif ($names && is_array($names)){
             $is_error = false;
@@ -97,7 +98,8 @@ class Router {
                 return isset($item1->middleware_not_exist) ? -1:1;
             });
             if($is_error && count($errors_return)){
-                return (new Response())->json($errors_return[0]);
+                echo json_encode($errors_return[0]);
+                exit();
             }
         }
         return $action;
