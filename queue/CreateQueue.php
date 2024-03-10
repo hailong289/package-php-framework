@@ -29,7 +29,7 @@ class CreateQueue
                         'uid' => uid(),
                         'payload' => get_object_vars($class),
                         'class' => str_replace('\\','/',get_class($class))
-                    ]);
+                    ], JSON_UNESCAPED_UNICODE);
                     Database::table('jobs')->insert([
                         'queue' => $data,
                         'created_at' => date(' Y-m-d H:i:s')
