@@ -1,64 +1,89 @@
 <?php
 ini_set('error_reporting', E_STRICT);
-$redis = \System\Core\Redis::work();
-if(!$redis->isConnected()) {
-    die('Redis connection is failed');
+
+if (QUEUE_WORK === 'database') {
+    $database = new \System\Core\Database();
+} else {
+    $redis = \System\Core\Redis::work();
+    if (!$redis->isConnected()) {
+        die('Redis connection is failed');
+    }
 }
 if ($type_queue === 'work') {
-    $queue_list = $redis->lrange("queue:$job_queue", 0, -1);
+    if (QUEUE_WORK === 'database') {
+        $queue_list = $database->table('jobs')->get()->toArray();
+    } else {
+        $queue_list = $redis->lrange("queue:$job_queue", 0, -1);
+    }
     foreach ($queue_list as $key => $value) {
-        $queue = json_decode($value, true);
+        if (QUEUE_WORK === 'database') {
+            $queue = json_decode($value['queue'], true);
+        } else {
+            $queue = json_decode($value, true);
+        }
         $uid = $queue['uid'];
-        $class = $queue['class'];
+        $class = QUEUE_WORK === 'database' ? str_replace('/', '\\', $queue['class']) : $queue['class'];
         $payload = $queue['payload'];
-        $directory = __DIR__ROOT ."/$class.php";
+        $directory = __DIR__ROOT . "/$class.php";
+        $key = QUEUE_WORK === 'database' ? $value['id']:$key;
         echo "$class running \n";
         try {
             if (method_exists($class, 'handle')) {
-                runQueue($redis, $value, $key, $class, $payload, $uid, $job_queue);
+                runQueue(QUEUE_WORK === 'database' ? $database : $redis, $value, $key, $class, $payload, $uid, $job_queue);
             } else {
-                failedQueue($redis, $payload, $class, $uid, new Exception('class handle does not exit'));
-                removeQueue($redis, $value, $key, $job_queue);
+                failedQueue(QUEUE_WORK === 'database' ? $database : $redis, $payload, $class, $uid, new Exception('class handle does not exit'));
+                removeQueue(QUEUE_WORK === 'database' ? $database : $redis, $value, $key, $job_queue);
                 echo "$class failed \n";
             }
-        }catch (\Throwable $e) {
-            removeQueue($redis, $value, $key, $job_queue);
-            failedQueue($redis, $payload, $class, $uid, $e);
+        } catch (\Throwable $e) {
+            log_debug($e);
+            removeQueue(QUEUE_WORK === 'database' ? $database : $redis, $value, $key, $job_queue);
+            failedQueue(QUEUE_WORK === 'database' ? $database : $redis, $payload, $class, $uid, $e);
             echo "$class failed \n";
         }
     }
 
 } else if ($type_queue === 'live') {
-    $queue_list = $redis->lrange("queue:$job_queue", 0, -1);
+    if (QUEUE_WORK === 'database') {
+        $queue_list = $database->table('jobs')->get()->values();
+    } else {
+        $queue_list = $redis->lrange("queue:$job_queue", 0, -1);
+    }
     foreach ($queue_list as $key => $value) {
-        $queue = json_decode($value, true);
+        if (QUEUE_WORK === 'database') {
+            $queue = json_decode($value['queue'], true);
+        } else {
+            $queue = json_decode($value, true);
+        }
         $uid = $queue['uid'];
-        $class = $queue['class'];
+        $class = QUEUE_WORK === 'database' ? str_replace('/', '\\', $queue['class']) : $queue['class'];
         $payload = $queue['payload'];
-        $directory = __DIR__ROOT ."/$class.php";
+        $directory = __DIR__ROOT . "/$class.php";
+        $key = QUEUE_WORK === 'database' ? $value['id']:$key;
         echo "$class running \n";
         try {
             if (method_exists($class, 'handle')) {
-                runQueue($redis, $value, $key, $class, $payload, $uid, $job_queue);
+                runQueue(QUEUE_WORK === 'database' ? $database : $redis, $value, $key, $class, $payload, $uid, $job_queue);
             } else {
-                removeQueue($redis, $value, $key, $job_queue);
-                failedQueue($redis, $payload, $class, $uid, new Exception('class handle does not exit'));
+                failedQueue(QUEUE_WORK === 'database' ? $database : $redis, $payload, $class, $uid, new Exception('class handle does not exit'));
+                removeQueue(QUEUE_WORK === 'database' ? $database : $redis, $value, $key, $job_queue);
                 echo "$class failed \n";
             }
-        }catch (\Throwable $e) {
-            removeQueue($redis, $value, $key, $job_queue);
-            failedQueue($redis, $payload, $class, $uid, $e);
+        } catch (\Throwable $e) {
+            log_debug($e);
+            removeQueue(QUEUE_WORK === 'database' ? $database : $redis, $value, $key, $job_queue);
+            failedQueue(QUEUE_WORK === 'database' ? $database : $redis, $payload, $class, $uid, $e);
             echo "$class failed \n";
         }
     }
-    while(true) {
+    while (true) {
         sleep(5);
         passthru('php cli.php run:queue work');
     }
 }
 
 
-function runQueue($redis, $queue_first, $index, $class, $payload, $uid, $job_queue)
+function runQueue($db, $queue_first, $index, $class, $payload, $uid, $job_queue)
 {
     $start = new DateTime();
     try {
@@ -66,28 +91,48 @@ function runQueue($redis, $queue_first, $index, $class, $payload, $uid, $job_que
         $work_class->handle();
         $end = new DateTime();
         $time = $end->diff($start)->format('%H:%I:%S');
-        echo "$class work success ---- Time: $time".PHP_EOL;
-    }catch (\Throwable $e) {
-        failedQueue($redis, $payload, $class, $uid, $e);
+        echo "$class work success ---- Time: $time" . PHP_EOL;
+    } catch (\Throwable $e) {
+        failedQueue($db, $payload, $class, $uid, $e);
         $end = new DateTime();
         $time = $end->diff($start)->format('%H:%I:%S');
-        echo "$class work failed ----  Time: $time".PHP_EOL;
+        echo "$class work failed ----  Time: $time" . PHP_EOL;
     }
-    removeQueue($redis, $queue_first, $index, $job_queue);
+    removeQueue($db, $queue_first, $index, $job_queue);
 }
 
-function removeQueue($redis, $queue_first, $index, $job_queue)
+function removeQueue($db, $queue_first, $index, $job_queue)
 {
-    $redis->lRem("queue:$job_queue",$queue_first, $index);
+    if (QUEUE_WORK === 'database') {
+        if ($db instanceof \System\Core\Database) {
+            $db::table($job_queue)->where('id', $index)->delete();
+        }
+    } else {
+        if ($db instanceof \Redis) {
+            $db->lRem("queue:$job_queue", $queue_first, $index);
+        }
+    }
 }
 
-function failedQueue($redis, $payload, $class, $uid, $e)
+function failedQueue($db, $payload, $class, $uid, $e)
 {
-    $redis->rPush('queue:job_failed', json_encode([
+    $data = json_encode([
         'uid' => $uid,
         'payload' => $payload,
-        'class' => $class,
+        'class' => str_replace('\\','/',$class),
         'error' => $e->getMessage(),
         'failed' => $e->getTraceAsString()
-    ]));
+    ]);
+    if (QUEUE_WORK === 'database') {
+        if ($db instanceof \System\Core\Database) {
+            $db::table('failed_jobs')->insert([
+                'queue' => $data,
+                'created_at' => date(' Y-m-d H:i:s')
+            ]);
+        }
+    } else {
+        if ($db instanceof \Redis) {
+            $db->rPush('queue:failed_jobs', $data);
+        }
+    }
 }

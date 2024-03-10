@@ -43,7 +43,7 @@ if(!function_exists('url')){
 if(!function_exists('view_root')){
     function view_root($view)
     {
-        if(!file_exists(__DIR__ROOT . '/App/Views/'.$views.'.view.php')){
+        if(!file_exists(__DIR__ROOT . '/App/Views/'.$view.'.view.php')){
             throw new \RuntimeException("File App/Views/$view.view.php does not exist", 500);
         }
         return __DIR__ROOT . '/App/views/'.$view.'.view.php';
@@ -61,25 +61,25 @@ if(!function_exists('log_debug')){
 }
 
 if(!function_exists('log_write')){
-    function log_write($e) {
+    function log_write($e, $name = 'debug') {
         $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
         if (!file_exists(__DIR__ROOT .'/storage')) {
             mkdir(__DIR__ROOT .'/storage', 0777, true);
         }
-        file_put_contents(__DIR__ROOT .'/storage/debug.log',$date . $e, FILE_APPEND);
+        file_put_contents(__DIR__ROOT ."/storage/$name.log",$date . $e, FILE_APPEND);
     }
 }
 
 if(!function_exists('get_view')){
     function get_view($name, $data = [])
     {
-        if(!file_exists(__DIR__ROOT . '/App/Views/'.$views.'.view.php')){
-            throw new \RuntimeException("File App/Views/$view.view.php does not exist", 500);
+        if(!file_exists(__DIR__ROOT . '/App/Views/'.$name.'.view.php')){
+            throw new \RuntimeException("File App/Views/$name.view.php does not exist", 500);
         }
         if(isset($GLOBALS['share_date_view']) && count($GLOBALS['share_date_view'])) $data = array_merge($data, $GLOBALS['share_date_view']);
         extract($data);
         $view = preg_replace('/([.]+)/', '/' , $name);
-        require_once __DIR__ROOT . '/App/views/'.$view.'.view.php';
+        require_once __DIR__ROOT . '/App/views/'.$name.'.view.php';
     }
 }
 
