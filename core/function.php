@@ -46,7 +46,7 @@ if(!function_exists('view_root')){
         if(!file_exists(__DIR__ROOT . '/App/Views/'.$view.'.view.php')){
             throw new \RuntimeException("File App/Views/$view.view.php does not exist", 500);
         }
-        return __DIR__ROOT . '/App/views/'.$view.'.view.php';
+        return __DIR__ROOT . '/App/Views/'.$view.'.view.php';
     }
 }
 
@@ -79,7 +79,7 @@ if(!function_exists('get_view')){
         if(isset($GLOBALS['share_date_view']) && count($GLOBALS['share_date_view'])) $data = array_merge($data, $GLOBALS['share_date_view']);
         extract($data);
         $view = preg_replace('/([.]+)/', '/' , $name);
-        require_once __DIR__ROOT . '/App/views/'.$name.'.view.php';
+        require_once __DIR__ROOT . '/App/Views/'.$name.'.view.php';
     }
 }
 
