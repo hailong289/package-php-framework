@@ -19,7 +19,13 @@
             "System\\Core\\": "core/",
             "System\\Middleware\\": "middleware/",
             "System\\Queue\\": "queue/"
-        }
+        },
+        "classmap": [
+            "trait/",
+            "core/",
+            "middleware/",
+            "queue/"
+        ]
     },
     "scripts": {
         "post-package-install": [
