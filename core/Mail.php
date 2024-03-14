@@ -78,7 +78,7 @@ class Mail {
         return $this;
     }
 
-    private function withData($data)
+    public function withData($data)
     {
         foreach ($data as $key=>$value) {
             if ($key === 'title') {
