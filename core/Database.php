@@ -61,9 +61,75 @@ class Database {
         return new static();
     }
 
-    public function getCollection($data) {
+    private function getCollection($data) {
         $collection = new Collection($data);
         return $collection;
     }
+
+    public static function get(){
+        $sql = self::sqlQuery();
+        $instance = static::modelInstance();
+        $data = $instance->query($sql)
+            ->fetchAll(\PDO::FETCH_OBJ);
+        if (!empty($data)) {
+            return $instance->getCollection($data)->map(fn ($item) => self::getAttribute($item));
+        }
+        return $instance->getCollection([]);
+    }
+
+    public static function getArray(){
+        $sql = self::sqlQuery();
+        $instance = static::modelInstance();
+        $data = $instance->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
+        if (!empty($data)) {
+            return array_map(function ($item){
+                return self::getAttribute($item, true);
+            }, $data ?? []);
+        }
+        return false;
+    }
+
+    public static function first(){
+        $sql = self::sqlQuery();
+        $instance = static::modelInstance();
+        $data = $instance->query($sql)->fetch(\PDO::FETCH_OBJ);
+        if (!empty($data)) {
+            return $instance->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
+        }
+        return false;
+    }
+
+    public static function firstArray(){
+        $sql = self::sqlQuery();
+        $instance = static::modelInstance();
+        $data = $instance->query($sql)->fetch(\PDO::FETCH_ASSOC);
+        if (!empty($data)) {
+            return self::getAttribute($data, true);
+        }
+        return false;
+    }
+
+    public static function findById($id) {
+        $tableName = self::$tableName ? self::$tableName:static::$tableName;
+        $instance = static::modelInstance();
+        $sql = "SELECT * FROM {$tableName} WHERE id = '$id'";
+        $data = $instance->query($sql)->fetch(\PDO::FETCH_OBJ);
+        if (!empty($data)) {
+            return $instance->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
+        }
+        return false;
+    }
+
+    public static function find($id) {
+        $tableName = self::$tableName ? self::$tableName:static::$tableName;
+        $instance = static::modelInstance();
+        $sql = "SELECT * FROM {$tableName} WHERE id = '$id'";
+        $data = $instance->query($sql)->fetch(\PDO::FETCH_OBJ);
+        if (!empty($data)) {
+            return $instance->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
+        }
+        return false;
+    }
+
 }
 
