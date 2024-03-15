@@ -67,7 +67,7 @@ class CreateQueue
                 exit();
             }
             Response::view("error.index", [
-                "message" => "Class handle in $class does not exit",
+                "message" => "Function handle in class $class does not exit",
                 "code" => 500,
             ]);
             exit();

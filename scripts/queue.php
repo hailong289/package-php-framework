@@ -62,7 +62,7 @@ if ($type_queue === 'work') {
             if (method_exists($class, 'handle')) {
                 runQueue(QUEUE_WORK === 'database' ? $database : $redis, $value, $key, $class, $payload, $uid, $job_queue);
             } else {
-                failedQueue(QUEUE_WORK === 'database' ? $database : $redis, $payload, $class, $uid, new Exception('class handle does not exit'));
+                failedQueue(QUEUE_WORK === 'database' ? $database : $redis, $payload, $class, $uid, new Exception("Function handle in class $class does not exit"));
                 removeQueue(QUEUE_WORK === 'database' ? $database : $redis, $value, $key, $job_queue);
                 echo "$class failed \n";
             }
