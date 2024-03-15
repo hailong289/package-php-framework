@@ -12,6 +12,7 @@ class CreateQueue
     function __construct() {}
     //create a function to add new element
     public function enQueue($class) {
+        $is_api = (new Request())->isJson();
         $tag_queue = 'queue:job';
         if (method_exists($class,'handle')) {
             try {
@@ -38,7 +39,6 @@ class CreateQueue
                 }
             } catch (\Exception $e) {
                 $code = (int)$e->getCode();
-                $is_api = (new Request())->isJson();
                 if($is_api) {
                     echo json_encode([
                         "message" => $e->getMessage(),
@@ -59,7 +59,18 @@ class CreateQueue
                 exit();
             }
         } else {
-            die('class handle does not exit');
+            if($is_api) {
+                echo json_encode([
+                    "message" => "Class handle in $class does not exit",
+                    "code" => 500
+                ]);
+                exit();
+            }
+            Response::view("error.index", [
+                "message" => "Class handle in $class does not exit",
+                "code" => 500,
+            ]);
+            exit();
         }
     }
 
