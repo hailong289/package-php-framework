@@ -2,13 +2,44 @@
 ini_set('error_reporting', E_STRICT);
 
 if (QUEUE_WORK === 'database') {
-    $database = new \System\Core\Database();
-} else {
-    $redis = \System\Core\Redis::work();
-    if (!$redis->isConnected()) {
-        die('Redis connection is failed');
+    try {
+        $database = new \System\Core\Database();
+    }catch (\Throwable $e) {
+        $code = (int)$e->getCode();
+        echo json_encode([
+            "message" => $e->getMessage(),
+            "code" => $code,
+            "line" => $e->getLine(),
+            "file" => $e->getFile(),
+            "trace" => $e->getTraceAsString()
+        ]);
+        exit();
     }
+
+} else {
+    try {
+        $redis = \System\Core\Redis::work();
+        if (!$redis->isConnected()) {
+            echo json_encode([
+                "message" => 'Redis connection is failed',
+                "code" => 503,
+            ]);
+            exit();
+        }
+    }catch (\Throwable $e) {
+        $code = (int)$e->getCode();
+        echo json_encode([
+            "message" => $e->getMessage(),
+            "code" => $code,
+            "line" => $e->getLine(),
+            "file" => $e->getFile(),
+            "trace" => $e->getTraceAsString()
+        ]);
+        exit();
+    }
+
 }
+
 if ($type_queue === 'work') {
     if (QUEUE_WORK === 'database') {
         $queue_list = $database->table('jobs')->get()->toArray();
@@ -31,7 +62,7 @@ if ($type_queue === 'work') {
             if (method_exists($class, 'handle')) {
                 runQueue(QUEUE_WORK === 'database' ? $database : $redis, $value, $key, $class, $payload, $uid, $job_queue);
             } else {
-                failedQueue(QUEUE_WORK === 'database' ? $database : $redis, $payload, $class, $uid, new Exception('class handle does not exit'));
+                failedQueue(QUEUE_WORK === 'database' ? $database : $redis, $payload, $class, $uid, new Exception("Function handle in class $class does not exit"));
                 removeQueue(QUEUE_WORK === 'database' ? $database : $redis, $value, $key, $job_queue);
                 echo "$class failed \n";
             }

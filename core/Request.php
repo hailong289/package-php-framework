@@ -161,6 +161,9 @@ class Request extends \stdClass {
         return $headers[$key] ?? null;
     }
 
+    public function isJson(){
+        return $this->headers('Accept') && $this->headers('Accept') === 'application/json';
+    }
     public function next($string = ''){
         return (object)[
             "message" => $string,

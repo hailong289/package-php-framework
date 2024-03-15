@@ -384,72 +384,12 @@ trait QueryBuilder
         return self::modelInstance();
     }
 
+
     public static function delete(){
         $sql = self::sqlQuery(true);
         $query = self::modelInstance()->query($sql);
         if (!empty($query)) {
             return true;
-        }
-        return false;
-    }
-
-
-    public static function get(){
-        if(!empty(static::$query)){
-            $query = static::$query->fetchAll(\PDO::FETCH_OBJ);
-            static::$query = '';
-            return self::modelInstance()->getCollection($query)->map(fn ($item) => self::getAttribute($item));
-        }
-        $sql = self::sqlQuery();
-        $data = self::modelInstance()->query($sql)->fetchAll(\PDO::FETCH_OBJ);
-        if (!empty($data)) {
-            return self::modelInstance()->getCollection($data)->map(fn ($item) => self::getAttribute($item));
-        }
-        return self::modelInstance()->getCollection([]);
-    }
-
-    public static function first(){
-        if(!empty(static::$query)){
-            $query = static::$query->fetch(\PDO::FETCH_OBJ);
-            static::$query = '';
-            return self::modelInstance()->getCollection($query)->mapFirst(fn ($item) => self::getAttribute($item));
-        }
-        $sql = self::sqlQuery();
-        $data = self::modelInstance()->query($sql)->fetch(\PDO::FETCH_OBJ);
-        if (!empty($data)) {
-            return self::modelInstance()->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
-        }
-        return false;
-    }
-
-    public static function getArray(){
-        if(!empty(static::$query)){
-            $data = static::$query->fetchAll(\PDO::FETCH_ASSOC);
-            static::$query = '';
-            return array_map(function ($item){
-                return self::getAttribute($item, true);
-            }, $data ?? []);
-        }
-        $sql = self::sqlQuery();
-        $data = self::modelInstance()->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
-        if (!empty($data)) {
-            return array_map(function ($item){
-               return self::getAttribute($item, true);
-            }, $data ?? []);
-        }
-        return false;
-    }
-
-    public static function firstArray(){
-        if(!empty(static::$query)){
-            $data = static::$query->fetch(\PDO::FETCH_ASSOC);
-            static::$query = '';
-            return self::getAttribute($data, true);
-        }
-        $sql = self::sqlQuery();
-        $data = self::modelInstance()->query($sql)->fetch(\PDO::FETCH_ASSOC);
-        if (!empty($data)) {
-            return self::getAttribute($data, true);
         }
         return false;
     }
@@ -468,26 +408,6 @@ trait QueryBuilder
     public static function clone() {
         $sql = self::sqlQuery();
         return $sql;
-    }
-
-    public static function findById($id) {
-        $tableName = self::$tableName ? self::$tableName:static::$tableName;
-        $sql = "SELECT * FROM {$tableName} WHERE id = '$id'";
-        $data = self::modelInstance()->query($sql)->fetch(\PDO::FETCH_OBJ);
-        if (!empty($data)) {
-            return self::modelInstance()->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
-        }
-        return false;
-    }
-
-    public static function find($id) {
-        $tableName = self::$tableName ? self::$tableName:static::$tableName;
-        $sql = "SELECT * FROM {$tableName} WHERE id = '$id'";
-        $data = self::modelInstance()->query($sql)->fetch(\PDO::FETCH_OBJ);
-        if (!empty($data)) {
-            return self::modelInstance()->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
-        }
-        return false;
     }
 
     private static function sqlQuery($is_delete = false){

@@ -35,7 +35,7 @@ class Connection{
                 $readTimeout = $connection['readTimeout'];
                 self::$redis->connect($host, $port, $timeout, $reserved, $retryInterval, $readTimeout);
             }catch (\Throwable $e) {
-                throw new \RuntimeException("Connect redis failed ".$e->getMessage(), 503);
+                throw new \RuntimeException("Connect redis failed. Error: ".$e->getMessage(), 503);
             }
         }
     }

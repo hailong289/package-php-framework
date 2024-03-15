@@ -48,15 +48,15 @@ class Mail {
         return $this;
     }
 
-    public function to($to, $data) {
+    public function to($to, $data = []) {
         $this->mail->addAddress($to);
-        $this->withData($data);
+        if (!empty($data)) $this->withData($data);
         return $this;
     }
 
-    public function toWithName($to, $name, $data) {
+    public function toWithName($to, $name, $data = []) {
         $this->mail->addAddress($to, $name);
-        $this->withData($data);
+        if (!empty($data)) $this->withData($data);
         return $this;
     }
 
@@ -66,7 +66,7 @@ class Mail {
         return $this;
     }
 
-    public function from($from, $name)
+    public function from($from, $name = '')
     {
         $this->mail->setFrom($from, $name);
         return $this;
@@ -78,7 +78,7 @@ class Mail {
         return $this;
     }
 
-    private function withData($data)
+    public function withData($data)
     {
         foreach ($data as $key=>$value) {
             if ($key === 'title') {
