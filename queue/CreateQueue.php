@@ -2,6 +2,8 @@
 namespace System\Queue;
 use System\Core\Database;
 use System\Core\Redis;
+use System\Core\Request;
+use System\Core\Response;
 
 class CreateQueue
 {
@@ -24,7 +26,6 @@ class CreateQueue
                         'class' => get_class($class)
                     ], 0);
                 } elseif ($this->connection === 'database') {
-//                    log_debug(get_class($class));
                     $data = json_encode([
                         'uid' => uid(),
                         'payload' => get_object_vars($class),
@@ -35,8 +36,27 @@ class CreateQueue
                         'created_at' => date(' Y-m-d H:i:s')
                     ]);
                 }
-            } catch (\Exception $exception) {
-                die($exception->getMessage());
+            } catch (\Exception $e) {
+                $code = (int)$e->getCode();
+                $is_api = (new Request())->isJson();
+                if($is_api) {
+                    echo json_encode([
+                        "message" => $e->getMessage(),
+                        "code" => $code,
+                        "line" => $e->getLine(),
+                        "file" => $e->getFile(),
+                        "trace" => $e->getTraceAsString()
+                    ]);
+                    exit();
+                }
+                Response::view("error.index", [
+                    "message" => $e->getMessage(),
+                    "code" => $code,
+                    "line" => $e->getLine(),
+                    "file" => $e->getFile(),
+                    "trace" => $e->getTraceAsString()
+                ]);
+                exit();
             }
         } else {
             die('class handle does not exit');
