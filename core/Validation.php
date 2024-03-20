@@ -4,6 +4,7 @@ namespace System\Core;
 
 class Validation {
      private static $errors;
+     private static $data;
 
      public static function create($data, $rules = []) {
          self::$errors = new \stdClass();
@@ -11,6 +12,7 @@ class Validation {
          foreach ($data as $name=>$value) {
              self::handleRule($name, $value, $rules, self::$errors);
          }
+         self::$data = $data;
          return new static();
      }
 
@@ -20,7 +22,7 @@ class Validation {
 
     public function data() {
 
-         return !count((array)self::$errors->errors) ? json_decode(json_encode(self::$errors)):null;
+         return !count((array)self::$errors->errors) ? json_decode(json_encode(self::$data)):null;
     }
 
     public function errorsArray() {
@@ -28,7 +30,7 @@ class Validation {
     }
 
     public function dataArray() {
-        return count((array)self::$errors->errors) ? json_decode(json_encode(self::$errors), true):null;
+        return count((array)self::$errors->errors) ? json_decode(json_encode(self::$data), true):null;
     }
 
 
