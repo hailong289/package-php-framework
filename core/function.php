@@ -210,3 +210,23 @@ if(!function_exists('uid')){
         return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
     }
 }
+
+if(!function_exists('errors')){
+    function errors($key = ''): object {
+        if(!empty($key)) {
+            return $GLOBALS['share_data_errors'][$key];
+        }
+        return new class() {
+            function get($key = '') {
+                return $GLOBALS['share_data_errors'][$key];
+            }
+            function set($key = '', $value = '') {
+                $GLOBALS['share_data_errors'][$key] = $value;
+                return;
+            }
+            function all(){
+                return $GLOBALS['share_data_errors'];
+            }
+        };
+    }
+}

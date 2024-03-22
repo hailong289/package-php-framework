@@ -2,7 +2,7 @@
 
 namespace System\Core;
 
-class FormRequest {
+class FormRequest extends Request {
     private $data_errors;
     public function __construct()
     {
@@ -34,15 +34,18 @@ class FormRequest {
             $class = get_class($this);
             throw new \RuntimeException("Function rules does not exist in $class");
         }
-
         $validate = Validation::create($request->all(), $this->rules());
         if(!empty($validate->errors())) {
             $this->data_errors = $validate->errors();
             if ($is_json) {
-                echo $validate->errors();
+                echo json_encode([
+                    'errors' => $validate->errors()
+                ]);
                 exit();
             }
-            $GLOBALS['share_date_view'] = $validate->errors();
+            $GLOBALS['share_data_errors'] = [
+                'errors' => $validate->errors()
+            ];
         }
         return;
     }
