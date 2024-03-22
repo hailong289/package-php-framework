@@ -25,7 +25,8 @@
             "core/",
             "middleware/",
             "queue/"
-        ]
+        ],
+        "files": ["core/function.php"]
     },
     "scripts": {
         "post-package-install": [
