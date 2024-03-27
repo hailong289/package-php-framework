@@ -4,6 +4,7 @@ namespace System\Core;
 class Session {
     public static function set($key, $value){
         $_SESSION[$key] = $value;
+        return new static();
     }
 
     public static function get($key){
@@ -26,6 +27,7 @@ class Session {
 class Cookie {
     public static function set($key, $value, $time = 3600){ // Mặc định lưu trong 1 giờ
         setcookie($key, $value, time() + $time, "/");
+        return new static();
     }
 
     public static function get($key){

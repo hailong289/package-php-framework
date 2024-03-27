@@ -36,6 +36,11 @@ class Database {
         return self::$log ?? '';
     }
 
+    public static function connection($env, $connection = 'mysql'){
+        self::$__conn = Connection::getInstance($env, $connection);
+        return new static();
+    }
+
     public static function beginTransaction(){
         if(self::$__conn == null) {
             self::$__conn = Connection::getInstance(DB_ENVIRONMENT, DB_CONNECTION);
