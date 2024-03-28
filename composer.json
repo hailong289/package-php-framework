@@ -11,7 +11,8 @@
         }
     ],
     "require": {
-        "php": ">=7.4"
+        "php": ">=7.4",
+        "symfony/console": "^6.4"
     },
     "autoload": {
         "psr-4": {
@@ -27,11 +28,6 @@
             "queue/"
         ],
         "files": ["core/function.php"]
-    },
-    "scripts": {
-        "post-package-install": [
-            "composer dump-autoload"
-        ]
     },
     "minimum-stability": "dev",
     "prefer-stable" : true,
