@@ -21,6 +21,9 @@ class ModelScript extends \System\Core\Command
         $name_table = $this->getOption('table') ?? 'default';
         $concurrentDirectory = __DIR__ROOT . "/App/Models/$name_model.php";
         if (!file_exists($concurrentDirectory)) {
+            if (!is_dir(__DIR__ROOT . "/App/Models")) {
+                mkdir(__DIR__ROOT . "/App/Models");
+            }
             file_put_contents($concurrentDirectory, '<?php
 namespace App\Models;
 use System\Core\Model;

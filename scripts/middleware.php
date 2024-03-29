@@ -21,6 +21,9 @@ class MiddlewareScript extends \System\Core\Command
         if (strpos($name_middleware, 'Middleware') === false) $name_middleware = $name_middleware . 'Middleware';
         $concurrentDirectory = __DIR__ROOT . "/middleware/$name_middleware.php";
         if (!file_exists($concurrentDirectory)) {
+            if (!is_dir(__DIR__ROOT . "/middleware")) {
+                mkdir(__DIR__ROOT . "/middleware");
+            }
             file_put_contents($concurrentDirectory, '<?php
 namespace System\Middleware;
 use System\Core\Request;

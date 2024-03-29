@@ -14,6 +14,9 @@ class JobsScript extends \System\Core\Command
         $name_job = $this->getArgument('name_job');
         $concurrentDirectory = __DIR__ROOT . "/queue/$name_job.php";
         if (!file_exists($concurrentDirectory)) {
+            if (!is_dir(__DIR__ROOT . "/queue")) {
+                mkdir(__DIR__ROOT . "/queue");
+            }
             file_put_contents($concurrentDirectory, '<?php
 namespace Queue\Jobs;
 class '.$name_job. ' {
