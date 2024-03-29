@@ -19,13 +19,15 @@
             "System\\Trait\\": "trait/",
             "System\\Core\\": "core/",
             "System\\Middleware\\": "middleware/",
-            "System\\Queue\\": "queue/"
+            "System\\Queue\\": "queue/",
+            "Scripts\\": "scripts/"
         },
         "classmap": [
             "trait/",
             "core/",
             "middleware/",
-            "queue/"
+            "queue/",
+            "scripts/"
         ],
         "files": ["core/function.php"]
     },

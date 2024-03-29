@@ -1,7 +1,27 @@
 <?php
-$concurrentDirectory = __DIR__ROOT . "/App/Models/$name_model.php";
-if (!file_exists($concurrentDirectory)) {
-    file_put_contents($concurrentDirectory, '<?php
+namespace Scripts;
+class ModelScript extends \System\Core\Command
+{
+    protected $command = 'create:model';
+    protected $command_description = 'Create a new model';
+    protected $arguments = [
+        'name_model'
+    ];
+    protected $options = ['table'];
+
+
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
+    public function handle()
+    {
+        $name_model = $this->getArgument('name_model');
+        $name_table = $this->getOption('table') ?? 'default';
+        $concurrentDirectory = __DIR__ROOT . "/App/Models/$name_model.php";
+        if (!file_exists($concurrentDirectory)) {
+            file_put_contents($concurrentDirectory, '<?php
 namespace App\Models;
 use System\Core\Model;
 
@@ -12,10 +32,14 @@ class ' . $name_model . ' extends Model {
     protected static $date_update = "date_update";
     protected static $field = [];
 }', FILE_APPEND);
-    if (!file_exists($concurrentDirectory)) {
-        throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
+            if (!file_exists($concurrentDirectory)) {
+               $this->output()->text(sprintf('Directory "%s" was not created', $concurrentDirectory));
+               return;
+            }
+            $this->output()->text("Model $name_model create successfully");
+        } else {
+            $this->output()->text("Model $name_model already exist");
+        }
     }
-    echo "Model $name_model create successfully";
-} else {
-    echo "Model $name_model already exist";
 }
+
