@@ -37,7 +37,8 @@ class CreateQueue
                         'connection' => 'database'
                     ], JSON_UNESCAPED_UNICODE);
                     Database::table('jobs')->insert([
-                        'queue' => $data,
+                        'data' => $data,
+                        'queue' => $this->queue,
                         'created_at' => date(' Y-m-d H:i:s')
                     ]);
                 }

@@ -4,10 +4,10 @@ class QueueScript extends \System\Core\Command
 {
     protected $command = 'queue:run';
     protected $command_description = 'Run a queue';
-    protected $arguments = [];
+    protected $arguments = ['?connection'];
     protected $options = ['queue'];
     protected $jobs_queue = 'jobs';
-
+    protected $connection = QUEUE_WORK;
 
     public function __construct()
     {
@@ -19,22 +19,22 @@ class QueueScript extends \System\Core\Command
         ini_set('error_reporting', E_STRICT);
 //        passthru('php cli.php run:queue work'); use queue live
         $queue_name = $this->getOption('queue');
+        $this->connection = $this->getArgument('connection') ?? QUEUE_WORK;
         if($queue_name) $this->jobs_queue = $queue_name;
         $db = $this->getDB();
         if($db) {
             sleep(1);
             $queues = $this->getQueueList($db);
-
             foreach ($queues as $key=>$queue) {
-                $key = QUEUE_WORK === 'database' ? $queue['id']:$key;
+                $key = $this->connection === 'database' ? $queue['id']:$key;
                 $this->clearQueue($db, $queue, $key);
-                if (QUEUE_WORK === 'database') {
-                    $queue = json_decode($queue['queue'], true);
+                if ($this->connection === 'database') {
+                    $queue = json_decode($queue['data'], true);
                 } else {
                     $queue = json_decode($queue, true);
                 }
                 $uid = $queue['uid'];
-                $class = QUEUE_WORK === 'database' ? str_replace('/', '\\', $queue['class']) : $queue['class'];
+                $class = $this->connection === 'database' ? str_replace('/', '\\', $queue['class']) : $queue['class'];
                 $payload = $queue['payload'];
                 $directory = __DIR__ROOT . "/$class.php";
                 $this->output()->text("$class running ".PHP_EOL);
@@ -56,9 +56,8 @@ class QueueScript extends \System\Core\Command
 
     public function getDB()
     {
-        $queue_connection = QUEUE_WORK;
         $db = '';
-        if($queue_connection === 'database') {
+        if($this->connection === 'database') {
             try {
                 $db = new \System\Core\Database();
             }catch (\Throwable $e) {
@@ -98,7 +97,7 @@ class QueueScript extends \System\Core\Command
     public function getQueueList($db)
     {
         if ($db instanceof \System\Core\Database) {
-            return $db->table($this->jobs_queue)->get()->toArray();
+            return $db->table('jobs')->where('queue', $this->jobs_queue)->get()->toArray();
         }
         if ($db instanceof \Redis) {
             return $db->lrange("queue:{$this->jobs_queue}", 0, -1);
@@ -132,7 +131,7 @@ class QueueScript extends \System\Core\Command
             'error' => $e->getMessage(),
             'failed' => $e->getTraceAsString()
         ]);
-        if (QUEUE_WORK === 'database') {
+        if ($this->connection === 'database') {
             if ($db instanceof \System\Core\Database) {
                 $db::table('failed_jobs')->insert([
                     'queue' => $data,

@@ -26,9 +26,11 @@ class Command extends SymfonyCommand {
             ->setDescription($this->command_description);
 
         if(!empty($this->arguments)) {
-            foreach ($this->arguments as $argument) {
+            foreach ($this->arguments as $key=>$argument) {
                 if(preg_match('/^[?]/', $argument)) {
-                    $command->addArgument($argument);
+                    $argument = str_replace('?','',$argument);
+                    $this->arguments[$key] = $argument;
+                    $command->addArgument($argument, InputArgument::OPTIONAL);
                 } else {
                     $command->addArgument($argument, InputArgument::REQUIRED);
                 }
@@ -36,8 +38,10 @@ class Command extends SymfonyCommand {
         }
 
         if(!empty($this->options)) {
-            foreach ($this->options as $options) {
+            foreach ($this->options as $key=>$options) {
                 if(preg_match('/^[?]/', $options)) {
+                    $options = str_replace('?','', $options);
+                    $this->options[$key] = $options;
                     $command->addOption($options, null, InputOption::VALUE_OPTIONAL, '');
                 } else {
                     $command->addOption($options,null, InputOption::VALUE_REQUIRED, '');
