@@ -38,9 +38,9 @@ class Command extends SymfonyCommand {
         if(!empty($this->options)) {
             foreach ($this->options as $options) {
                 if(preg_match('/^[?]/', $options)) {
-                    $command->addOption($options);
+                    $command->addOption($options, null, InputOption::VALUE_OPTIONAL, '');
                 } else {
-                    $command->addOption($options, InputOption::VALUE_REQUIRED);
+                    $command->addOption($options,null, InputOption::VALUE_REQUIRED, '');
                 }
             }
         }

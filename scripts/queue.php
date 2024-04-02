@@ -14,32 +14,41 @@ class QueueScript extends \System\Core\Command
         parent::__construct();
     }
 
-    public function handel()
+    public function handle()
     {
         ini_set('error_reporting', E_STRICT);
 //        passthru('php cli.php run:queue work'); use queue live
-        $queue = $this->getOption('queue');
+        $queue_name = $this->getOption('queue');
+        if($queue_name) $this->jobs_queue = $queue_name;
         $db = $this->getDB();
         if($db) {
-            $queue = $this->getQueueList($db);
-            $uid = $queue['uid'];
-            $class = QUEUE_WORK === 'database' ? str_replace('/', '\\', $queue['class']) : $queue['class'];
-            $payload = $queue['payload'];
-            $directory = __DIR__ROOT . "/$class.php";
-            $key = QUEUE_WORK === 'database' ? $value['id']:$key;
-            $this->output()->text("$class running ".PHP_EOL);
-            try {
-                if (method_exists($class, 'handle')) {
-                    $this->startRunQueue($db, $value, $key, $class, $payload, $uid, $job_queue);
+            sleep(1);
+            $queues = $this->getQueueList($db);
+
+            foreach ($queues as $key=>$queue) {
+                $key = QUEUE_WORK === 'database' ? $queue['id']:$key;
+                $this->clearQueue($db, $queue, $key);
+                if (QUEUE_WORK === 'database') {
+                    $queue = json_decode($queue['queue'], true);
                 } else {
-                    $this->stopQueue($db, $payload, $class, $uid, new Exception("Function handle in class $class does not exit"));
-                    removeQueue(QUEUE_WORK === 'database' ? $database : $redis, $value, $key, $job_queue);
+                    $queue = json_decode($queue, true);
+                }
+                $uid = $queue['uid'];
+                $class = QUEUE_WORK === 'database' ? str_replace('/', '\\', $queue['class']) : $queue['class'];
+                $payload = $queue['payload'];
+                $directory = __DIR__ROOT . "/$class.php";
+                $this->output()->text("$class running ".PHP_EOL);
+                try {
+                    if (method_exists($class, 'handle')) {
+                        $this->startRunQueue($db, $value, $key, $class, $payload, $uid);
+                    } else {
+                        $this->stopQueue($db, $payload, $class, $uid, new Exception("Function handle in class $class does not exit"));
+                        $this->output()->text("$class failed ".PHP_EOL);
+                    }
+                } catch (\Throwable $e) {
+                    $this->stopQueue($db, $payload, $class, $uid, $e);
                     $this->output()->text("$class failed ".PHP_EOL);
                 }
-            } catch (\Throwable $e) {
-                removeQueue(QUEUE_WORK === 'database' ? $database : $redis, $value, $key, $job_queue);
-                failedQueue(QUEUE_WORK === 'database' ? $database : $redis, $payload, $class, $uid, $e);
-                $this->output()->text("$class failed ".PHP_EOL);
             }
         }
     }
@@ -55,7 +64,7 @@ class QueueScript extends \System\Core\Command
             }catch (\Throwable $e) {
                 $this->output()->error([
                     "message" => $e->getMessage(),
-                    "code" => $code,
+                    "code" => $e->getCode(),
                     "line" => $e->getLine(),
                     "file" => $e->getFile(),
                     "trace" => $e->getTraceAsString()
@@ -65,7 +74,7 @@ class QueueScript extends \System\Core\Command
         } else {
             try {
                 $db = \System\Core\Redis::work();
-                if (!$redis->isConnected()) {
+                if (!$db->isConnected()) {
                     $this->output()->error([
                         "message" => 'Redis connection is failed',
                         "code" => 503,
@@ -75,7 +84,7 @@ class QueueScript extends \System\Core\Command
             }catch (\Throwable $e) {
                 $this->output()->error([
                     "message" => $e->getMessage(),
-                    "code" => $code,
+                    "code" => $e->getCode(),
                     "line" => $e->getLine(),
                     "file" => $e->getFile(),
                     "trace" => $e->getTraceAsString()
@@ -88,25 +97,30 @@ class QueueScript extends \System\Core\Command
 
     public function getQueueList($db)
     {
-        return QUEUE_WORK === 'database' ? $db->table($this->jobs_queue)->get()->toArray():$db->lrange("queue:{$this->jobs_queue}", 0, -1);
+        if ($db instanceof \System\Core\Database) {
+            return $db->table($this->jobs_queue)->get()->toArray();
+        }
+        if ($db instanceof \Redis) {
+            return $db->lrange("queue:{$this->jobs_queue}", 0, -1);
+        }
+        return null;
     }
 
     public function startRunQueue($db, $queue_first, $index, $class, $payload, $uid)
     {
-        $start = new DateTime();
+        $start = new \DateTime();
         try {
             $work_class = new $class(...array_values($payload));
             $work_class->handle();
-            $end = new DateTime();
+            $end = new \DateTime();
             $time = $end->diff($start)->format('%H:%I:%S');
             $this->output()->text("$class work success ---- Time: $time" . PHP_EOL);
         } catch (\Throwable $e) {
             $this->stopQueue($db, $payload, $class, $uid, $e);
-            $end = new DateTime();
+            $end = new \DateTime();
             $time = $end->diff($start)->format('%H:%I:%S');
             $this->output()->text("$class work failed ----  Time: $time" . PHP_EOL);
         }
-        $this->clearQueue($db, $queue_first, $index);
     }
 
     public function stopQueue($db, $payload, $class, $uid, $e)
@@ -133,10 +147,14 @@ class QueueScript extends \System\Core\Command
     }
 
     public function clearQueue($db, $queue_first, $index) {
-        if ($db instanceof \System\Core\Database) {
-            $db::table($this->job_queue)->where('id', $index)->delete();
-        } else if ($db instanceof \Redis) {
-            $db->lRem("queue:{$this->job_queue}", $queue_first, $index);
+        try {
+            if ($db instanceof \System\Core\Database) {
+                $db::table($this->jobs_queue)->where('id', $index)->delete();
+            } else if ($db instanceof \Redis) {
+                $db->lRem("queue:{$this->jobs_queue}", $queue_first, $index);
+            }
+        }catch (\Throwable $e) {
+            $this->output()->text($e->getMessage());
         }
     }
 }

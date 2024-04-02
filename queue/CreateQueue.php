@@ -7,13 +7,13 @@ use System\Core\Response;
 
 class CreateQueue
 {
-    private $queue = array();
+    private $queue = 'jobs';
     public $connection = QUEUE_WORK;
     function __construct() {}
     //create a function to add new element
     public function enQueue($class) {
         $is_api = (new Request())->isJson();
-        $tag_queue = 'queue:job';
+        $tag_queue = "queue:{$this->queue}";
         if (method_exists($class,'handle')) {
             try {
                 if($this->connection === 'redis') {
@@ -24,13 +24,17 @@ class CreateQueue
                     Redis::cacheRPush($tag_queue, [
                         'uid' => uid(),
                         'payload' => $class,
-                        'class' => get_class($class)
+                        'class' => get_class($class),
+                        'queue' => $this->queue,
+                        'connection' => 'redis'
                     ], 0);
                 } elseif ($this->connection === 'database') {
                     $data = json_encode([
                         'uid' => uid(),
                         'payload' => get_object_vars($class),
-                        'class' => str_replace('\\','/',get_class($class))
+                        'class' => str_replace('\\','/',get_class($class)),
+                        'queue' => $this->queue,
+                        'connection' => 'database'
                     ], JSON_UNESCAPED_UNICODE);
                     Database::table('jobs')->insert([
                         'queue' => $data,
@@ -75,7 +79,29 @@ class CreateQueue
     }
 
     public function connection($connection = QUEUE_WORK) {
-        $this->connection = $connection;
+        if($connection === 'redis' || $connection === 'database') {
+            $this->connection = $connection;
+        } else {
+            $is_api = (new Request())->isJson();
+            if($is_api) {
+                echo json_encode([
+                    "message" => "Connection not supported",
+                    "code" => 500
+                ]);
+                exit();
+            }
+            Response::view("error.index", [
+                "message" => "Connection not supported",
+                "code" => 500,
+            ]);
+            exit();
+        }
+        return $this;
+    }
+
+    public function setQueue($queue)
+    {
+        $this->queue = $queue;
         return $this;
     }
 }
