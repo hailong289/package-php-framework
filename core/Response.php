@@ -15,6 +15,7 @@ class Response {
     public static function view($view, $data = [], $status = 200){
         if(count($data)) $GLOBALS['share_date_view'] = $data;
         extract($data);
+        $GLOBALS['date_view'] = $data;
         $views = preg_replace('/([.]+)/', '/' , $view);
         if(!file_exists(__DIR__ROOT . '/App/Views/'.$views.'.view.php') && $view === 'error.index') {
             require_once 'view/error.view.php';

@@ -230,3 +230,39 @@ if(!function_exists('errors')){
         };
     }
 }
+
+if(!function_exists('val')){
+    function val($key = '') {
+        return $GLOBALS['date_view'][$key];
+    }
+}
+
+if(!function_exists('res')){
+    function res() {
+        return new class() {
+            function view($name, $data = [], $status = 200) {
+                if(!file_exists(__DIR__ROOT . '/App/Views/'.$name.'.view.php')){
+                    throw new \RuntimeException("File App/Views/$name.view.php does not exist", 500);
+                }
+                http_response_code($status);
+                if(count($data)) $GLOBALS['share_date_view'] = $data;
+                extract($data);
+                $GLOBALS['date_view'] = $data;
+                $view = preg_replace('/([.]+)/', '/' , $name);
+                require_once __DIR__ROOT . '/App/Views/'.$name.'.view.php';
+            }
+            function data($data = []) {
+                if(count($GLOBALS['share_date_view'])) {
+                    $GLOBALS['share_date_view'] = array_merge($data, $GLOBALS['share_date_view']);
+                } else {
+                    $GLOBALS['share_date_view'] = $data;
+                }
+                return $this;
+            }
+            function json($data, $status = 200){
+                http_response_code($status);
+                return $data;
+            }
+        };
+    }
+}
