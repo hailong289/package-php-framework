@@ -27,7 +27,6 @@ class QueueScript extends \System\Core\Command
             $queues = $this->getQueueList($db);
             foreach ($queues as $key=>$queue) {
                 $key = $this->connection === 'database' ? $queue['id']:$key;
-                $this->clearQueue($db, $queue, $key);
                 if ($this->connection === 'database') {
                     $queue = json_decode($queue['data'], true);
                 } else {
@@ -41,12 +40,15 @@ class QueueScript extends \System\Core\Command
                 try {
                     if (method_exists($class, 'handle')) {
                         $this->startRunQueue($db, $value, $key, $class, $payload, $uid);
+                        $this->clearQueue($db, $queue, $key);
                     } else {
                         $this->stopQueue($db, $payload, $class, $uid, new Exception("Function handle in class $class does not exit"));
+                        $this->clearQueue($db, $queue, $key);
                         $this->output()->text("$class failed ".PHP_EOL);
                     }
                 } catch (\Throwable $e) {
                     $this->stopQueue($db, $payload, $class, $uid, $e);
+                    $this->clearQueue($db, $queue, $key);
                     $this->output()->text("$class failed ".PHP_EOL);
                 }
             }
