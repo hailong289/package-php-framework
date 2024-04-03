@@ -109,13 +109,13 @@ if(!function_exists('log_write')){
 if(!function_exists('get_view')){
     function get_view($name, $data = [])
     {
-        if(!file_exists(__DIR__ROOT . '/App/Views/'.$name.'.view.php')){
-            throw new \RuntimeException("File App/Views/$name.view.php does not exist", 500);
+        $view = preg_replace('/([.]+)/', '/' , $name);
+        if(!file_exists(__DIR__ROOT . '/App/Views/'.$view.'.view.php')){
+            throw new \RuntimeException("File App/Views/$view.view.php does not exist", 500);
         }
         if(isset($GLOBALS['share_date_view']) && count($GLOBALS['share_date_view'])) $data = array_merge($data, $GLOBALS['share_date_view']);
         extract($data);
-        $view = preg_replace('/([.]+)/', '/' , $name);
-        require_once __DIR__ROOT . '/App/Views/'.$name.'.view.php';
+        require_once __DIR__ROOT . '/App/Views/'.$view.'.view.php';
     }
 }
 
@@ -241,15 +241,15 @@ if(!function_exists('res')){
     function res() {
         return new class() {
             function view($name, $data = [], $status = 200) {
-                if(!file_exists(__DIR__ROOT . '/App/Views/'.$name.'.view.php')){
-                    throw new \RuntimeException("File App/Views/$name.view.php does not exist", 500);
+                $view = preg_replace('/([.]+)/', '/' , $name);
+                if(!file_exists(__DIR__ROOT . '/App/Views/'.$view.'.view.php')){
+                    throw new \RuntimeException("File App/Views/$view.view.php does not exist", 500);
                 }
                 http_response_code($status);
                 if(count($data)) $GLOBALS['share_date_view'] = $data;
                 extract($data);
                 $GLOBALS['date_view'] = $data;
-                $view = preg_replace('/([.]+)/', '/' , $name);
-                require_once __DIR__ROOT . '/App/Views/'.$name.'.view.php';
+                require_once __DIR__ROOT . '/App/Views/'.$view.'.view.php';
             }
             function data($data = []) {
                 if(count($GLOBALS['share_date_view'])) {
