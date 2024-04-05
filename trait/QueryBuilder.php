@@ -1,5 +1,5 @@
 <?php
-namespace System\Trait;
+namespace System\Traits;
 
 trait QueryBuilder
 {

@@ -12,7 +12,8 @@
     ],
     "require": {
         "php": ">=7.4",
-        "symfony/console": "^6.4"
+        "symfony/console": "^6.4",
+        "phpmailer/phpmailer": "v6.9.1"
     },
     "autoload": {
         "psr-4": {

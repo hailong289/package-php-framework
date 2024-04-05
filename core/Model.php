@@ -1,6 +1,6 @@
 <?php
 namespace System\Core;
-use System\Trait\QueryBuilder;
+use System\Traits\QueryBuilder;
 
 abstract class Model extends Database
 {
