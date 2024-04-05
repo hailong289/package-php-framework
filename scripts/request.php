@@ -13,10 +13,10 @@ class RequestScript extends \System\Core\Command
     {
         $name_request = $this->getArgument('name_request');
         if (strpos($name_request, 'Request') === false) $name_request = $name_request . 'Request';
-        $concurrentDirectory = __DIR__ROOT . "/Request/$name_request.php";
+        $concurrentDirectory = __DIR__ROOT . "/request/$name_request.php";
         if (!file_exists($concurrentDirectory)) {
-            if (!is_dir(__DIR__ROOT . "/Request")) {
-                mkdir(__DIR__ROOT . "/Request");
+            if (!is_dir(__DIR__ROOT . "/request")) {
+                mkdir(__DIR__ROOT . "/request");
             }
             file_put_contents($concurrentDirectory, '<?php
 namespace Request;
