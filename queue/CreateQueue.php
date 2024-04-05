@@ -109,7 +109,7 @@ class CreateQueue
         return $this;
     }
 
-    public function setTimeout($timeout = 0)
+    public function setTimeOut($timeout = 0)
     {
         $this->timeout = $timeout;
         return $this;
