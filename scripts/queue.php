@@ -5,9 +5,11 @@ class QueueScript extends \System\Core\Command
     protected $command = 'queue:run';
     protected $command_description = 'Run a queue';
     protected $arguments = ['?connection'];
-    protected $options = ['queue'];
+    protected $options = ['queue','?timeout'];
     protected $jobs_queue = 'jobs';
     protected $connection = QUEUE_WORK;
+    protected $timeout = QUEUE_TIMEOUT ?? 600; // default 10 minutes
+    private $queueRunning = null;
 
     public function __construct()
     {
@@ -16,11 +18,17 @@ class QueueScript extends \System\Core\Command
 
     public function handle()
     {
-        ini_set('error_reporting', E_STRICT);
-//        passthru('php cli.php run:queue work'); use queue live
+        register_shutdown_function([$this, 'stopJobTimeout']);
+        ini_set('max_execution_time', $this->timeout); // timeout all job
+//      passthru('php cli.php run:queue work'); use queue live
         $queue_name = $this->getOption('queue');
+        $timeout_options = $this->getOption('timeout');
         $this->connection = $this->getArgument('connection') ?? QUEUE_WORK;
         if($queue_name) $this->jobs_queue = $queue_name;
+        if(!empty($timeout_options)) {
+            $this->timeout = $timeout;
+            ini_set('max_execution_time', $timeout);
+        }
         $db = $this->getDB();
         if($db) {
             sleep(1);
@@ -35,14 +43,26 @@ class QueueScript extends \System\Core\Command
                 $uid = $queue['uid'];
                 $class = $this->connection === 'database' ? str_replace('/', '\\', $queue['class']) : $queue['class'];
                 $payload = $queue['payload'];
+                $timeout = $queue['timeout'] ?? 0;
+                if ($timeout > 0) {
+                    $this->timeout = $timeout;
+                    ini_set('max_execution_time', $timeout); // timeout one job
+                }
                 $directory = __DIR__ROOT . "/$class.php";
                 $this->output()->text("$class running ".PHP_EOL);
                 try {
                     if (method_exists($class, 'handle')) {
-                        $this->startRunQueue($db, $value, $key, $class, $payload, $uid);
+                        $this->queueRunning = [
+                            'key' => $key,
+                            'queue' => $queue,
+                            'payload' => $payload,
+                            'uid' => $uid,
+                            'class' => $class
+                        ];
+                        $this->startRunQueue($db, $queue, $key, $class, $payload, $uid);
                         $this->clearQueue($db, $queue, $key);
                     } else {
-                        $this->stopQueue($db, $payload, $class, $uid, new Exception("Function handle in class $class does not exit"));
+                        $this->stopQueue($db, $payload, $class, $uid, new \Exception("Function handle in class $class does not exit"));
                         $this->clearQueue($db, $queue, $key);
                         $this->output()->text("$class failed ".PHP_EOL);
                     }
@@ -56,7 +76,7 @@ class QueueScript extends \System\Core\Command
     }
 
 
-    public function getDB()
+    private function getDB()
     {
         $db = '';
         if($this->connection === 'database') {
@@ -96,7 +116,7 @@ class QueueScript extends \System\Core\Command
         return $db;
     }
 
-    public function getQueueList($db)
+    private function getQueueList($db)
     {
         if ($db instanceof \System\Core\Database) {
             return $db->table('jobs')->where('queue', $this->jobs_queue)->get()->toArray();
@@ -107,7 +127,7 @@ class QueueScript extends \System\Core\Command
         return null;
     }
 
-    public function startRunQueue($db, $queue_first, $index, $class, $payload, $uid)
+    private function startRunQueue($db, $queue_first, $index, $class, $payload, $uid)
     {
         $start = new \DateTime();
         try {
@@ -124,17 +144,17 @@ class QueueScript extends \System\Core\Command
         }
     }
 
-    public function stopQueue($db, $payload, $class, $uid, $e)
+    private function stopQueue($db, $payload, $class, $uid, $e)
     {
-        $data = json_encode([
-            'uid' => $uid,
-            'payload' => $payload,
-            'class' => str_replace('\\','/',$class),
-            'error' => $e->getMessage(),
-            'failed' => $e->getTraceAsString()
-        ]);
         if ($this->connection === 'database') {
             if ($db instanceof \System\Core\Database) {
+                $data = json_encode([
+                    'uid' => $uid,
+                    'payload' => $payload,
+                    'class' => str_replace('\\','/',$class),
+                    'error' => $e->getMessage(),
+                    'failed' => $e->getTraceAsString()
+                ]);
                 $db::table('failed_jobs')->insert([
                     'queue' => $data,
                     'created_at' => date(' Y-m-d H:i:s')
@@ -142,20 +162,55 @@ class QueueScript extends \System\Core\Command
             }
         } else {
             if ($db instanceof \Redis) {
+                $data = json_encode([
+                    'uid' => $uid,
+                    'payload' => $payload,
+                    'class' => $class,
+                    'error' => $e->getMessage(),
+                    'failed' => $e->getTraceAsString()
+                ]);
                 $db->rPush('queue:failed_jobs', $data);
             }
         }
     }
 
-    public function clearQueue($db, $queue_first, $index) {
+    private function clearQueue($db, $queue_first, $index) {
         try {
             if ($db instanceof \System\Core\Database) {
                 $db::table($this->jobs_queue)->where('id', $index)->delete();
             } else if ($db instanceof \Redis) {
-                $db->lRem("queue:{$this->jobs_queue}", $queue_first, $index);
+                $db->lRem("queue:{$this->jobs_queue}", json_encode($queue_first), $index);
             }
         }catch (\Throwable $e) {
             $this->output()->text($e->getMessage());
+        }
+    }
+
+    private function stopJobTimeout() {
+        $error = error_get_last();
+        if(!is_null($error)) {
+            if (strpos($error['message'], "Maximum execution time of {$this->timeout} seconds exceeded") === false) {
+                echo 'Other error: ' . print_r($error, true);
+            } else {
+                $db = $this->getDB();
+                if (!empty($this->queueRunning) && $db) {
+                    $key = $this->queueRunning['key'];
+                    $queue = $this->queueRunning['queue'];
+                    $payload = $this->queueRunning['payload'];
+                    $class = $this->queueRunning['class'];
+                    $uid = $this->queueRunning['uid'];
+                    $this->stopQueue($db, $payload, $class, $uid, new \Exception("Time out queue"));
+                    $this->clearQueue($db, $queue, $key);
+                    $this->output()->text("$class failed. Error: Timeout queue".PHP_EOL);
+                    $queues = $this->getQueueList($db);
+                    if($queues) { // Continue running despite the timeout error until the job ends
+                        $command = 'php cli.php queue:run ';
+                        if(!empty($this->getArgument('connection'))) $command .= "{$this->getArgument('connection')} ";
+                        if(!empty($this->getOption('queue'))) $command .= "{$this->getOption('queue')} ";
+                        passthru($command);
+                    }
+                }
+            }
         }
     }
 }

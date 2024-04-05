@@ -8,6 +8,7 @@ use System\Core\Response;
 class CreateQueue
 {
     private $queue = 'jobs';
+    private $timeout = 0;
     public $connection = QUEUE_WORK;
     function __construct() {}
     //create a function to add new element
@@ -26,7 +27,8 @@ class CreateQueue
                         'payload' => $class,
                         'class' => get_class($class),
                         'queue' => $this->queue,
-                        'connection' => 'redis'
+                        'connection' => 'redis',
+                        'timeout' => $this->timeout
                     ], 0);
                 } elseif ($this->connection === 'database') {
                     $data = json_encode([
@@ -34,7 +36,8 @@ class CreateQueue
                         'payload' => get_object_vars($class),
                         'class' => str_replace('\\','/',get_class($class)),
                         'queue' => $this->queue,
-                        'connection' => 'database'
+                        'connection' => 'database',
+                        'timeout' => $this->timeout
                     ], JSON_UNESCAPED_UNICODE);
                     Database::table('jobs')->insert([
                         'data' => $data,
@@ -103,6 +106,12 @@ class CreateQueue
     public function setQueue($queue)
     {
         $this->queue = $queue;
+        return $this;
+    }
+
+    public function setTimeout($timeout = 0)
+    {
+        $this->timeout = $timeout;
         return $this;
     }
 }
