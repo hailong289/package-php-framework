@@ -21,7 +21,7 @@ class Mail {
 
     public function getMail()
     {
-        return $this->mail;
+        return $this->mail instanceof PHPMailer ? $this->mail:false;
     }
 
     public function setSubject($subject)

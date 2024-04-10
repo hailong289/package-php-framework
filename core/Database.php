@@ -1,6 +1,6 @@
 <?php
 namespace System\Core;
-use System\Trait\QueryBuilder;
+use System\Traits\QueryBuilder;
 
 class Database {
     private static $__conn;

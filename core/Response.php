@@ -25,7 +25,8 @@ class Response {
             throw new \RuntimeException("File App/Views/$view.view.php does not exist", 500);
         }
         http_response_code($status);
-        require_once __DIR__ROOT . '/App/Views/'.$views.'.view.php';
-        return;
+        $file = __DIR__ROOT . '/App/Views/'.$views.'.view.php';
+        require_once $file;
+        return $file;
     }
 }

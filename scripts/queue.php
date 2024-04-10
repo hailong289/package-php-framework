@@ -46,7 +46,7 @@ class QueueScript extends \System\Core\Command
                 $class = $this->connection === 'database' ? str_replace('/', '\\', $queue['class']) : $queue['class'];
                 $payload = $queue['payload'];
                 $timeout = $queue['timeout'] ?? 0;
-                if ($timeout > 0) {
+                if ($timeout > 0 && empty($timeout_options)) {
                     $this->timeout = $timeout;
                     ini_set('max_execution_time', $timeout); // timeout one job
                 }
@@ -198,7 +198,7 @@ class QueueScript extends \System\Core\Command
                     $payload = $this->queueRunning['payload'];
                     $class = $this->queueRunning['class'];
                     $uid = $this->queueRunning['uid'];
-                    $this->stopQueue($db, $payload, $class, $uid, new \Exception("Time out queue"));
+                    $this->stopQueue($db, $payload, $class, $uid, new \Exception("Timeout queue"));
                     $this->clearQueue($db, $queue, $key);
                     $this->output()->text("$class failed. Error: Timeout queue".PHP_EOL);
                     $queues = $this->getQueueList($db);
