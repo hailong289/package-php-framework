@@ -30,10 +30,10 @@ class MailScript extends Command
 namespace Mails;
 use System\Core\Mail;
 class '.$name_mail.' extends Mail {
-    public function __construct(...$params)
+    protected $useQueue = false;
+    public function __construct()
     {
         parent::__construct();
-        $this->handle(...$params);
     }
    
     public function handle()

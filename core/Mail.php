@@ -17,6 +17,9 @@ class Mail {
         $this->mail->Password = config_env('MAIL_PASSWORD','password'); // SMTP password
         $this->mail->SMTPSecure = config_env('MAIL_ENCRYPTION', PHPMailer::ENCRYPTION_SMTPS); // Enable TLS encryption; `PHPMailer::ENCRYPTION_SMTPS` also accepted
         $this->mail->Port = config_env('MAIL_PORT', 587); // TCP port to connect to
+        if(method_exists($this, 'handle')) {
+            if((isset($useQueue) && $useQueue === false) || !isset($useQueue)) $this->handle();
+        }
     }
 
     public function getMail()

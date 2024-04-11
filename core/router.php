@@ -4,10 +4,10 @@ namespace System\Core;
 use System\Middleware\Kernel;
 
 class Router {
-    protected static $method = 'GET';
-    protected static $action;
-    protected static $path;
-    protected static $routers;
+    private static $method = 'GET';
+    private static $action;
+    private static $path;
+    private static $routers;
     private static $name_middleware = '';
     private static $prefix = '';
     protected static $path_load_file;
@@ -149,7 +149,7 @@ class Router {
         return new static();
     }
     public static function patch($name, $action): Router {
-        self::$method = 'PATH';
+        self::$method = 'PATCH';
         self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
         self::$path = self::$path_load_file . self::$path;
         self::$action = $action;
@@ -250,5 +250,10 @@ class Router {
                 'middleware_not_exist' => 1
             ];
         }
+    }
+    
+    public static function list()
+    {
+        return self::$routers;
     }
 }
