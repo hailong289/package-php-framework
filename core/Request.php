@@ -86,11 +86,12 @@ class Request extends \stdClass {
     public function file($key = ''){
         if(!array_key_exists($key, $_FILES)) die('key not exit');
         $this->file = $_FILES[$key];
+        return $this;
     }
     public function get_file($key = ''){
         if(!array_key_exists($key, $_FILES)) die('key not exit');
         $this->file = $_FILES[$key];
-        return  $this->file;
+        return $this->file;
     }
 
     public function tmp_name(){
