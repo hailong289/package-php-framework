@@ -5,8 +5,8 @@ class Request extends \stdClass {
 
     public function __construct()
     {
-        $all_data = $this->all();
-        if(count((array)$all_data)) {
+        $all_data = (array)$this->all();
+        if(count($all_data)) {
             foreach ($all_data as $key=>$item) {
                 if(!isset($this->{$key})) $this->{$key} = $item;
             }
