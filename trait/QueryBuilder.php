@@ -604,6 +604,7 @@ trait QueryBuilder
         self::$pageSub = '';
         self::$limitSub = '';
         self::$groupBySub = '';
+        if (isset(static::$data_relation)) static::$data_relation = [];
     }
 
     private static function operator($name, $isSub = false) {

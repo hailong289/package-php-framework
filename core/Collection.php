@@ -40,6 +40,17 @@ class Collection
         return $this;
     }
 
+    public function dataColumn($key)
+    {
+        foreach ($this->data as $key_data => $data) {
+            $keys = get_object_vars($data);
+            if(isset($keys[$key])) {
+                $this->data[$key_data] = $data->{$key};
+            }
+        }
+        return $this;
+    }
+
     public function mapFirst($fn) {
         $this->data = $fn($this->data);
         return $this;

@@ -271,3 +271,11 @@ if(!function_exists('res')){
         };
     }
 }
+
+
+if(!function_exists('collection')) {
+    function collection($data)
+    {
+        return new \System\Core\Collection($data);
+    }
+}
