@@ -151,9 +151,24 @@ class Database {
     {
         $instance = static::modelInstance();
         if (is_array($name)) {
-            foreach ($name as $relation) {
-                if (method_exists($instance, $relation)) {
-                    $instance->{$relation}();
+
+            foreach ($name as $key=>$value) {
+                if(is_numeric($key)) {
+                    $relation = $value;
+                    if (method_exists($instance, $relation)) {
+                        $instance->{$relation}();
+                    }
+                } else {
+                    // query
+                    $query = $value;
+                    $relation = $key;
+                    if (method_exists($instance, $relation)) {
+                        $instance->{$relation}();
+                        if(!empty(static::$data_relation)) {
+                            $key_last = array_key_last(static::$data_relation);
+                            static::$data_relation[$key_last]['query'] = $query;
+                        }
+                    }
                 }
             }
             return $instance;
@@ -170,16 +185,19 @@ class Database {
         $model_many = null,
         $foreign_key,
         $foreign_key2 = null,
-        $primary_key
+        $primary_key,
+        $query
     ) {
         $instance = static::modelInstance();
         if($relation === static::$HAS_MANY) {
             $db_table = class_exists($model) ? (new $model):Database::table($model);
+            if(!empty($query)) $db_table = $query($db_table);
             $sql = $db_table->where($foreign_key, $primary_key)->clone();
             $data = $instance->query($sql)->fetchAll(\PDO::FETCH_OBJ);
             return $instance->getCollection($data)->values();
         } else if($relation === static::$BELONG_TO) {
             $db_table = class_exists($model) ? (new $model):Database::table($model);
+            if(!empty($query)) $db_table = $query($db_table);
             $sql = $db_table->where($foreign_key, $primary_key)->clone();
             $data = $instance->query($sql)->fetch(\PDO::FETCH_OBJ);
             return $instance->getCollection($data)->value();
@@ -191,6 +209,7 @@ class Database {
             $id_join = $instance->getCollection($data_tb_3rd)->dataColumn($foreign_key2)->values();
             if(!empty($id_join)) {
                 $db_table = class_exists($model) ? (new $model):Database::table($model);
+                if(!empty($query)) $db_table = $query($db_table);
                 $sql = $db_table->whereIn('id', $id_join)->clone();
                 $data = $instance->query($sql)->fetchAll(\PDO::FETCH_OBJ);
                 return $instance->getCollection($data)->values();
@@ -204,6 +223,7 @@ class Database {
             $id_join = $instance->getCollection($data_tb_3rd)->dataColumn($foreign_key2)->values();
             if(!empty($id_join)) {
                 $db_table = class_exists($model) ? (new $model):Database::table($model);
+                if(!empty($query)) $db_table = $query($db_table);
                 $sql = $db_table->whereIn('id', $id_join)->clone();
                 $data = $instance->query($sql)->fetchAll(\PDO::FETCH_OBJ);
                 return $instance->getCollection($data)->values();
@@ -211,6 +231,7 @@ class Database {
             return [];
         } else { // has one
             $db_table = class_exists($model) ? (new $model):Database::table($model);
+            if(!empty($query)) $db_table = $query($db_table);
             $sql = $db_table->where($foreign_key, $primary_key)->clone();
             $data = $instance->query($sql)->fetch(\PDO::FETCH_OBJ);
             return $instance->getCollection($data)->value();
@@ -259,6 +280,7 @@ class Database {
                         $model_many = $relation['model_many'];
                         $name = $relation['name'];
                         $name_relation = $relation['relation'];
+                        $query = $relation['query'] ?? null;
                         if (isset($keys[$primary_key])) {
                             $item->{$name} = self::dataRelation(
                                 $name_relation,
@@ -266,7 +288,8 @@ class Database {
                                 $model_many,
                                 $foreign_key,
                                 $foreign_key2,
-                                $item->{$primary_key}
+                                $item->{$primary_key},
+                                $query
                             );
                         }
                     }
