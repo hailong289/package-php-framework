@@ -410,7 +410,7 @@ trait QueryBuilder
         return $sql;
     }
 
-    private static function sqlQuery($is_delete = false){
+    private static function sqlQuery($is_delete = false, $query = null){
         $select = self::$select;
         $tableName = self::$tableName ? self::$tableName:static::$tableName; // ko có sẽ lấy bên model
         $join = self::$join;
@@ -430,6 +430,10 @@ trait QueryBuilder
                 $fieldTable = implode(',', $fieldTable);
             }
             $select = $fieldTable;
+        }
+
+        if(!empty($query)) { // use count, sum
+            $select = $query;
         }
 
         if ($is_delete) {

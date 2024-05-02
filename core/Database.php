@@ -15,9 +15,17 @@ class Database {
 
     public function query($sql, $last_id = false){
         try {
+            if(self::$enableLog) $startTime = microtime(true);
             $statement = self::$__conn->prepare($sql);
             $statement->execute();
-            if(self::$enableLog) self::$log[] = $statement;
+            if(self::$enableLog) {
+                $endTime = microtime(true);
+                $executionTime = $endTime - $startTime;
+                self::$log[] = [
+                    'query' => $sql,
+                    'executionTime' => "Query took " . $executionTime . " seconds to execute."
+                ];
+            }
             if($last_id) return self::$__conn->lastInsertId();
             return $statement;
         } catch (\Throwable $th) {
@@ -142,6 +150,31 @@ class Database {
             $data = $instance->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
             $data_relation = self::workRelation($data, 'first');
             if (!empty($data_relation)) $data = $data_relation;
+            return $data;
+        }
+        return false;
+    }
+    
+    public static function count($key = '*', $as = 'count')
+    {
+        $sql = self::sqlQuery(false, "COUNT($key) as $as");
+        $instance = static::modelInstance();
+        $data = $instance->query($sql)->fetch(\PDO::FETCH_OBJ);
+        if (!empty($data)) {
+            $data = $instance->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
+            return $data;
+        }
+        return false;
+    }
+
+    public static function sum($key = '*', $as = '')
+    {
+        if(empty($as)) $as = $key;
+        $sql = self::sqlQuery(false, "SUM($key) as $as");
+        $instance = static::modelInstance();
+        $data = $instance->query($sql)->fetch(\PDO::FETCH_OBJ);
+        if (!empty($data)) {
+            $data = $instance->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
             return $data;
         }
         return false;
