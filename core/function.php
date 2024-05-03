@@ -114,7 +114,7 @@ if(!function_exists('get_view')){
         if(!file_exists(__DIR__ROOT . '/App/Views/'.$view.'.view.php')){
             throw new \RuntimeException("File App/Views/$view.view.php does not exist", 500);
         }
-        if(isset($GLOBALS['share_date_view']) && count($GLOBALS['share_date_view'])) $data = array_merge($data, $GLOBALS['share_date_view']);
+        if(isset($GLOBALS['share_data_view']) && count($GLOBALS['share_data_view'])) $data = array_merge($data, $GLOBALS['share_data_view']);
         extract($data);
         $file = __DIR__ROOT . '/App/Views/'.$views.'.view.php';
         require_once $file;
@@ -236,7 +236,7 @@ if(!function_exists('errors')){
 
 if(!function_exists('val')){
     function val($key = '') {
-        return $GLOBALS['date_view'][$key];
+        return $GLOBALS['data_view'][$key];
     }
 }
 
@@ -249,18 +249,18 @@ if(!function_exists('res')){
                     throw new \RuntimeException("File App/Views/$view.view.php does not exist", 500);
                 }
                 http_response_code($status);
-                if(count($data)) $GLOBALS['share_date_view'] = $data;
+                if(count($data)) $GLOBALS['share_data_view'] = $data;
                 extract($data);
-                $GLOBALS['date_view'] = $data;
+                $GLOBALS['data_view'] = $data;
                 $file = __DIR__ROOT . '/App/Views/'.$views.'.view.php';
                 require_once $file;
                 return $file;
             }
             function data($data = []) {
-                if(count($GLOBALS['share_date_view'])) {
-                    $GLOBALS['share_date_view'] = array_merge($data, $GLOBALS['share_date_view']);
+                if(count($GLOBALS['share_data_view'])) {
+                    $GLOBALS['share_data_view'] = array_merge($data, $GLOBALS['share_data_view']);
                 } else {
-                    $GLOBALS['share_date_view'] = $data;
+                    $GLOBALS['share_data_view'] = $data;
                 }
                 return $this;
             }

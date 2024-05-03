@@ -32,7 +32,7 @@ class ' . $name_model . ' extends Model {
     protected static $tableName = "' . $name_table . '";
     protected static $times_auto = false;
     protected static $date_create = "date_created";
-    protected static $date_update = "date_update";
+    protected static $date_update = "date_updated";
     protected static $field = [];
 }', FILE_APPEND);
             if (!file_exists($concurrentDirectory)) {
