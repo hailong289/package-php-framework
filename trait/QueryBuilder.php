@@ -480,6 +480,7 @@ trait QueryBuilder
             $value = rtrim($value, ',');
             $sql = "INSERT INTO $tableName($field) VALUES ($value)";
             $result = self::modelInstance()->query($sql, true);
+            self::reset();
             if($result){
                 return self::where('id','=', $result)->first();
             }
@@ -507,6 +508,7 @@ trait QueryBuilder
             $value = rtrim($value, ',');
             $sql = "INSERT INTO $tableName($field) VALUES ($value)";
             $status = self::modelInstance()->query($sql);
+            self::reset();
             if($status){
                 return true;
             }
@@ -534,6 +536,7 @@ trait QueryBuilder
             $value = rtrim($value, ',');
             $sql = "INSERT INTO $tableName($field) VALUES ($value)";
             $result = self::modelInstance()->query($sql, true);
+            self::reset();
             if($result){
                 return $result;
             }
@@ -573,6 +576,7 @@ trait QueryBuilder
             $compare = rtrim($compare, ", ");
             $sql = "UPDATE {$tableName} SET {$compare}{$where}";
             $status = self::modelInstance()->query($sql);
+            self::reset();
             if($status){
                 return true;
             }

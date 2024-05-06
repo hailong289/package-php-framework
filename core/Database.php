@@ -215,9 +215,9 @@ class Database {
     private static function dataRelation(
         $relation,
         $model,
-        $model_many = null,
+        $model_many,
         $foreign_key,
-        $foreign_key2 = null,
+        $foreign_key2,
         $primary_key,
         $query
     ) {
@@ -308,9 +308,9 @@ class Database {
                     foreach (static::$data_relation as $key => $relation) {
                         $primary_key = $relation['primary_key'];
                         $foreign_key = $relation['foreign_key'];
-                        $foreign_key2 = $relation['foreign_key2'];
+                        $foreign_key2 = $relation['foreign_key2'] ?? null;
                         $model = $relation['model'];
-                        $model_many = $relation['model_many'];
+                        $model_many = $relation['model_many'] ?? null;
                         $name = $relation['name'];
                         $name_relation = $relation['relation'];
                         $query = $relation['query'] ?? null;

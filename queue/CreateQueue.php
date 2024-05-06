@@ -11,10 +11,16 @@ class CreateQueue
     private $timeout = 0;
     public $connection = QUEUE_WORK;
     function __construct() {}
+    
+    public static function instance(){
+        return new CreateQueue();
+    }
+    
     //create a function to add new element
     public function enQueue($class) {
         $is_api = (new Request())->isJson();
         $tag_queue = "queue:{$this->queue}";
+        $reflectionClass = new \ReflectionClass($class);
         if (method_exists($class,'handle')) {
             try {
                 if($this->connection === 'redis') {
@@ -25,16 +31,17 @@ class CreateQueue
                     Redis::cacheRPush($tag_queue, [
                         'uid' => uid(),
                         'payload' => $class,
-                        'class' => get_class($class),
+                        'class' => $reflectionClass->getShortName(),
                         'queue' => $this->queue,
                         'connection' => 'redis',
                         'timeout' => $this->timeout
                     ], 0);
                 } elseif ($this->connection === 'database') {
+
                     $data = json_encode([
                         'uid' => uid(),
                         'payload' => get_object_vars($class),
-                        'class' => str_replace('\\','/',get_class($class)),
+                        'class' => $reflectionClass->getShortName(),
                         'queue' => $this->queue,
                         'connection' => 'database',
                         'timeout' => $this->timeout
