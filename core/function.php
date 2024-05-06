@@ -116,7 +116,7 @@ if(!function_exists('get_view')){
         }
         if(isset($GLOBALS['share_data_view']) && count($GLOBALS['share_data_view'])) $data = array_merge($data, $GLOBALS['share_data_view']);
         extract($data);
-        $file = __DIR__ROOT . '/App/Views/'.$views.'.view.php';
+        $file = __DIR__ROOT . '/App/Views/'.$view.'.view.php';
         require_once $file;
         return $file;
     }
@@ -252,7 +252,7 @@ if(!function_exists('res')){
                 if(count($data)) $GLOBALS['share_data_view'] = $data;
                 extract($data);
                 $GLOBALS['data_view'] = $data;
-                $file = __DIR__ROOT . '/App/Views/'.$views.'.view.php';
+                $file = __DIR__ROOT . '/App/Views/'.$view.'.view.php';
                 require_once $file;
                 return $file;
             }
