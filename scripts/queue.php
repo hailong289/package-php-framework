@@ -120,13 +120,23 @@ class QueueScript extends \System\Core\Command
 
     private function getQueueList($db)
     {
-        if ($db instanceof \System\Core\Database) {
-            $table = $this->jobs_queue === 'rollback_failed_job' ? 'failed_jobs':'jobs';
-            $queue = $this->jobs_queue === 'rollback_failed_job' ? 'failed_jobs':'jobs';
-            return $db->table($table)->where('queue', $queue)->get()->toArray();
-        }
-        if ($db instanceof \Redis) {
-            return $db->lrange("queue:{$this->jobs_queue}", 0, -1);
+        try {
+            if ($db instanceof \System\Core\Database) {
+                $table = $this->jobs_queue === 'rollback_failed_job' ? 'failed_jobs' : 'jobs';
+                $queue = $this->jobs_queue === 'rollback_failed_job' ? 'failed_jobs' : 'jobs';
+                return $db->table($table)->where('queue', $queue)->get()->toArray();
+            }
+            if ($db instanceof \Redis) {
+                return $db->lrange("queue:{$this->jobs_queue}", 0, -1);
+            }
+        }catch (\Throwable $e) {
+            $this->output()->error([
+                "message" => $e->getMessage(),
+                "code" => $e->getCode(),
+                "line" => $e->getLine(),
+                "file" => $e->getFile(),
+                "trace" => $e->getTraceAsString()
+            ]);
         }
         return null;
     }
@@ -150,32 +160,42 @@ class QueueScript extends \System\Core\Command
 
     private function stopQueue($db, $payload, $class, $uid, $e)
     {
-        if ($this->connection === 'database') {
-            if ($db instanceof \System\Core\Database) {
-                $data = json_encode([
-                    'uid' => $uid,
-                    'payload' => $payload,
-                    'class' => $class,
-                    'error' => $e->getMessage()
-                ]);
-                $db::table('failed_jobs')->insert([
-                    'data' => $data,
-                    'queue' => 'failed_jobs',
-                    'exception' => $e->getMessage() .". Trace: " . base64_encode($e->getTraceAsString()),
-                    'created_at' => date('Y-m-d H:i:s')
-                ]);
+        try {
+            if ($this->connection === 'database') {
+                if ($db instanceof \System\Core\Database) {
+                    $data = json_encode([
+                        'uid' => $uid,
+                        'payload' => $payload,
+                        'class' => $class,
+                        'error' => $e->getMessage()
+                    ]);
+                    $db::table('failed_jobs')->insert([
+                        'data' => $data,
+                        'queue' => 'failed_jobs',
+                        'exception' => $e->getMessage() . ". Trace: " . base64_encode($e->getTraceAsString()),
+                        'created_at' => date('Y-m-d H:i:s')
+                    ]);
+                }
+            } else {
+                if ($db instanceof \Redis) {
+                    $data = json_encode([
+                        'uid' => $uid,
+                        'payload' => $payload,
+                        'class' => $class,
+                        'error' => $e->getMessage(),
+                        'failed' => $e->getTraceAsString()
+                    ]);
+                    $db->rPush('queue:failed_jobs', $data);
+                }
             }
-        } else {
-            if ($db instanceof \Redis) {
-                $data = json_encode([
-                    'uid' => $uid,
-                    'payload' => $payload,
-                    'class' => $class,
-                    'error' => $e->getMessage(),
-                    'failed' => $e->getTraceAsString()
-                ]);
-                $db->rPush('queue:failed_jobs', $data);
-            }
+        }catch (\Throwable $e) {
+            $this->output()->error([
+                "message" => $e->getMessage(),
+                "code" => $e->getCode(),
+                "line" => $e->getLine(),
+                "file" => $e->getFile(),
+                "trace" => $e->getTraceAsString()
+            ]);
         }
     }
 
@@ -189,7 +209,13 @@ class QueueScript extends \System\Core\Command
                 $db->lRem("queue:{$this->jobs_queue}", $queue_first, $index);
             }
         }catch (\Throwable $e) {
-            $this->output()->text($e->getMessage());
+            $this->output()->error([
+                "message" => $e->getMessage(),
+                "code" => $e->getCode(),
+                "line" => $e->getLine(),
+                "file" => $e->getFile(),
+                "trace" => $e->getTraceAsString()
+            ]);
         }
     }
 

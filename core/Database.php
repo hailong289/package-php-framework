@@ -253,7 +253,7 @@ class Database {
             $db_table_many = class_exists($model_many) ? (new $model_many):Database::table($model_many);
             $sql_tb_3rd =  $db_table_many->where($foreign_key, $primary_key)->clone();
             $data_tb_3rd = $instance->query($sql_tb_3rd)->fetchAll(\PDO::FETCH_OBJ);
-            $id_join = $instance->getCollection($data_tb_3rd)->dataColumn($foreign_key2)->values();
+            $id_join = $instance->getCollection($data_tb_3rd)->dataColumn($foreign_key2)->toArray();
             if(!empty($id_join)) {
                 $db_table = class_exists($model) ? (new $model):Database::table($model);
                 if(!empty($query)) $db_table = $query($db_table);
@@ -287,6 +287,7 @@ class Database {
                         $model_many = $relation['model_many'];
                         $name = $relation['name'];
                         $name_relation = $relation['relation'];
+                        $query = $relation['query'] ?? null;
                         if (isset($keys[$primary_key])) {
                             $item->{$name} = self::dataRelation(
                                 $name_relation,
@@ -294,7 +295,8 @@ class Database {
                                 $model_many,
                                 $foreign_key,
                                 $foreign_key2,
-                                $item->{$primary_key}
+                                $item->{$primary_key},
+                                $query
                             );
                         }
                     }

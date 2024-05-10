@@ -5,7 +5,6 @@ trait QueryBuilder
 {
     private static $tableName = '';
     private static $where = '';
-    private static $whereExit = '';
     private static $select = '*';
     private static $orderBy = '';
     private static $operator = '';
@@ -415,7 +414,6 @@ trait QueryBuilder
         $tableName = self::$tableName ? self::$tableName:static::$tableName; // ko có sẽ lấy bên model
         $join = self::$join;
         $where = self::$where;
-        $whereExit = self::$whereExit;
         $orderBy = self::$orderBy;
         $groupBy = self::$groupBy;
         $fieldTable = static::$field ?? '';
@@ -437,14 +435,14 @@ trait QueryBuilder
         }
 
         if ($is_delete) {
-            $sql = "DELETE FROM {$tableName}{$where}{$whereExit}{$limit}";
+            $sql = "DELETE FROM {$tableName}{$where}{$limit}";
             $sql = trim($sql);
             self::reset();
             return $sql;
         }
 
         $sql = "SELECT {$select} FROM {$tableName}{$join}
-        {$where}{$whereExit}{$groupBy}{$orderBy}{$limit}{$offset}{$union}";
+        {$where}{$groupBy}{$orderBy}{$limit}{$offset}{$union}";
         $sql = trim($sql);
         self::reset();
         return $sql;
@@ -593,7 +591,6 @@ trait QueryBuilder
         self::$operator = '';
         self::$join = '';
         self::$on = '';
-        self::$whereExit = '';
         self::$page = '';
         self::$limit = '';
         self::$union = '';

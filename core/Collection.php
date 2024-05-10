@@ -30,7 +30,8 @@ class Collection
 
     public function count(): int
     {
-        return is_countable($this->data) && count($this->data);
+        $is_count = is_countable($this->data) && count($this->data);
+        return $is_count ? count($this->data):0;
     }
 
     public function map($fn) {
@@ -74,8 +75,13 @@ class Collection
 
     public function add($item)
     {
-        $this->items[] = $item;
+        $this->data[] = $item;
 
         return $this;
+    }
+
+    public function last()
+    {
+        return $this->count() ? $this->data[$this->count() - 1]:$this->data;
     }
 }

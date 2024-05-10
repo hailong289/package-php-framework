@@ -236,7 +236,7 @@ if(!function_exists('errors')){
 
 if(!function_exists('val')){
     function val($key = '') {
-        return $GLOBALS['data_view'][$key];
+        return $GLOBALS['share_data_view'][$key];
     }
 }
 
@@ -251,7 +251,6 @@ if(!function_exists('res')){
                 http_response_code($status);
                 if(count($data)) $GLOBALS['share_data_view'] = $data;
                 extract($data);
-                $GLOBALS['data_view'] = $data;
                 $file = __DIR__ROOT . '/App/Views/'.$view.'.view.php';
                 require_once $file;
                 return $file;
