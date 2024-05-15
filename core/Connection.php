@@ -29,11 +29,14 @@ class Connection{
                 $connection = DATABASE[$host][$environment];
                 $host = $connection['host'];
                 $port = $connection['port'];
+                $username = $connection['username'];
+                $password = $connection['password'];
                 $timeout = $connection['timeout'];
                 $reserved = $connection['reserved'];
                 $retryInterval = $connection['retryInterval'];
                 $readTimeout = $connection['readTimeout'];
                 self::$redis->connect($host, $port, $timeout, $reserved, $retryInterval, $readTimeout);
+                self::$redis->rawCommand('auth', $username, $password);
             }catch (\Throwable $e) {
                 throw new \RuntimeException("Connect redis failed. Error: ".$e->getMessage(), 503);
             }
