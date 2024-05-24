@@ -112,6 +112,7 @@ class QueueScript extends \System\Core\Command
                     "file" => $e->getFile(),
                     "trace" => $e->getTraceAsString()
                 ]);
+                log_write($e);
                 return false;
             }
         }
@@ -137,6 +138,7 @@ class QueueScript extends \System\Core\Command
                 "file" => $e->getFile(),
                 "trace" => $e->getTraceAsString()
             ]);
+            log_write($e);
         }
         return null;
     }
@@ -196,6 +198,7 @@ class QueueScript extends \System\Core\Command
                 "file" => $e->getFile(),
                 "trace" => $e->getTraceAsString()
             ]);
+            log_write($e);
         }
     }
 
@@ -216,6 +219,7 @@ class QueueScript extends \System\Core\Command
                 "file" => $e->getFile(),
                 "trace" => $e->getTraceAsString()
             ]);
+            log_write($e);
         }
     }
 

@@ -37,7 +37,7 @@ class Files {
                 'filename' => $fileName,
                 'msg' => 'Success'
             ];
-        }catch (Exception $e){
+        }catch (\Exception $e){
             return [
                 'uploaded' => 0,
                 'url' => null,

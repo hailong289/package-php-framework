@@ -36,7 +36,9 @@ class Connection{
                 $retryInterval = $connection['retryInterval'];
                 $readTimeout = $connection['readTimeout'];
                 self::$redis->connect($host, $port, $timeout, $reserved, $retryInterval, $readTimeout);
-                self::$redis->rawCommand('auth', $username, $password);
+                if($username && $password) {
+                    self::$redis->rawCommand('auth', $username, $password);
+                }
             }catch (\Throwable $e) {
                 throw new \RuntimeException("Connect redis failed. Error: ".$e->getMessage(), 503);
             }
