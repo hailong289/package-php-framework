@@ -235,8 +235,8 @@ if(!function_exists('errors')){
 }
 
 if(!function_exists('val')){
-    function val($key = '') {
-        return $GLOBALS['share_data_view'][$key];
+    function val($key = '', $default = null) {
+        return $GLOBALS['share_data_view'][$key] ?? $default;
     }
 }
 

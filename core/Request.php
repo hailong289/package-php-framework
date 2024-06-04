@@ -30,13 +30,13 @@ class Request extends \stdClass {
         }
     }
 
-    public function value($key = '') {
+    public function value($key = '', $default = null) {
         $data = file_get_contents('php://input');
         if (is_string($data)) {
             $data = json_decode($data, true);
-            return $data[$key] ?? null;
+            return $data[$key] ?? $default;
         }
-        return $data[$key] ?? null;
+        return $data[$key] ?? $default;
     }
 
     private function get_data($key = '', $all = false){
@@ -84,38 +84,46 @@ class Request extends \stdClass {
     }
 
     public function file($key = ''){
-        if(!array_key_exists($key, $_FILES)) die('key not exit');
-        $this->file = $_FILES[$key];
+        $this->file = $_FILES[$key] ?? '';
         return $this;
     }
     public function get_file($key = ''){
-        if(!array_key_exists($key, $_FILES)) die('key not exit');
-        $this->file = $_FILES[$key];
+        $this->file = $_FILES[$key] ?? '';
         return $this->file;
     }
 
     public function tmp_name(){
-        if(empty($this->file)) die('key not exit');
+        if(empty($this->file)) {
+            throw new \Exception('File not set');
+        }
         return $this->file['tmp_name'];
     }
 
     public function size(){
-        if(empty($this->file)) die('key not exit');
+        if(empty($this->file)) {
+            throw new \Exception('File not set');
+        }
         return $this->file['size'];
     }
 
     public function type(){
-        if(empty($this->file)) die('key not exit');
+        if(empty($this->file)) {
+            throw new \Exception('File not set');
+        }
         return $this->file['type'];
     }
 
     public function error(){
-        if(empty($this->file)) die('key not exit');
+        if(empty($this->file)) {
+            throw new \Exception('File not set');
+        }
         return $this->file['error'];
     }
 
     public function originName(){
-        if(empty($this->file)) die('key not exit');
+        if(empty($this->file)) {
+            throw new \Exception('File not set');
+        }
         return current((explode(".", $this->file['name'])));
     }
 
