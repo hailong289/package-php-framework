@@ -1,7 +1,7 @@
 <?php
 namespace System\Core;
 
-use System\Middleware\Kernel;
+use Middleware\Kernel;
 
 class Router {
     private static $method = 'GET';
@@ -105,13 +105,16 @@ class Router {
                 }
             }
         }
-
-        if(empty($action) || count($current_router) == 0) throw new \RuntimeException("Not found", 404);
+        if(empty($action) || count($current_router) == 0) {
+            throw new \RuntimeException("Not found", 404);
+        }
         $names = $current_router['middleware'];
         if($names && is_string($names)) {
             $result = $this->middlewareWork($names);
             if($result->error_code){
                 echo json_encode($result);
+                exit();
+            } elseif (empty($result)) {
                 exit();
             }
         }elseif ($names && is_array($names)){
@@ -120,6 +123,9 @@ class Router {
             foreach ($names as $name){
                 $result = $this->middlewareWork($name);
                 if($result->error_code){
+                    $errors_return[] = $result;
+                    $is_error = true;
+                } elseif (empty($result)) {
                     $errors_return[] = $result;
                     $is_error = true;
                 }
