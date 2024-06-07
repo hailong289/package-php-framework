@@ -19,14 +19,12 @@
         "psr-4": {
             "System\\Trait\\": "trait/",
             "System\\Core\\": "core/",
-            "System\\Middleware\\": "middleware/",
             "System\\Queue\\": "queue/",
             "Scripts\\": "scripts/"
         },
         "classmap": [
             "trait/",
             "core/",
-            "middleware/",
             "queue/",
             "scripts/"
         ],
