@@ -480,7 +480,7 @@ trait QueryBuilder
             $result = self::modelInstance()->query($sql, true);
             self::reset();
             if($result){
-                return self::where('id','=', $result)->first();
+                return self::findById($result)->value();
             }
             return false;
         }
