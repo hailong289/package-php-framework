@@ -33,7 +33,7 @@ class Files {
             }
             return [
                 'uploaded' => 1,
-                'url' => $target_file,
+                'url' => url($path) . '/' . $fileName,
                 'filename' => $fileName,
                 'msg' => 'Success'
             ];
@@ -45,6 +45,21 @@ class Files {
                 'msg' => $e->getMessage() ?? 'Error upload file'
             ];
         }
+    }
+    public function removeFile($path)
+    {
+        $file = __DIR__ROOT .'/' . $path;
+        if (file_exists($file)) {
+            unlink($file);
+            return [
+                'status' => 1,
+                'msg' => 'Success'
+            ];
+        }
+        return [
+            'status' => 0,
+            'msg' => 'File not found'
+        ];
     }
 
     public function uploadAndResizeImage(
