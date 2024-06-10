@@ -582,6 +582,29 @@ trait QueryBuilder
         }
     }
 
+    public function updateOrInsert($data, $fieldOrId)
+    {
+        $tableName = self::$tableName ? self::$tableName:static::$tableName; // ko có sẽ lấy bên model
+        $where = '';
+        if(is_array($fieldOrId)) {
+            foreach ($fieldOrId as $key=>$value){
+                if (empty($where)) {
+                    $where = " WHERE {$key} = '$value'";
+                } else {
+                    $where .= " AND {$key} = '$value'";
+                }
+            }
+        } else {
+            $where = " WHERE id = $fieldOrId";
+        }
+        $sql_has_data = "SELECT count(*) as count FROM {$tableName}{$where} LIMIT 1";
+        $has_data = self::modelInstance()->query($sql_has_data)->fetch()->fetch(\PDO::FETCH_OBJ);
+        if(!empty($has_data->count)) {
+            return self::update($data, $fieldOrId);
+        }
+        return self::insert($data);
+    }
+
     private static function reset() {
         // reset
         self::$tableName = '';

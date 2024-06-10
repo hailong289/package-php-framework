@@ -184,7 +184,6 @@ class Database {
     {
         $instance = static::modelInstance();
         if (is_array($name)) {
-
             foreach ($name as $key=>$value) {
                 if(is_numeric($key)) {
                     $relation = $value;
