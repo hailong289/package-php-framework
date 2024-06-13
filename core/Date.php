@@ -6,29 +6,58 @@ class Date
 {
     private $date;
     private $format = 'Y-m-d H:i:s';
+    private $timezone = TIMEZONE;
 
-    public static function init($timezone = TIMEZONE)
+    public static function init()
     {
-        date_default_timezone_set($timezone);
         return new Date();
+    }
+
+    private function clearTimezone()
+    {
+        date_default_timezone_set(TIMEZONE); // clear timezone when success
+    }
+    
+    public function setTimezone($timezone = TIMEZONE)
+    {
+        $this->timezone = $timezone;
+        return $this;
     }
 
     public function get()
     {
         $this->date = date($this->format, strtotime($this->date));
-        date_default_timezone_set(TIMEZONE); // clear timezone when success
         return $this->date;
+    }
+
+    public function getTimestamp()
+    {
+        $timestamp = strtotime($this->date);
+        return $timestamp;
     }
 
     public function set($date)
     {
+        date_default_timezone_set($this->timezone);
         $this->date = date($date);
+        $this->clearTimezone();
+        return $this;
+    }
+
+    public function setTimestamp($timestamp)
+    {
+        date_default_timezone_set($this->timezone);
+        $timestamp = strtotime($timestamp);
+        $this->date = date($this->format, $timestamp);
+        $this->clearTimezone();
         return $this;
     }
 
     public function now()
     {
+        date_default_timezone_set($this->timezone);
         $this->date = date($this->format);
+        $this->clearTimezone();
         return $this;
     }
 
@@ -41,7 +70,7 @@ class Date
     public function addDay($number)
     {
         $newdate = strtotime("+$number day", strtotime($this->date));
-        $this->date = date($this->format, $add_date);
+        $this->date = date($this->format, $newdate);
         return $this;
     }
 

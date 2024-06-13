@@ -12,6 +12,11 @@ class Request extends \stdClass {
             }
         }
     }
+
+    public static function instance()
+    {
+        return new Request();
+    }
     
     public function get($key = '', $default = null){
         $method = $_SERVER['REQUEST_METHOD'];

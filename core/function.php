@@ -97,6 +97,43 @@ if(!function_exists('log_debug')){
     }
 }
 
+if(!function_exists('logs')){
+    interface InterfaceLogs {
+        public function dump(...$args);
+        public function write($data, $name_file = 'debug');
+        public function debug($data);
+    }
+    /**
+     * @return InterfaceLogs|__anonymous@2793
+     */
+    function logs(): object {
+        return new class implements InterfaceLogs {
+            public function dump(...$args) {
+                http_response_code(500);
+                echo "<pre>";
+                print_r($args);
+                echo "</pre>";
+                exit();
+            }
+            function write($data, $name_file = 'debug') {
+                $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
+                $data = json_encode($data);
+                if (!file_exists(__DIR__ROOT .'/storage')) {
+                    mkdir(__DIR__ROOT .'/storage', 0777, true);
+                }
+                file_put_contents(__DIR__ROOT ."/storage/$name_file.log",$date . $data . PHP_EOL, FILE_APPEND);
+                return $this;
+            }
+            function debug($data) {
+                $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
+                $data = json_encode($data);
+                file_put_contents(__DIR__ROOT .'/storage/debug.log',$date . $data . PHP_EOL, FILE_APPEND);
+                return $this;
+            }
+        };
+    }
+}
+
 if(!function_exists('log_write')){
     function log_write($e, $name = 'debug') {
         $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
@@ -215,11 +252,20 @@ if(!function_exists('uid')){
 }
 
 if(!function_exists('errors')){
+    interface InterfaceErrors {
+        public function get($key = '');
+        public function set($key = '', $value = '');
+        public function all();
+    }
+    /**
+     * @param $key
+     * @return object|InterfaceErrors|mixed|__anonymous@7689
+     */
     function errors($key = ''): object {
         if(!empty($key)) {
             return $GLOBALS['share_data_errors'][$key];
         }
-        return new class() {
+        return new class() implements InterfaceErrors {
             function get($key = '') {
                 return $GLOBALS['share_data_errors'][$key];
             }
@@ -241,8 +287,17 @@ if(!function_exists('val')){
 }
 
 if(!function_exists('res')){
+    interface InterfaceRes {
+        public function view($name, $data = [], $status = 200);
+        public function data($data = []);
+        public function json($data, $status = 200);
+    }
+
+    /**
+     * @return InterfaceRes|__anonymous@8576
+     */
     function res() {
-        return new class() {
+        return new class() implements InterfaceRes {
             function view($name, $data = [], $status = 200) {
                 $view = preg_replace('/([.]+)/', '/' , $name);
                 if(!file_exists(__DIR__ROOT . '/App/Views/'.$view.'.view.php')){
