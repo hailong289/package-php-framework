@@ -6,7 +6,7 @@ class QueueScript extends \System\Core\Command
     protected $command = 'queue:run';
     protected $command_description = 'Run a queue';
     protected $arguments = ['?connection'];
-    protected $options = ['queue','?timeout'];
+    protected $options = ['queue','?timeout','?type'];
     protected $jobs_queue = 'jobs';
     protected $connection = QUEUE_WORK;
     protected $timeout = QUEUE_TIMEOUT ?? 600; // default 10 minutes
@@ -24,6 +24,7 @@ class QueueScript extends \System\Core\Command
         $queue_name = $this->getOption('queue');
         $timeout_options = $this->getOption('timeout');
         $this->connection = $this->getArgument('connection') ?? QUEUE_WORK;
+        $type = $this->getOption('type');
         if($queue_name) $this->jobs_queue = $queue_name;
         if(!empty($timeout_options)) {
             $this->timeout = $timeout_options;
@@ -74,6 +75,7 @@ class QueueScript extends \System\Core\Command
                     $this->output()->text("$class failed ".PHP_EOL);
                 }
             }
+            if(!empty($type) && $type === 'live') $this->handle();
         }
     }
 
@@ -124,11 +126,15 @@ class QueueScript extends \System\Core\Command
         try {
             if ($db instanceof \System\Core\Database) {
                 $table = $this->jobs_queue === 'rollback_failed_job' ? 'failed_jobs' : 'jobs';
-                $queue = $this->jobs_queue === 'rollback_failed_job' ? 'failed_jobs' : 'jobs';
+                $queue = $this->jobs_queue === 'rollback_failed_job' ? 'failed_jobs' : $this->jobs_queue;
                 return $db->table($table)->where('queue', $queue)->get()->toArray();
             }
             if ($db instanceof \Redis) {
-                return $db->lrange("queue:{$this->jobs_queue}", 0, -1);
+                $queue_name = $this->jobs_queue;
+                if ($queue_name === 'rollback_failed_job') {
+                    $queue_name = 'failed_jobs';
+                }
+                return $db->lrange("queue:{$queue_name}", 0, -1);
             }
         }catch (\Throwable $e) {
             $this->output()->error([
@@ -206,10 +212,14 @@ class QueueScript extends \System\Core\Command
         try {
             if ($db instanceof \System\Core\Database) {
                 $table = $this->jobs_queue === 'rollback_failed_job' ? 'failed_jobs':'jobs';
-                $queue = $this->jobs_queue === 'rollback_failed_job' ? 'failed_jobs':'jobs';
+                $queue = $this->jobs_queue === 'rollback_failed_job' ? 'failed_jobs':$this->jobs_queue;
                 $db::table($table)->where('queue', $queue)->where('id', $index)->delete();
             } else if ($db instanceof \Redis) {
-                $db->lRem("queue:{$this->jobs_queue}", $queue_first, $index);
+                $queue_name = $this->jobs_queue;
+                if ($queue_name === 'rollback_failed_job') {
+                    $queue_name = 'failed_jobs';
+                }
+                $db->lRem("queue:{$queue_name}", $queue_first, $index);
             }
         }catch (\Throwable $e) {
             $this->output()->error([
