@@ -75,7 +75,7 @@ class Router {
                         $current_router = $router;
                     }
                 }
-            } else if($check_url_slug && $check_router_param) { // check router slug
+            } else if($check_url_slug && $check_router_param && empty($action)) { // check router slug
                 $path_arr = array_values(array_filter(explode('/',$path_router)));
                 $url_arr =  array_values(array_filter(explode('/', $url)));
                 if(
