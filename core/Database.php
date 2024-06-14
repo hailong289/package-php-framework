@@ -101,7 +101,7 @@ class Database {
                 return self::getAttribute($item, true);
             }, $data ?? []);
         }
-        return false;
+        return [];
     }
 
     public static function first(){
@@ -114,7 +114,7 @@ class Database {
             if (!empty($data_relation)) $data = $data_relation;
             return $data;
         }
-        return false;
+        return $instance->getCollection(null);
     }
 
     public static function firstArray(){
@@ -124,7 +124,7 @@ class Database {
         if (!empty($data)) {
             return self::getAttribute($data, true);
         }
-        return false;
+        return null;
     }
 
     public static function findById($id) {
@@ -138,7 +138,7 @@ class Database {
             if (!empty($data_relation)) $data = $data_relation;
             return $data;
         }
-        return false;
+        return $instance->getCollection(null);
     }
 
     public static function find($id) {
@@ -152,7 +152,7 @@ class Database {
             if (!empty($data_relation)) $data = $data_relation;
             return $data;
         }
-        return false;
+        return $instance->getCollection(null);
     }
     
     public static function count($key = '*', $as = 'count')
@@ -164,7 +164,7 @@ class Database {
             $data = $instance->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
             return $data;
         }
-        return false;
+        return $instance->getCollection(null);
     }
 
     public static function sum($key = '*', $as = '')
@@ -177,7 +177,7 @@ class Database {
             $data = $instance->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
             return $data;
         }
-        return false;
+        return $instance->getCollection(null);
     }
 
     public static function with($name)
