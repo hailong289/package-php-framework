@@ -28,8 +28,8 @@ class QueueScript extends \System\Core\Command
         $type = $this->getOption('type');
         $connection_arg = $this->getArgument('connection');
 
-        if($connection_arg) $this->connection = $connection_arg;
-        if($queue_name) $this->jobs_queue = $queue_name;
+        if(!empty($connection_arg)) $this->connection = $connection_arg;
+        if(!empty($queue_name)) $this->jobs_queue = $queue_name;
         if(!empty($timeout_options)) {
             $this->timeout = $timeout_options;
             ini_set('max_execution_time', $this->timeout);
