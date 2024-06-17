@@ -8,8 +8,8 @@ class QueueScript extends \System\Core\Command
     protected $arguments = ['?connection'];
     protected $options = ['queue','?timeout','?type'];
     protected $jobs_queue = 'jobs';
-    protected $connection = QUEUE_WORK;
-    protected $timeout = QUEUE_TIMEOUT ?? 600; // default 10 minutes
+    protected $connection = 'database';
+    protected $timeout = 600; // default 10 minutes
     private $queueRunning = null;
 
     public function __construct()
@@ -20,11 +20,15 @@ class QueueScript extends \System\Core\Command
     public function handle()
     {
         register_shutdown_function([$this, 'stopJobTimeout']);
+        $this->timeout = config_env('QUEUE_TIMEOUT', 600);
+        $this->connection = config_env('QUEUE_WORK', 'database');
 //      passthru('php cli.php run:queue work'); use queue live
         $queue_name = $this->getOption('queue');
         $timeout_options = $this->getOption('timeout');
-        $this->connection = $this->getArgument('connection') ?? QUEUE_WORK;
         $type = $this->getOption('type');
+        $connection_arg = $this->getArgument('connection');
+
+        if($connection_arg) $this->connection = $connection_arg;
         if($queue_name) $this->jobs_queue = $queue_name;
         if(!empty($timeout_options)) {
             $this->timeout = $timeout_options;
