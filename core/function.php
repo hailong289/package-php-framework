@@ -57,7 +57,7 @@ if(!function_exists('str_slug')){
         );
         $string = preg_replace($search, $replace, $str);
         $string = preg_replace('/(-)+/', $delimiter, $string);
-        $string = strtolower($string);
+        $string = rtrim(strtolower($string), $delimiter);
         return $string;
     }
 }

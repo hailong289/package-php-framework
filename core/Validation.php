@@ -9,8 +9,22 @@ class Validation {
      public static function create($data, $rules = []) {
          self::$errors = new \stdClass();
          self::$errors->errors = new \stdClass();
-         foreach ($data as $name=>$value) {
-             self::handleRule($name, $value, $rules, self::$errors);
+         if (!empty($data)) {
+             $keys_validate = array_keys($rules);
+             foreach ($keys_validate as $name) {
+                 if (!isset($data[$name])) {
+                     $value = '';
+                     self::handleRule($name, $value, $rules, self::$errors);
+                 } else {
+                     $value = $data[$name];
+                     self::handleRule($name, $value, $rules, self::$errors);
+                 }
+             }
+         } else {
+             $keys_validate = array_keys($rules);
+             foreach ($keys_validate as $name) {
+                 self::handleRule($name, '', $rules, self::$errors);
+             }
          }
          self::$data = $data;
          return new static();
