@@ -176,7 +176,8 @@ class Request extends \stdClass {
     }
 
     public function isJson(){
-        return $this->headers('Accept') && $this->headers('Accept') === 'application/json';
+        $accept = $this->headers('Accept');
+        return strpos($accept,'application/json') !== false;
     }
     
     public function next($string = ''){
