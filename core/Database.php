@@ -70,7 +70,8 @@ class Database {
         return self::$__conn->rollBack();
     }
 
-    public static function modelInstance() {
+    public static function instance()
+    {
         return new static();
     }
 
@@ -79,23 +80,21 @@ class Database {
         return $collection;
     }
 
-    public static function get(){
+    public function get(){
         $sql = self::sqlQuery();
-        $instance = static::modelInstance();
-        $data = $instance->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+        $data = $this->query($sql)->fetchAll(\PDO::FETCH_OBJ);
         if (!empty($data)) {
-            $data = $instance->getCollection($data)->map(fn ($item) => self::getAttribute($item));
+            $data = $this->getCollection($data)->map(fn ($item) => self::getAttribute($item));
             $data_relation = self::workRelation($data, 'get');
             if (!empty($data_relation)) $data = $data_relation;
             return $data;
         }
-        return $instance->getCollection([]);
+        return $this->getCollection([]);
     }
 
-    public static function getArray(){
+    public function getArray(){
         $sql = self::sqlQuery();
-        $instance = static::modelInstance();
-        $data = $instance->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
+        $data = $this->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
         if (!empty($data)) {
             return array_map(function ($item){
                 return self::getAttribute($item, true);
@@ -104,85 +103,79 @@ class Database {
         return [];
     }
 
-    public static function first(){
+    public function first(){
         $sql = self::sqlQuery();
-        $instance = static::modelInstance();
-        $data = $instance->query($sql)->fetch(\PDO::FETCH_OBJ);
+        $data = $this->query($sql)->fetch(\PDO::FETCH_OBJ);
         if (!empty($data)) {
-            $data = $instance->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
+            $data = $this->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
             $data_relation = self::workRelation($data, 'first');
             if (!empty($data_relation)) $data = $data_relation;
             return $data;
         }
-        return $instance->getCollection(null);
+        return $this->getCollection(null);
     }
 
-    public static function firstArray(){
+    public function firstArray(){
         $sql = self::sqlQuery();
-        $instance = static::modelInstance();
-        $data = $instance->query($sql)->fetch(\PDO::FETCH_ASSOC);
+        $data = $this->query($sql)->fetch(\PDO::FETCH_ASSOC);
         if (!empty($data)) {
             return self::getAttribute($data, true);
         }
         return null;
     }
 
-    public static function findById($id) {
+    public function findById($id) {
         $tableName = self::$tableName ? self::$tableName:static::$tableName;
-        $instance = static::modelInstance();
         $sql = "SELECT * FROM {$tableName} WHERE id = '$id'";
-        $data = $instance->query($sql)->fetch(\PDO::FETCH_OBJ);
+        $data = $this->query($sql)->fetch(\PDO::FETCH_OBJ);
         if (!empty($data)) {
-            $data = $instance->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
+            $data = $this->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
             $data_relation = self::workRelation($data, 'first');
             if (!empty($data_relation)) $data = $data_relation;
             return $data;
         }
-        return $instance->getCollection(null);
+        return $this->getCollection(null);
     }
 
-    public static function find($id) {
+    public function find($id) {
         $tableName = self::$tableName ? self::$tableName:static::$tableName;
-        $instance = static::modelInstance();
         $sql = "SELECT * FROM {$tableName} WHERE id = '$id'";
-        $data = $instance->query($sql)->fetch(\PDO::FETCH_OBJ);
+        $data = $this->query($sql)->fetch(\PDO::FETCH_OBJ);
         if (!empty($data)) {
-            $data = $instance->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
+            $data = $this->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
             $data_relation = self::workRelation($data, 'first');
             if (!empty($data_relation)) $data = $data_relation;
             return $data;
         }
-        return $instance->getCollection(null);
+        return $this->getCollection(null);
     }
     
-    public static function count($key = '*', $as = 'count')
+    public function count($key = '*', $as = 'count')
     {
         $sql = self::sqlQuery(false, "COUNT($key) as $as");
-        $instance = static::modelInstance();
-        $data = $instance->query($sql)->fetch(\PDO::FETCH_OBJ);
+        $data = $this->query($sql)->fetch(\PDO::FETCH_OBJ);
         if (!empty($data)) {
-            $data = $instance->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
+            $data = $this->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
             return $data;
         }
-        return $instance->getCollection(null);
+        return $this->getCollection(null);
     }
 
-    public static function sum($key = '*', $as = '')
+    public function sum($key = '*', $as = '')
     {
         if(empty($as)) $as = $key;
         $sql = self::sqlQuery(false, "SUM($key) as $as");
-        $instance = static::modelInstance();
-        $data = $instance->query($sql)->fetch(\PDO::FETCH_OBJ);
+        $data = $this->query($sql)->fetch(\PDO::FETCH_OBJ);
         if (!empty($data)) {
-            $data = $instance->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
+            $data = $this->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
             return $data;
         }
-        return $instance->getCollection(null);
+        return $this->getCollection(null);
     }
 
-    public static function with($name)
+    public function with($name)
     {
-        $instance = static::modelInstance();
+        $instance = static::instance();
         if (is_array($name)) {
             foreach ($name as $key=>$value) {
                 if(is_numeric($key)) {
@@ -220,7 +213,7 @@ class Database {
         $primary_key,
         $query
     ) {
-        $instance = static::modelInstance();
+        $instance = static::instance();
         if($relation === static::$HAS_MANY) {
             $db_table = class_exists($model) ? (new $model):Database::table($model);
             if(!empty($query)) $db_table = $query($db_table);

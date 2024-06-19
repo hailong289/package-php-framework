@@ -4,7 +4,7 @@ namespace System\Core;
 use System\Interfaces\FormRequestInterface\DataInterface;
 
 class FormRequest extends Request {
-    private $data_errors;
+    private $data_errors = null;
     private $data = [];
     public function __construct()
     {
@@ -71,10 +71,10 @@ class FormRequest extends Request {
                 return $this->data;
             }
             function toArray() {
-                return $this->data;
+                return convert_to_array($this->data);
             }
             function toJson() {
-                return $this->data;
+                return convert_to_object($this->data);
             }
         };
     }
