@@ -59,7 +59,7 @@ class QueueScript extends \System\Core\Command
                     ini_set('max_execution_time', $timeout); // timeout one job
                 }
                 $directory = __DIR__ROOT . "/$class.php";
-                $this->output()->text("$class running ".PHP_EOL);
+                $this->output()->text("$class running ");
                 try {
                     if (method_exists($class, 'handle')) {
                         $this->queueRunning = [
@@ -72,11 +72,11 @@ class QueueScript extends \System\Core\Command
                         $this->startRunQueue($db, $queue, $key, $class, $payload, $uid);
                     } else {
                         $this->stopQueue($db, $payload, $class, $uid, new \Exception("Function handle in class $class does not exit"));
-                        $this->output()->text("$class failed ".PHP_EOL);
+                        $this->output()->text("$class failed ");
                     }
                 } catch (\Throwable $e) {
                     $this->stopQueue($db, $payload, $class, $uid, $e);
-                    $this->output()->text("$class failed ".PHP_EOL);
+                    $this->output()->text("$class failed ");
                 }
             }
             if(!empty($type) && $type === 'live') $this->handle();
@@ -161,12 +161,12 @@ class QueueScript extends \System\Core\Command
             $work_class->handle();
             $end = new \DateTime();
             $time = $end->diff($start)->format('%H:%I:%S');
-            $this->output()->text("$class work success ---- Time: $time" . PHP_EOL);
+            $this->output()->text("$class work success ---- Time: $time");
         } catch (\Throwable $e) {
             $this->stopQueue($db, $payload, $class, $uid, $e);
             $end = new \DateTime();
             $time = $end->diff($start)->format('%H:%I:%S');
-            $this->output()->text("$class work failed ----  Time: $time" . PHP_EOL);
+            $this->output()->text("$class work failed ----  Time: $time");
         }
     }
 
@@ -240,7 +240,8 @@ class QueueScript extends \System\Core\Command
     private function stopJobTimeout() {
         $error = error_get_last();
         if(!is_null($error)) {
-            if (strpos($error['message'], "Maximum execution time of {$this->timeout} seconds exceeded") === false) {
+            $seconds = $this->timeout > 1 ? 'seconds':'second';
+            if (strpos($error['message'], "Maximum execution time of {$this->timeout} {$seconds} exceeded") === false) {
                 echo 'Other error: ' . print_r($error, true);
             } else {
                 $db = $this->getDB();

@@ -1,9 +1,11 @@
 <?php
 
 namespace System\Core;
+use System\Interfaces\FormRequestInterface\DataInterface;
 
 class FormRequest extends Request {
     private $data_errors;
+    private $data = [];
     public function __construct()
     {
         $this->validate();
@@ -16,20 +18,26 @@ class FormRequest extends Request {
         if(method_exists($this,'auth')) {
             if(!$this->auth()) {
                 http_response_code(403);
+                $data = [
+                    'message' => 'unauthorized',
+                    'code' => 403
+                ];
+                $name_view = 'error.index';
+                if (method_exists($this,'view_auth')) {
+                    $name_view = $this->view_auth();
+                }
+                if (method_exists($this,'data_auth')) {
+                    $data = $this->data_auth();
+                }
                 if ($is_json) {
-                    echo json_encode([
-                        'message' => 'unauthorized',
-                        'code' => 403
-                    ]);
+                    echo json_encode($data);
                     exit();
                 }
-                Response::view('error.index',[
-                    "message" => 'unauthorized',
-                    "code" => 403
-                ]);
+                Response::view($name_view, $data);
                 exit();
             }
         }
+
         if(!method_exists($this,'rules')) {
             $class = get_class($this);
             throw new \RuntimeException("Function rules does not exist in $class");
@@ -47,11 +55,27 @@ class FormRequest extends Request {
                 'errors' => $validate->errors()
             ];
         }
+        $this->data = $validate->data();
         return;
     }
 
     public function errors()
     {
         return $this->data_errors;
+    }
+
+    public function data()
+    {
+        return new class implements DataInterface {
+            function value() {
+                return $this->data;
+            }
+            function toArray() {
+                return $this->data;
+            }
+            function toJson() {
+                return $this->data;
+            }
+        };
     }
 }

@@ -9,6 +9,7 @@ class Response {
     }
     public static function json($data = [], $status = 200, $headers = [], $options = 0){
         http_response_code($status);
+        header('Accept: application/json');
         return $data;
     }
 

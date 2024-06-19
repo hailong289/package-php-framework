@@ -115,6 +115,13 @@ if(!function_exists('logs')){
                 echo "</pre>";
                 exit();
             }
+            public function dump_html(...$args) {
+                http_response_code(500);
+                echo "<pre>";
+                print_r($args, true);
+                echo "</pre>";
+                exit();
+            }
             function write($data, $name_file = 'debug') {
                 $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
                 $data = json_encode($data);
@@ -252,11 +259,6 @@ if(!function_exists('uid')){
 }
 
 if(!function_exists('errors')){
-    interface InterfaceErrors {
-        public function get($key = '');
-        public function set($key = '', $value = '');
-        public function all();
-    }
     /**
      * @param $key
      * @return object|InterfaceErrors|mixed|__anonymous@7689
@@ -265,7 +267,7 @@ if(!function_exists('errors')){
         if(!empty($key)) {
             return $GLOBALS['share_data_errors'][$key];
         }
-        return new class() implements InterfaceErrors {
+        return new class() implements \System\Interfaces\FunctionInterface\InterfaceErrors {
             function get($key = '') {
                 return $GLOBALS['share_data_errors'][$key];
             }
@@ -287,17 +289,11 @@ if(!function_exists('val')){
 }
 
 if(!function_exists('res')){
-    interface InterfaceRes {
-        public function view($name, $data = [], $status = 200);
-        public function data($data = []);
-        public function json($data, $status = 200);
-    }
-
     /**
      * @return InterfaceRes|__anonymous@8576
      */
     function res() {
-        return new class() implements InterfaceRes {
+        return new class() implements \System\Interfaces\FunctionInterface\InterfaceRes {
             function view($name, $data = [], $status = 200) {
                 $view = preg_replace('/([.]+)/', '/' , $name);
                 if(!file_exists(__DIR__ROOT . '/App/Views/'.$view.'.view.php')){
@@ -320,6 +316,7 @@ if(!function_exists('res')){
             }
             function json($data, $status = 200){
                 http_response_code($status);
+                header('Accept: application/json');
                 return $data;
             }
         };
@@ -331,5 +328,39 @@ if(!function_exists('collection')) {
     function collection($data)
     {
         return new \System\Core\Collection($data);
+    }
+}
+
+if (!function_exists('sendJobs')) {
+    /**
+     * @param $job
+     * @return InterfaceSendJob|__anonymous@10121
+     */
+    function sendJobs($job) {
+        $queue = \System\Queue\CreateQueue::instance();
+        return new class ($queue, $job) implements \System\Interfaces\FunctionInterface\InterfaceSendJob {
+            private $queue;
+            private $job;
+            function __construct(\System\Queue\CreateQueue $queue, $job) {
+                $this->queue = $queue;
+                $this->job = $job;
+            }
+            function connection($name) {
+                $this->queue->connection($name);
+                return $this;
+            }
+            function timeout($timeout) {
+                $this->queue->setTimeOut($timeout);
+                return $this;
+            }
+            function queue($name) {
+                $this->queue->setQueue($name);
+                return $this;
+            }
+            function work() {
+                $this->queue->enQueue($this->job);
+                return $this;
+            }
+        };
     }
 }
