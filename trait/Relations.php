@@ -44,7 +44,7 @@ trait Relations {
 
     public function belongsTo($model, $foreign_key, $key) {
         $parent_function = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'];
-        return $this->relations($model, $parent_function, $foreign_key, null, $key, self::$BELONG_TO);
+        return $this->relations($model, null, $parent_function, $foreign_key, null, $key, self::$BELONG_TO);
     }
 
     public function manyToMany($model, $model_many_to_many, $foreign_key, $foreign_key2, $key) {
