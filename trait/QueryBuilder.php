@@ -1,6 +1,8 @@
 <?php
 namespace System\Traits;
 
+use System\Core\Collection;
+
 trait QueryBuilder
 {
     private $tableName = '';
@@ -26,18 +28,19 @@ trait QueryBuilder
     private $pageSub = '';
     private $limitSub = '';
     private $groupBySub = '';
+    private static $data_relation = [];
 
-    private function startQuerySub(){ 
-        $this->startSub = true; 
+    private function startQuerySub(){
+        $this->startSub = true;
     }
-    
-    private function endQuerySub(){ 
-        $this->startSub = false; 
-        $this->resetSub(); 
+
+    private function endQuerySub(){
+        $this->startSub = false;
+        $this->resetSub();
     }
-    
-    private function isQuerySub(){ 
-        return $this->startSub; 
+
+    private function isQuerySub(){
+        return $this->startSub;
     }
 
     public function table($tableName)
@@ -647,7 +650,6 @@ trait QueryBuilder
         $this->pageSub = '';
         $this->limitSub = '';
         $this->groupBySub = '';
-        if (isset(static::$data_relation)) static::$data_relation = [];
     }
 
     private function operator($name, $isSub = false) {
@@ -667,7 +669,7 @@ trait QueryBuilder
 
     private function getAttribute($item, $is_array = false)
     {
-        $instance = !empty($this->getModel()) ? $this->getModel():$this;
+        $instance = $this->getModel();
         $keys = array_keys($is_array ? $item:get_object_vars($item));
         foreach ($keys as $key) {
             $name = ucfirst($key);
@@ -691,11 +693,168 @@ trait QueryBuilder
         return $item;
     }
     private function setAttribute($key, $val){
-        $instance = !empty($this->getModel()) ? $this->getModel():$this;
+        $instance = $this->getModel();
         if(method_exists($instance, "setAttribute$key")) {
             $val = $instance->{"setAttribute$key"}($val);
         }
         return $val;
     }
 
+    // relation
+    public function with($name)
+    {
+        $instance = $this->getModel();
+        if (is_array($name)) {
+            foreach ($name as $key=>$value) {
+                if(is_numeric($key)) {
+                    $relation = $value;
+                    if (method_exists($instance, $relation)) {
+                        $instance->{$relation}();
+                    }
+                } else {
+                    // query
+                    $query = $value;
+                    $relation = $key;
+                    if (method_exists($instance, $relation)) {
+                        $data_relation = $instance->{$relation}();
+                        self::$data_relation = $data_relation;
+                        if(!empty($this->data_relation)) {
+                            self::$data_relation['query'] = $query;
+                        }
+                    }
+                }
+            }
+            return $instance;
+        }
+        if (method_exists($instance, $name)) {
+            $instance->{$name}();
+        }
+        return $instance;
+    }
+
+    private function workRelation($data, $type = 'get') {
+        if(empty(self::$data_relation)) {
+            return false;
+        }
+        if($data instanceof Collection) {
+            if ($type === 'get') {
+                $result = $data->map(function ($item) {
+                    $keys = get_object_vars($item);
+                    $relation = self::$data_relation;
+//                    foreach ($this->data_relation as $key => $relation) {
+                    $primary_key = $relation['primary_key'];
+                    $foreign_key = $relation['foreign_key'];
+                    $foreign_key2 = $relation['foreign_key2'];
+                    $model = $relation['model'];
+                    $model_many = $relation['model_many'];
+                    $name = $relation['name'];
+                    $name_relation = $relation['relation'];
+                    $query = $relation['query'] ?? null;
+                    if (isset($keys[$primary_key])) {
+                        $item->{$name} =  $this->dataRelation(
+                            $name_relation,
+                            $model,
+                            $model_many,
+                            $foreign_key,
+                            $foreign_key2,
+                            $item->{$primary_key},
+                            $query
+                        );
+                    }
+//                    }
+                    return $item;
+                });
+                self::$data_relation = []; // reset when successful
+                return $result;
+            } else {
+                $result = $data->mapFirst(function ($item) {
+                    $keys = get_object_vars($item);
+                    $relation = self::$data_relation;
+//                    foreach (static::$data_relation as $key => $relation) {
+                    $primary_key = $relation['primary_key'];
+                    $foreign_key = $relation['foreign_key'];
+                    $foreign_key2 = $relation['foreign_key2'] ?? null;
+                    $model = $relation['model'];
+                    $model_many = $relation['model_many'] ?? null;
+                    $name = $relation['name'];
+                    $name_relation = $relation['relation'];
+                    $query = $relation['query'] ?? null;
+                    if (isset($keys[$primary_key])) {
+                        $item->{$name} = $this->dataRelation(
+                            $name_relation,
+                            $model,
+                            $model_many,
+                            $foreign_key,
+                            $foreign_key2,
+                            $item->{$primary_key},
+                            $query
+                        );
+                    }
+//                    }
+                    return $item;
+                });
+                self::$data_relation = []; // reset when successful
+                return $result;
+            }
+        }
+    }
+
+    private function dataRelation(
+        $relation,
+        $model,
+        $model_many,
+        $foreign_key,
+        $foreign_key2,
+        $primary_key,
+        $query
+    ) {
+        $instance = $this;
+        if($relation === $this->HAS_MANY) {
+            $db_table = class_exists($model) ? (new $model):$this->table($model);
+            if(!empty($query)) $db_table = $query($db_table);
+            $sql = $db_table->where($foreign_key, $primary_key)->clone();
+            $data = $instance->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+            return $instance->getCollection($data)->values();
+        } else if($relation === $this->BELONG_TO) {
+            $db_table = class_exists($model) ? (new $model):$this->table($model);
+            if(!empty($query)) $db_table = $query($db_table);
+            $sql = $db_table->where($foreign_key, $primary_key)->clone();
+            $data = $instance->query($sql)->fetch(\PDO::FETCH_OBJ);
+            return $instance->getCollection($data)->value();
+        } else if($relation === $this->MANY_TO_MANY) {
+            // get id 3rd table
+            $db_table_many = class_exists($model_many) ? (new $model_many):$this->table($model_many);
+            $sql_tb_3rd =  $db_table_many->where($foreign_key, $primary_key)->clone();
+            $data_tb_3rd = $instance->query($sql_tb_3rd)->fetchAll(\PDO::FETCH_OBJ);
+            $id_join = $instance->getCollection($data_tb_3rd)->dataColumn($foreign_key2)->values();
+            if(!empty($id_join)) {
+                $db_table = class_exists($model) ? (new $model):$this->table($model);
+                if(!empty($query)) $db_table = $query($db_table);
+                $sql = $db_table->whereIn('id', $id_join)->clone();
+                $data = $instance->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+                return $instance->getCollection($data)->values();
+            }
+            return [];
+        } else if($relation === $this->BELONG_TO_MANY) {
+            // get id 3rd table
+            $db_table_many = class_exists($model_many) ? (new $model_many):$this->table($model_many);
+            $sql_tb_3rd =  $db_table_many->where($foreign_key, $primary_key)->clone();
+            $data_tb_3rd = $instance->query($sql_tb_3rd)->fetchAll(\PDO::FETCH_OBJ);
+            $id_join = $instance->getCollection($data_tb_3rd)->dataColumn($foreign_key2)->toArray();
+            if(!empty($id_join)) {
+                $db_table = class_exists($model) ? (new $model):$this->table($model);
+                if(!empty($query)) $db_table = $query($db_table);
+                $sql = $db_table->whereIn('id', $id_join)->clone();
+                $data = $instance->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+                return $instance->getCollection($data)->values();
+            }
+            return [];
+        } else { // has one
+            $db_table = class_exists($model) ? (new $model):$this->table($model);
+            if(!empty($query)) $db_table = $query($db_table);
+            $sql = $db_table->where($foreign_key, $primary_key)->clone();
+            $data = $instance->query($sql)->fetch(\PDO::FETCH_OBJ);
+            return $instance->getCollection($data)->value();
+        }
+    }
 }
