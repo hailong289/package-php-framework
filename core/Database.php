@@ -53,6 +53,11 @@ class Database {
         return self::$log ?? '';
     }
 
+    public static function instance()
+    {
+        return new Database();
+    }
+
     public static function connection($env, $connection = 'mysql'){
         self::$__conn = Connection::getInstance($env, $connection);
         return new static();
