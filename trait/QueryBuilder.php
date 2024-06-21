@@ -492,9 +492,10 @@ trait QueryBuilder
             $value = rtrim($value, ',');
             $sql = "INSERT INTO $tableName($field) VALUES ($value)";
             $result = $this->query($sql, true);
+            $result = $this->findById($result)->value();
             $this->reset();
-            if($result){
-                return $this->findById($result)->value();
+            if ($result) {
+                return $result;
             }
             return false;
         }
