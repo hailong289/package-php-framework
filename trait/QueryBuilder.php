@@ -3,171 +3,178 @@ namespace System\Traits;
 
 trait QueryBuilder
 {
-    private static $tableName = '';
-    private static $where = '';
-    private static $select = '*';
-    private static $orderBy = '';
-    private static $operator = '';
-    private static $join = '';
-    private static $on = '';
-    private static $page = '';
-    private static $limit = '';
-    private static $subQuery = '';
-    private static $union = '';
-    private static $groupBy = '';
+    private $tableName = '';
+    private $where = '';
+    private $select = '*';
+    private $orderBy = '';
+    private $operator = '';
+    private $join = '';
+    private $on = '';
+    private $page = '';
+    private $limit = '';
+    private $union = '';
+    private $groupBy = '';
     // start query sub
-    private static $startSub = false;
-    private static $tableNameSub = '';
-    private static $whereSub = '';
-    private static $selectSub = '';
-    private static $orderBySub = '';
-    private static $operatorSub = '';
-    private static $joinSub = '';
-    private static $onSub = '';
-    private static $pageSub = '';
-    private static $limitSub = '';
-    private static $groupBySub = '';
-    private static $sqlSub = '';
+    private $startSub = false;
+    private $tableNameSub = '';
+    private $whereSub = '';
+    private $selectSub = '';
+    private $orderBySub = '';
+    private $operatorSub = '';
+    private $joinSub = '';
+    private $onSub = '';
+    private $pageSub = '';
+    private $limitSub = '';
+    private $groupBySub = '';
 
-    private static function startQuerySub(){ self::$startSub = true; }
-    private static function endQuerySub(){ self::$startSub = false; self::resetSub(); }
-    private static function isQuerySub(){ return self::$startSub; }
+    private function startQuerySub(){ 
+        $this->startSub = true; 
+    }
+    
+    private function endQuerySub(){ 
+        $this->startSub = false; 
+        $this->resetSub(); 
+    }
+    
+    private function isQuerySub(){ 
+        return $this->startSub; 
+    }
 
     public function table($tableName)
     {
-        if(self::isQuerySub()) {
-            self::$tableNameSub = $tableName;
+        if($this->isQuerySub()) {
+            $this->tableNameSub = $tableName;
             return $this;
         }
-        self::$tableName = $tableName;
+        $this->tableName = $tableName;
         return $this;
     }
 
     public function from($tableName)
     {
-        if(self::isQuerySub()) {
-            self::$tableNameSub = $tableName;
+        if($this->isQuerySub()) {
+            $this->tableNameSub = $tableName;
             return $this;
         }
-        self::$tableName = $tableName;
+        $this->tableName = $tableName;
         return $this;
     }
 
     public function subQuery($sql, $name)
     {
-        if(self::isQuerySub()) {
+        if($this->isQuerySub()) {
             return $this;
         }
         if(empty($name)) throw new \RuntimeException("table subQuery is not null", 500);
-        self::$tableName = "($sql) as $name";
+        $this->tableName = "($sql) as $name";
         return $this;
     }
 
     public function union($sql)
     {
-        if(self::isQuerySub()) {
+        if($this->isQuerySub()) {
             return $this;
         }
-        self::$union = " UNION $sql";
+        $this->union = " UNION $sql";
         return $this;
     }
 
     public function union_all($sql)
     {
-        if(self::isQuerySub()) {
+        if($this->isQuerySub()) {
             return $this;
         }
-        self::$union = " UNION ALL $sql";
+        $this->union = " UNION ALL $sql";
         return $this;
     }
 
     public function where($field, $compare = '=', $value = null)
     {
         if (is_callable($field)) {
-            self::startQuerySub();
+            $this->startQuerySub();
             $field($this);
-            $operator = self::operator('AND');
-            $subWhere = self::$whereSub;
-            self::$where .= "{$operator}({$subWhere})";
-            self::endQuerySub();
+            $operator = $this->operator('AND');
+            $subWhere = $this->whereSub;
+            $this->where .= "{$operator}({$subWhere})";
+            $this->endQuerySub();
             return $this;
         }
-        if(self::isQuerySub()) {
-            $operator = self::operator('AND', true);
+        if($this->isQuerySub()) {
+            $operator = $this->operator('AND', true);
             if(is_null($value)) {
                 $value = $compare;
                 $compare = '=';
             }
             $value = (is_numeric($value) ? $value:"'".$value."'");
-            self::$whereSub .= "{$operator}{$field} {$compare} {$value}";
+            $this->whereSub .= "{$operator}{$field} {$compare} {$value}";
             return $this;
         }
-        $operator = self::operator('AND');
+        $operator = $this->operator('AND');
         if(is_null($value)) {
             $value = $compare;
             $compare = '=';
         }
         $value = (is_numeric($value) ? $value:"'".$value."'");
-        self::$where .= "{$operator}{$field} {$compare} {$value}";
+        $this->where .= "{$operator}{$field} {$compare} {$value}";
         return $this;
     }
 
     public function orWhere($field, $compare = '=', $value = null)
     {
         if (is_callable($field)) {
-            self::startQuerySub();
+            $this->startQuerySub();
             $field($this);
-            $operator = self::operator('OR');
-            $subWhere = self::$whereSub;
-            self::$where .= "{$operator}({$subWhere})";
-            self::endQuerySub();
+            $operator = $this->operator('OR');
+            $subWhere = $this->whereSub;
+            $this->where .= "{$operator}({$subWhere})";
+            $this->endQuerySub();
             return $this;
         }
-        if(self::isQuerySub()) {
-            $operator = self::operator('OR', true);
+        if($this->isQuerySub()) {
+            $operator = $this->operator('OR', true);
             if(is_null($value)) {
                 $value = $compare;
                 $compare = '=';
             }
             $value = (is_numeric($value) ? $value:"'".$value."'");
-            self::$whereSub .= "{$operator}{$field} {$compare} {$value}";
+            $this->whereSub .= "{$operator}{$field} {$compare} {$value}";
             return $this;
         }
-        $operator = self::operator("OR");
+        $operator = $this->operator("OR");
         if(is_null($value)) {
             $value = $compare;
             $compare = '=';
         }
         $value = (is_numeric($value) ? $value:"'".$value."'");
-        self::$where .= "{$operator}{$field} {$compare} {$value}";
+        $this->where .= "{$operator}{$field} {$compare} {$value}";
         return $this;
     }
 
     public function whereLike($field, $value)
     {
-        if(self::isQuerySub()) {
-            $operator = self::operator('AND', true);
+        if($this->isQuerySub()) {
+            $operator = $this->operator('AND', true);
             $value = (is_numeric($value) ? $value:"'".$value."'");
-            self::$whereSub .= "{$operator}{$field} LIKE {$value}";
+            $this->whereSub .= "{$operator}{$field} LIKE {$value}";
             return $this;
         }
-        $operator = self::operator("AND");
+        $operator = $this->operator("AND");
         $value = (is_numeric($value) ? $value:"'".$value."'");
-        self::$where .= "{$operator}{$field} LIKE {$value}";
+        $this->where .= "{$operator}{$field} LIKE {$value}";
         return $this;
     }
 
     public function orWhereLike($field, $value)
     {
-        if(self::isQuerySub()) {
-            $operator = self::operator('OR', true);
+        if($this->isQuerySub()) {
+            $operator = $this->operator('OR', true);
             $value = (is_numeric($value) ? $value:"'".$value."'");
-            self::$whereSub .= "{$operator}{$field} LIKE {$value}";
+            $this->whereSub .= "{$operator}{$field} LIKE {$value}";
             return $this;
         }
-        $operator = self::operator("OR");
+        $operator = $this->operator("OR");
         $value = (is_numeric($value) ? $value:"'".$value."'");
-        self::$where .= "{$operator}{$field} LIKE {$value}";
+        $this->where .= "{$operator}{$field} LIKE {$value}";
         return $this;
     }
 
@@ -176,15 +183,15 @@ trait QueryBuilder
         if(!is_array($value)) {
             throw new \RuntimeException("Params of {$field} is not array function whereIn", 500);
         }
-        if(self::isQuerySub()) {
-            $operator = self::operator('AND', true);
+        if($this->isQuerySub()) {
+            $operator = $this->operator('AND', true);
             $value = implode(',', $value);
-            self::$whereSub .= "{$operator}{$field} IN ({$value})";
+            $this->whereSub .= "{$operator}{$field} IN ({$value})";
             return $this;
         }
-        $operator = self::operator("AND");
+        $operator = $this->operator("AND");
         $value = implode(',', $value);
-        self::$where .= "{$operator}{$field} IN ({$value})";
+        $this->where .= "{$operator}{$field} IN ({$value})";
         return $this;
     }
 
@@ -193,15 +200,15 @@ trait QueryBuilder
         if(!is_array($value)) {
             throw new \RuntimeException("Params of {$field} is not array function whereIn", 500);
         }
-        if(self::isQuerySub()) {
-            $operator = self::operator('OR', true);
+        if($this->isQuerySub()) {
+            $operator = $this->operator('OR', true);
             $value = implode(',', $value);
-            self::$whereSub .= "{$operator}{$field} IN ({$value})";
+            $this->whereSub .= "{$operator}{$field} IN ({$value})";
             return $this;
         }
-        $operator = self::operator("OR");
+        $operator = $this->operator("OR");
         $value = implode(',', $value);
-        self::$where .= "{$operator}{$field} IN ({$value})";
+        $this->where .= "{$operator}{$field} IN ({$value})";
         return $this;
     }
 
@@ -210,15 +217,15 @@ trait QueryBuilder
         if(!is_array($value)) {
             throw new \RuntimeException("Params of {$field} is not array function whereNotIn", 500);
         }
-        if(self::isQuerySub()) {
-            $operator = self::operator('AND', true);
+        if($this->isQuerySub()) {
+            $operator = $this->operator('AND', true);
             $value = implode(',', $value);
-            self::$whereSub .= "{$operator}{$field} NOT IN ({$value})";
+            $this->whereSub .= "{$operator}{$field} NOT IN ({$value})";
             return $this;
         }
-        $operator =  self::operator("AND");
+        $operator =  $this->operator("AND");
         $value = implode(',', $value);
-        self::$where .= "{$operator}{$field} NOT IN ({$value})";
+        $this->where .= "{$operator}{$field} NOT IN ({$value})";
         return $this;
     }
 
@@ -227,15 +234,15 @@ trait QueryBuilder
         if(!is_array($value)) {
             throw new \RuntimeException("Params of {$field} is not array function whereNotIn", 500);
         }
-        if(self::isQuerySub()) {
-            $operator = self::operator('OR', true);
+        if($this->isQuerySub()) {
+            $operator = $this->operator('OR', true);
             $value = implode(',', $value);
-            self::$whereSub .= "{$operator}{$field} NOT IN ({$value})";
+            $this->whereSub .= "{$operator}{$field} NOT IN ({$value})";
             return $this;
         }
-        $operator =  self::operator("OR");
+        $operator =  $this->operator("OR");
         $value = implode(',', $value);
-        self::$where .= "{$operator}{$field} NOT IN ({$value})";
+        $this->where .= "{$operator}{$field} NOT IN ({$value})";
         return $this;
     }
 
@@ -247,65 +254,65 @@ trait QueryBuilder
         if(count($value) > 2) {
             throw new \RuntimeException("The value in the array is more than 2 function whereBetween", 500);
         }
-        if(self::isQuerySub()) {
-            $operator = self::operator('OR', true);
-            self::$whereSub .= "{$operator}{$field} BETWEEN '{$value[0]}' AND '{$value[1]}'";
+        if($this->isQuerySub()) {
+            $operator = $this->operator('OR', true);
+            $this->whereSub .= "{$operator}{$field} BETWEEN '{$value[0]}' AND '{$value[1]}'";
             return $this;
         }
-        $operator = self::operator("AND");
-        self::$where .= "{$operator}{$field} BETWEEN '{$value[0]}' AND '{$value[1]}'";
+        $operator = $this->operator("AND");
+        $this->where .= "{$operator}{$field} BETWEEN '{$value[0]}' AND '{$value[1]}'";
         return $this;
     }
 
     public function whereRaw($sql) {
-        if(self::isQuerySub()) {
-            $operator = self::operator('AND', true);
-            self::$whereSub .= "{$operator}{$sql}";
+        if($this->isQuerySub()) {
+            $operator = $this->operator('AND', true);
+            $this->whereSub .= "{$operator}{$sql}";
             return $this;
         }
-        $operator = self::operator("AND");
-        self::$where .= "{$operator}{$sql}";
+        $operator = $this->operator("AND");
+        $this->where .= "{$operator}{$sql}";
         return $this;
     }
 
     public function orWhereRaw($sql) {
-        if(self::isQuerySub()) {
-            $operator = self::operator('OR', true);
-            self::$whereSub .= "{$operator}{$sql}";
+        if($this->isQuerySub()) {
+            $operator = $this->operator('OR', true);
+            $this->whereSub .= "{$operator}{$sql}";
             return $this;
         }
-        $operator = self::operator("OR");
-        self::$where .= "{$operator}{$sql}";
+        $operator = $this->operator("OR");
+        $this->where .= "{$operator}{$sql}";
         return $this;
     }
 
     public function select($field){
-        if(self::isQuerySub()) {
+        if($this->isQuerySub()) {
             $field = (is_array($field)) ? implode(", ", $field):$field;
-            self::$selectSub = $field;
+            $this->selectSub = $field;
             return $this;
         }
         $field = (is_array($field)) ? implode(", ", $field):$field;
-        self::$select = $field;
+        $this->select = $field;
         return $this;
     }
 
     public function orderBy($field, $orderBy = 'ASC'){
-        if(self::isQuerySub()) {
+        if($this->isQuerySub()) {
             return $this;
         }
-        self::$orderBy = " ORDER BY {$field} {$orderBy} ";
+        $this->orderBy = " ORDER BY {$field} {$orderBy} ";
         return $this;
     }
 
     public function join($table, $function = ''){
-        if(self::isQuerySub()) {
+        if($this->isQuerySub()) {
             return $this;
         }
-        if (empty(self::$join)) {
-            self::$join = " INNER JOIN {$table}";
+        if (empty($this->join)) {
+            $this->join = " INNER JOIN {$table}";
         } else {
-            self::$join .= " INNER JOIN {$table}";
+            $this->join .= " INNER JOIN {$table}";
         }
         if (is_callable($function)) {
             $function($this);
@@ -314,13 +321,13 @@ trait QueryBuilder
     }
 
     public function leftJoin($table, $function = ''){
-        if(self::isQuerySub()) {
+        if($this->isQuerySub()) {
             return $this;
         }
-        if (empty(self::$join)) {
-            self::$join = " LEFT JOIN {$table}";
+        if (empty($this->join)) {
+            $this->join = " LEFT JOIN {$table}";
         } else {
-            self::$join .= " LEFT JOIN {$table}";
+            $this->join .= " LEFT JOIN {$table}";
         }
         if (is_callable($function)) {
             $function($this);
@@ -329,13 +336,13 @@ trait QueryBuilder
     }
 
     public function rightJoin($table, $function = ''){
-        if(self::isQuerySub()) {
+        if($this->isQuerySub()) {
             return $this;
         }
-        if (empty(self::$join)) {
-            self::$join = " RIGHT JOIN {$table}";
+        if (empty($this->join)) {
+            $this->join = " RIGHT JOIN {$table}";
         } else {
-            self::$join .= " RIGHT JOIN {$table}";
+            $this->join .= " RIGHT JOIN {$table}";
         }
         if (is_callable($function)) {
             $function($this);
@@ -344,42 +351,42 @@ trait QueryBuilder
     }
 
     public function on($field1, $compare, $field2, $operator = ''){
-        if(self::isQuerySub()) {
+        if($this->isQuerySub()) {
             return $this;
         }
-        if(!empty(self::$on)){
+        if(!empty($this->on)){
             $operator = empty($operator) ? "AND":$operator;
-            self::$operator = " {$operator} ";
+            $this->operator = " {$operator} ";
         }else{
-            self::$operator = " ON ";
+            $this->operator = " ON ";
         }
-        $operator = self::$operator;
-        self::$join .= "{$operator} {$field1} {$compare} {$field2}";
+        $operator = $this->operator;
+        $this->join .= "{$operator} {$field1} {$compare} {$field2}";
         return $this;
     }
 
     public function groupBy($field){
-        if(self::isQuerySub()) {
+        if($this->isQuerySub()) {
             return $this;
         }
         $field = is_array($field) ? implode(',',$field):$field;
-        self::$groupBy = " GROUP BY {$field}";
+        $this->groupBy = " GROUP BY {$field}";
         return $this;
     }
 
     public function page($page){
-        if(self::isQuerySub()) {
+        if($this->isQuerySub()) {
             return $this;
         }
-        self::$page = $page;
+        $this->page = $page;
         return $this;
     }
 
     public function limit($limit){
-        if(self::isQuerySub()) {
+        if($this->isQuerySub()) {
             return $this;
         }
-        self::$limit = $limit;
+        $this->limit = $limit;
         return $this;
     }
 
@@ -410,16 +417,16 @@ trait QueryBuilder
     }
 
     private function sqlQuery($is_delete = false, $query = null){
-        $select = self::$select;
-        $tableName = self::$tableName;
-        $join = self::$join;
-        $where = self::$where;
-        $orderBy = self::$orderBy;
-        $groupBy = self::$groupBy;
+        $select = $this->select;
+        $tableName = $this->tableName;
+        $join = $this->join;
+        $where = $this->where;
+        $orderBy = $this->orderBy;
+        $groupBy = $this->groupBy;
         $fieldTable = static::$field ?? '';
-        $offset = is_numeric(self::$page) && is_numeric(self::$limit) ? ' OFFSET '.self::$page * self::$limit:'';
-        $limit = is_numeric(self::$limit) ? " LIMIT ".self::$limit:'';
-        $union = self::$union;
+        $offset = is_numeric($this->page) && is_numeric($this->limit) ? ' OFFSET '.$this->page * $this->limit:'';
+        $limit = is_numeric($this->limit) ? " LIMIT ".$this->limit:'';
+        $union = $this->union;
 
         if (empty($select)) {
             if (empty($fieldTable)) {
@@ -437,19 +444,19 @@ trait QueryBuilder
         if ($is_delete) {
             $sql = "DELETE FROM {$tableName}{$where}{$limit}";
             $sql = trim($sql);
-            self::reset();
+            $this->reset();
             return $sql;
         }
 
         $sql = "SELECT {$select} FROM {$tableName}{$join}
         {$where}{$groupBy}{$orderBy}{$limit}{$offset}{$union}";
         $sql = trim($sql);
-        self::reset();
+        $this->reset();
         return $sql;
     }
 
     public function create($data){
-        $tableName = self::$tableName;
+        $tableName = $this->tableName;
         $fieldTable = static::$field ?? [];
         $fieldTableNone = [];
         if(!empty($data)){
@@ -459,7 +466,7 @@ trait QueryBuilder
                 if (!in_array($key, $fieldTable)) {
                     $fieldTableNone[] = $key;
                 }
-                $val = self::setAttribute($key, $val);
+                $val = $this->setAttribute($key, $val);
                 $field .= $key . ',';
                 $value .= "'".$val."'". ",";
             }
@@ -478,21 +485,21 @@ trait QueryBuilder
             $value = rtrim($value, ',');
             $sql = "INSERT INTO $tableName($field) VALUES ($value)";
             $result = $this->query($sql, true);
-            self::reset();
+            $this->reset();
             if($result){
-                return self::findById($result)->value();
+                return $this->findById($result)->value();
             }
             return false;
         }
     }
 
     public function insert($data){
-        $tableName = self::$tableName;
+        $tableName = $this->tableName;
         if(!empty($data)){
             $field = '';
             $value = '';
             foreach($data as $key=>$val){
-                $val = self::setAttribute($key, $val);
+                $val = $this->setAttribute($key, $val);
                 $field .= $key . ',';
                 $value .= "'".$val."'". ",";
             }
@@ -506,7 +513,7 @@ trait QueryBuilder
             $value = rtrim($value, ',');
             $sql = "INSERT INTO $tableName($field) VALUES ($value)";
             $status = $this->query($sql);
-            self::reset();
+            $this->reset();
             if($status){
                 return true;
             }
@@ -515,12 +522,12 @@ trait QueryBuilder
     }
 
     public function insertLastId($data){
-        $tableName = self::$tableName;
+        $tableName = $this->tableName;
         if(!empty($data)){
             $field = '';
             $value = '';
             foreach($data as $key=>$val){
-                $val = self::setAttribute($key, $val);
+                $val = $this->setAttribute($key, $val);
                 $field .= $key . ',';
                 $value .= "'".$val."'". ",";
             }
@@ -534,7 +541,7 @@ trait QueryBuilder
             $value = rtrim($value, ',');
             $sql = "INSERT INTO $tableName($field) VALUES ($value)";
             $result = $this->query($sql, true);
-            self::reset();
+            $this->reset();
             if($result){
                 return $result;
             }
@@ -543,11 +550,11 @@ trait QueryBuilder
     }
 
     public function update($data, $fieldOrId = null){
-        $tableName = self::$tableName;
+        $tableName = $this->tableName;
         if(!empty($data)){
             $compare = '';
             foreach($data as $key=>$val){
-                $val = self::setAttribute($key, $val);
+                $val = $this->setAttribute($key, $val);
                 $compare .= $key." = '".$val."', ";
             }
             if (isset(static::$times_auto) && static::$times_auto) {
@@ -557,7 +564,7 @@ trait QueryBuilder
             }
             $where = '';
             if(empty($fieldOrId)) {
-                $where = self::$where;
+                $where = $this->where;
             } else {
                 if(is_array($fieldOrId)){
                     foreach ($fieldOrId as $key=>$value){
@@ -574,7 +581,7 @@ trait QueryBuilder
             $compare = rtrim($compare, ", ");
             $sql = "UPDATE {$tableName} SET {$compare}{$where}";
             $status = $this->query($sql);
-            self::reset();
+            $this->reset();
             if($status){
                 return true;
             }
@@ -584,7 +591,7 @@ trait QueryBuilder
 
     public function updateOrInsert($data, $fieldOrId)
     {
-        $tableName = self::$tableName;
+        $tableName = $this->tableName;
         $where = '';
         if(is_array($fieldOrId)) {
             foreach ($fieldOrId as $key=>$value){
@@ -600,59 +607,59 @@ trait QueryBuilder
         $sql_has_data = "SELECT count(*) as count FROM {$tableName}{$where} LIMIT 1";
         $has_data = $this->query($sql_has_data)->fetch()->fetch(\PDO::FETCH_OBJ);
         if(!empty($has_data->count)) {
-            return self::update($data, $fieldOrId);
+            return $this->update($data, $fieldOrId);
         }
-        return self::insert($data);
+        return $this->insert($data);
     }
 
-    private static function reset() {
+    private function reset() {
         // reset
-        self::$tableName = '';
-        self::$where = '';
-        self::$select = '*';
-        self::$orderBy = '';
-        self::$operator = '';
-        self::$join = '';
-        self::$on = '';
-        self::$page = '';
-        self::$limit = '';
-        self::$union = '';
-        self::$groupBy = '';
+        $this->tableName = '';
+        $this->where = '';
+        $this->select = '*';
+        $this->orderBy = '';
+        $this->operator = '';
+        $this->join = '';
+        $this->on = '';
+        $this->page = '';
+        $this->limit = '';
+        $this->union = '';
+        $this->groupBy = '';
     }
 
-    private static function resetSub() {
+    private function resetSub() {
         // reset
-        self::$tableNameSub = '';
-        self::$whereSub = '';
-        self::$selectSub = '';
-        self::$orderBySub = '';
-        self::$operatorSub = '';
-        self::$joinSub = '';
-        self::$onSub = '';
-        self::$pageSub = '';
-        self::$limitSub = '';
-        self::$groupBySub = '';
+        $this->tableNameSub = '';
+        $this->whereSub = '';
+        $this->selectSub = '';
+        $this->orderBySub = '';
+        $this->operatorSub = '';
+        $this->joinSub = '';
+        $this->onSub = '';
+        $this->pageSub = '';
+        $this->limitSub = '';
+        $this->groupBySub = '';
         if (isset(static::$data_relation)) static::$data_relation = [];
     }
 
-    private static function operator($name, $isSub = false) {
+    private function operator($name, $isSub = false) {
         if($isSub) {
-            if (!empty(self::$whereSub)) {
-                self::$operatorSub = " $name ";
+            if (!empty($this->whereSub)) {
+                $this->operatorSub = " $name ";
             }
-            return self::$operatorSub;
+            return $this->operatorSub;
         }
-        if (empty(self::$where)) {
-            self::$operator = " WHERE ";
+        if (empty($this->where)) {
+            $this->operator = " WHERE ";
         } else {
-            self::$operator = " $name ";
+            $this->operator = " $name ";
         }
-        return self::$operator;
+        return $this->operator;
     }
 
-    private static function getAttribute($item, $is_array = false)
+    private function getAttribute($item, $is_array = false)
     {
-        $instance = new static();
+        $instance = !empty($this->getModel()) ? $this->getModel():$this;
         $keys = array_keys($is_array ? $item:get_object_vars($item));
         foreach ($keys as $key) {
             $name = ucfirst($key);
@@ -675,8 +682,8 @@ trait QueryBuilder
         }
         return $item;
     }
-    private static function setAttribute($key, $val){
-        $instance = new static();
+    private function setAttribute($key, $val){
+        $instance = !empty($this->getModel()) ? $this->getModel():$this;
         if(method_exists($instance, "setAttribute$key")) {
             $val = $instance->{"setAttribute$key"}($val);
         }

@@ -8,9 +8,18 @@ class Database {
     private static $enableLog = false;
     private static $log = [];
     private static $collection;
-    public function __construct()
+    private $model;
+    public function __construct($model = '')
     {
         self::$__conn = Connection::getInstance(DB_ENVIRONMENT, DB_CONNECTION);
+        if (!empty($model)) {
+            $this->model = $model;
+        }
+    }
+
+    private function getModel()
+    {
+        return new $this->model;
     }
 
     public function query($sql, $last_id = false){

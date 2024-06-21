@@ -5,7 +5,9 @@ class Model {
 
     private static function DB()
     {
-       return new Database();
+        $call_class = get_called_class();
+        $db = new Database($call_class);
+        return $db;
     }
 
     private static function getTable()
