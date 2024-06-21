@@ -4,17 +4,17 @@ namespace System\Traits;
 
 trait Relations {
 
-    protected static $HAS_MANY = 'HAS_MANY';
-    protected static $HAS_ONE = 'HAS_ONE';
-    protected static $BELONG_TO = 'BELONG_TO';
-    protected static $MANY_TO_MANY = 'MANY_TO_MANY';
-    protected static $BELONG_TO_MANY = 'BELONG_TO_MANY';
-    protected static $data_relation;
+    public $HAS_MANY = 'HAS_MANY';
+    public $HAS_ONE = 'HAS_ONE';
+    public $BELONG_TO = 'BELONG_TO';
+    public $MANY_TO_MANY = 'MANY_TO_MANY';
+    public $BELONG_TO_MANY = 'BELONG_TO_MANY';
+    public $data_relation;
 
     private function relations($model, $model_many = null, $name, $foreign_key, $foreign_key2 = null, $primary_key, $relation)
     {
         $log_debug = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1];
-        self::$data_relation[] = [
+        $this->data_relation[] = [
             'model' => $model,
             'model_many' => $model_many,
             'name' => $name,

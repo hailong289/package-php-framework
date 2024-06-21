@@ -9,10 +9,13 @@ class Database {
     private static $log = [];
     private static $collection;
     private $model;
-    public function __construct($model = '')
+    public function __construct($model = '', $column = [])
     {
         self::$__conn = Connection::getInstance(DB_ENVIRONMENT, DB_CONNECTION);
         if (!empty($model)) {
+            foreach ($column as $key => $value) {
+                $this->{$key} = $value;
+            }
             $this->model = $model;
         }
     }

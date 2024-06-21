@@ -6,7 +6,8 @@ class Model {
     private static function DB()
     {
         $call_class = get_called_class();
-        $db = new Database($call_class);
+        $var = get_class_vars($call_class);
+        $db = new Database($call_class, $var);
         return $db;
     }
 

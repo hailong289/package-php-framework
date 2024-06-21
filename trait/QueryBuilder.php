@@ -423,7 +423,7 @@ trait QueryBuilder
         $where = $this->where;
         $orderBy = $this->orderBy;
         $groupBy = $this->groupBy;
-        $fieldTable = static::$field ?? '';
+        $fieldTable = $this->field ?? '';
         $offset = is_numeric($this->page) && is_numeric($this->limit) ? ' OFFSET '.$this->page * $this->limit:'';
         $limit = is_numeric($this->limit) ? " LIMIT ".$this->limit:'';
         $union = $this->union;
@@ -457,7 +457,7 @@ trait QueryBuilder
 
     public function create($data){
         $tableName = $this->tableName;
-        $fieldTable = static::$field ?? [];
+        $fieldTable = $this->field ?? [];
         $fieldTableNone = [];
         if(!empty($data)){
             $field = '';
@@ -470,14 +470,14 @@ trait QueryBuilder
                 $field .= $key . ',';
                 $value .= "'".$val."'". ",";
             }
-            if (isset(static::$times_auto) && static::$times_auto) {
-                $date_create = static::$date_create ?? 'date_created';
+            if (isset($this->times_auto) && $this->times_auto) {
+                $date_create = $this->date_create ?? 'date_created';
                 $now = date('Y-m-d H:i:s');
                 $field .= "{$date_create},";
                 $value .= "'".$now."'". ",";
             }
             if(count($fieldTableNone) > 0){
-                $class = get_class(new static());
+                $class = get_class($this);
                 $fieldTableNone = implode(',', $fieldTableNone);
                 throw new \RuntimeException("Missing $fieldTableNone in fieldTable class $class", 500);
             }
@@ -503,8 +503,8 @@ trait QueryBuilder
                 $field .= $key . ',';
                 $value .= "'".$val."'". ",";
             }
-            if (isset(static::$times_auto) && static::$times_auto) {
-                $date_create = static::$date_create ?? 'date_created';
+            if (isset($this->times_auto) && $this->times_auto) {
+                $date_create = $this->date_create ?? 'date_created';
                 $now = date('Y-m-d H:i:s');
                 $field .= "{$date_create},";
                 $value .= "'".$now."'". ",";
@@ -531,8 +531,8 @@ trait QueryBuilder
                 $field .= $key . ',';
                 $value .= "'".$val."'". ",";
             }
-            if (isset(static::$times_auto) && static::$times_auto) {
-                $date_create = static::$date_create ?? 'date_created';
+            if (isset($this->times_auto) && $this->times_auto) {
+                $date_create = $this->date_create ?? 'date_created';
                 $now = date('Y-m-d H:i:s');
                 $field .= "{$date_create},";
                 $value .= "'".$now."'". ",";
@@ -557,8 +557,8 @@ trait QueryBuilder
                 $val = $this->setAttribute($key, $val);
                 $compare .= $key." = '".$val."', ";
             }
-            if (isset(static::$times_auto) && static::$times_auto) {
-                $date_update = static::$date_update ?? 'date_updated';
+            if (isset($this->times_auto) && $this->times_auto) {
+                $date_update = $this->date_update ?? 'date_updated';
                 $now = date('Y-m-d H:i:s');
                 $compare .= $date_update." = '".$now."', ";
             }
