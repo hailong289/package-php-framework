@@ -94,7 +94,7 @@ trait QueryBuilder
         }
         if(self::isQuerySub()) {
             $operator = self::operator('AND', true);
-            if(empty($value)) {
+            if(is_null($value)) {
                 $value = $compare;
                 $compare = '=';
             }
@@ -103,7 +103,7 @@ trait QueryBuilder
             return $this;
         }
         $operator = self::operator('AND');
-        if(empty($value)) {
+        if(is_null($value)) {
             $value = $compare;
             $compare = '=';
         }
@@ -125,7 +125,7 @@ trait QueryBuilder
         }
         if(self::isQuerySub()) {
             $operator = self::operator('OR', true);
-            if(empty($value)) {
+            if(is_null($value)) {
                 $value = $compare;
                 $compare = '=';
             }
@@ -134,7 +134,7 @@ trait QueryBuilder
             return $this;
         }
         $operator = self::operator("OR");
-        if(empty($value)) {
+        if(is_null($value)) {
             $value = $compare;
             $compare = '=';
         }
