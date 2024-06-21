@@ -137,7 +137,7 @@ class Database {
     }
 
     public function findById($id) {
-        $tableName = self::$tableName ? self::$tableName:static::$tableName;
+        $tableName = $this->tableName;
         $sql = "SELECT * FROM {$tableName} WHERE id = '$id'";
         $data = $this->query($sql)->fetch(\PDO::FETCH_OBJ);
         if (!empty($data)) {
@@ -150,7 +150,7 @@ class Database {
     }
 
     public function find($id) {
-        $tableName = self::$tableName ? self::$tableName:static::$tableName;
+        $tableName = $this->tableName;
         $sql = "SELECT * FROM {$tableName} WHERE id = '$id'";
         $data = $this->query($sql)->fetch(\PDO::FETCH_OBJ);
         if (!empty($data)) {
