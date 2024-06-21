@@ -137,8 +137,7 @@ class Database {
     }
 
     public function findById($id) {
-        $tableName = $this->tableName;
-        $sql = "SELECT * FROM {$tableName} WHERE id = '$id'";
+        $sql = $this->sqlQuery(false, null, $id);
         $data = $this->query($sql)->fetch(\PDO::FETCH_OBJ);
         if (!empty($data)) {
             $data = $this->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
@@ -150,8 +149,7 @@ class Database {
     }
 
     public function find($id) {
-        $tableName = $this->tableName;
-        $sql = "SELECT * FROM {$tableName} WHERE id = '$id'";
+        $sql = $this->sqlQuery(false, null, $id);
         $data = $this->query($sql)->fetch(\PDO::FETCH_OBJ);
         if (!empty($data)) {
             $data = $this->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));

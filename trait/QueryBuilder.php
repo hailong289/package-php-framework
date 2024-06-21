@@ -416,7 +416,7 @@ trait QueryBuilder
         return $sql;
     }
 
-    private function sqlQuery($is_delete = false, $query = null){
+    private function sqlQuery($is_delete = false, $query = null, $byId = 0){
         $select = $this->select;
         $tableName = $this->tableName;
         $join = $this->join;
@@ -439,6 +439,13 @@ trait QueryBuilder
 
         if(!empty($query)) { // use count, sum
             $select = $query;
+        }
+
+        if ($byId) {
+            $sql = "SELECT {$select} FROM {$tableName} WHERE id = '$byId' LIMIT 1";
+            $sql = trim($sql);
+            $this->reset();
+            return $sql;
         }
 
         if ($is_delete) {
