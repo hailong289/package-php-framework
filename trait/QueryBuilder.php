@@ -616,7 +616,7 @@ trait QueryBuilder
             $where = " WHERE id = $fieldOrId";
         }
         $sql_has_data = "SELECT count(*) as count FROM {$tableName}{$where} LIMIT 1";
-        $has_data = $this->query($sql_has_data)->fetch()->fetch(\PDO::FETCH_OBJ);
+        $has_data = $this->query($sql_has_data)->fetch(\PDO::FETCH_OBJ);
         if(!empty($has_data->count)) {
             return $this->update($data, $fieldOrId);
         }
@@ -707,9 +707,16 @@ trait QueryBuilder
         if (is_array($name)) {
             foreach ($name as $key=>$value) {
                 if(is_numeric($key)) {
-                    $relation = $value;
+                    $explode = explode(':', $value);
+                    $relation = $explode[0] ?? $value;
                     if (method_exists($instance, $relation)) {
-                        $instance->{$relation}();
+                        $data_relation = $instance->{$relation}();
+                        self::$data_relation = $data_relation;
+                        if (!empty($explode[1]) && !empty(self::$data_relation)) {
+                            self::$data_relation['query'] = function ($query) use ($explode) {
+                                return $query->select($explode[1]);
+                            };
+                        }
                     }
                 } else {
                     // query
@@ -718,16 +725,15 @@ trait QueryBuilder
                     if (method_exists($instance, $relation)) {
                         $data_relation = $instance->{$relation}();
                         self::$data_relation = $data_relation;
-                        if(!empty($this->data_relation)) {
-                            self::$data_relation['query'] = $query;
-                        }
+                        if(!empty(self::$data_relation)) self::$data_relation['query'] = $query;
                     }
                 }
             }
             return $instance;
         }
         if (method_exists($instance, $name)) {
-            $instance->{$name}();
+            $data_relation = $instance->{$name}();
+            self::$data_relation = $data_relation;
         }
         return $instance;
     }
