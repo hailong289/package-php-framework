@@ -81,7 +81,7 @@ trait QueryBuilder
         return $this;
     }
 
-    public function where($field, $compare = '=', $value = '')
+    public function where($field, $compare = '=', $value = null)
     {
         if (is_callable($field)) {
             self::startQuerySub();
@@ -112,7 +112,7 @@ trait QueryBuilder
         return $this;
     }
 
-    public function orWhere($field, $compare = '=', $value = '')
+    public function orWhere($field, $compare = '=', $value = null)
     {
         if (is_callable($field)) {
             self::startQuerySub();
@@ -385,7 +385,7 @@ trait QueryBuilder
 
 
     public function delete(){
-        $sql = self::sqlQuery(true);
+        $sql = $this->sqlQuery(true);
         $query = $this->query($sql);
         if (!empty($query)) {
             return true;
@@ -394,24 +394,24 @@ trait QueryBuilder
     }
 
     public function toSqlRaw() {
-        $sql = self::sqlQuery();
+        $sql = $this->sqlQuery();
         return $sql;
     }
 
     public function showSqlRaw() {
-        $sql = self::sqlQuery();
+        $sql = $this->sqlQuery();
         logs()->dump($sql);
     }
 
 
     public function clone() {
-        $sql = self::sqlQuery();
+        $sql = $this->sqlQuery();
         return $sql;
     }
 
-    private static function sqlQuery($is_delete = false, $query = null){
+    private function sqlQuery($is_delete = false, $query = null){
         $select = self::$select;
-        $tableName = self::$tableName ? self::$tableName:static::$tableName; // ko có sẽ lấy bên model
+        $tableName = self::$tableName;
         $join = self::$join;
         $where = self::$where;
         $orderBy = self::$orderBy;
@@ -449,7 +449,7 @@ trait QueryBuilder
     }
 
     public function create($data){
-        $tableName = self::$tableName ? self::$tableName:static::$tableName;
+        $tableName = self::$tableName;
         $fieldTable = static::$field ?? [];
         $fieldTableNone = [];
         if(!empty($data)){
@@ -487,7 +487,7 @@ trait QueryBuilder
     }
 
     public function insert($data){
-        $tableName = self::$tableName ? self::$tableName:static::$tableName; // ko có sẽ lấy bên model
+        $tableName = self::$tableName;
         if(!empty($data)){
             $field = '';
             $value = '';
@@ -515,7 +515,7 @@ trait QueryBuilder
     }
 
     public function insertLastId($data){
-        $tableName = self::$tableName ? self::$tableName:static::$tableName; // ko có sẽ lấy bên model
+        $tableName = self::$tableName;
         if(!empty($data)){
             $field = '';
             $value = '';
@@ -543,7 +543,7 @@ trait QueryBuilder
     }
 
     public function update($data, $fieldOrId = null){
-        $tableName = self::$tableName ? self::$tableName:static::$tableName; // ko có sẽ lấy bên model
+        $tableName = self::$tableName;
         if(!empty($data)){
             $compare = '';
             foreach($data as $key=>$val){
@@ -584,7 +584,7 @@ trait QueryBuilder
 
     public function updateOrInsert($data, $fieldOrId)
     {
-        $tableName = self::$tableName ? self::$tableName:static::$tableName; // ko có sẽ lấy bên model
+        $tableName = self::$tableName;
         $where = '';
         if(is_array($fieldOrId)) {
             foreach ($fieldOrId as $key=>$value){
@@ -652,7 +652,7 @@ trait QueryBuilder
 
     private static function getAttribute($item, $is_array = false)
     {
-        $instance = self::instance();
+        $instance = new static();
         $keys = array_keys($is_array ? $item:get_object_vars($item));
         foreach ($keys as $key) {
             $name = ucfirst($key);
@@ -676,7 +676,7 @@ trait QueryBuilder
         return $item;
     }
     private static function setAttribute($key, $val){
-        $instance = self::instance();
+        $instance = new static();
         if(method_exists($instance, "setAttribute$key")) {
             $val = $instance->{"setAttribute$key"}($val);
         }

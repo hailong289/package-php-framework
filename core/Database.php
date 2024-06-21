@@ -70,18 +70,13 @@ class Database {
         return self::$__conn->rollBack();
     }
 
-    public static function instance()
-    {
-        return new static();
-    }
-
     private function getCollection($data) {
         $collection = new Collection($data);
         return $collection;
     }
 
     public function get(){
-        $sql = self::sqlQuery();
+        $sql = $this->sqlQuery();
         $data = $this->query($sql)->fetchAll(\PDO::FETCH_OBJ);
         if (!empty($data)) {
             $data = $this->getCollection($data)->map(fn ($item) => self::getAttribute($item));
@@ -93,7 +88,7 @@ class Database {
     }
 
     public function getArray(){
-        $sql = self::sqlQuery();
+        $sql = $this->sqlQuery();
         $data = $this->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
         if (!empty($data)) {
             return array_map(function ($item){
@@ -104,7 +99,7 @@ class Database {
     }
 
     public function first(){
-        $sql = self::sqlQuery();
+        $sql = $this->sqlQuery();
         $data = $this->query($sql)->fetch(\PDO::FETCH_OBJ);
         if (!empty($data)) {
             $data = $this->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
@@ -116,7 +111,7 @@ class Database {
     }
 
     public function firstArray(){
-        $sql = self::sqlQuery();
+        $sql = $this->sqlQuery();
         $data = $this->query($sql)->fetch(\PDO::FETCH_ASSOC);
         if (!empty($data)) {
             return self::getAttribute($data, true);
@@ -152,7 +147,7 @@ class Database {
     
     public function count($key = '*', $as = 'count')
     {
-        $sql = self::sqlQuery(false, "COUNT($key) as $as");
+        $sql = $this->sqlQuery(false, "COUNT($key) as $as");
         $data = $this->query($sql)->fetch(\PDO::FETCH_OBJ);
         if (!empty($data)) {
             $data = $this->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
@@ -164,7 +159,7 @@ class Database {
     public function sum($key = '*', $as = '')
     {
         if(empty($as)) $as = $key;
-        $sql = self::sqlQuery(false, "SUM($key) as $as");
+        $sql = $this->sqlQuery(false, "SUM($key) as $as");
         $data = $this->query($sql)->fetch(\PDO::FETCH_OBJ);
         if (!empty($data)) {
             $data = $this->getCollection($data)->mapFirst(fn ($item) => self::getAttribute($item));
