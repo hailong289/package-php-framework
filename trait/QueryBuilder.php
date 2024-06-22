@@ -711,9 +711,10 @@ trait QueryBuilder
                     $relation = $explode[0] ?? $value;
                     if (method_exists($instance, $relation)) {
                         $data_relation = $instance->{$relation}();
-                        self::$data_relation = $data_relation;
+                        self::$data_relation[] = $data_relation;
                         if (!empty($explode[1]) && !empty(self::$data_relation)) {
-                            self::$data_relation['query'] = function ($query) use ($explode) {
+                            $key_last = array_key_last(self::$data_relation);
+                            self::$data_relation[$key_last]['query'] = function ($query) use ($explode) {
                                 return $query->select($explode[1]);
                             };
                         }
@@ -724,8 +725,11 @@ trait QueryBuilder
                     $relation = $key;
                     if (method_exists($instance, $relation)) {
                         $data_relation = $instance->{$relation}();
-                        self::$data_relation = $data_relation;
-                        if(!empty(self::$data_relation)) self::$data_relation['query'] = $query;
+                        self::$data_relation[] = $data_relation;
+                        if(!empty(self::$data_relation)) {
+                            $key_last = array_key_last(self::$data_relation);
+                            self::$data_relation[$key_last]['query'] = $query;
+                        }
                     }
                 }
             }
@@ -733,7 +737,7 @@ trait QueryBuilder
         }
         if (method_exists($instance, $name)) {
             $data_relation = $instance->{$name}();
-            self::$data_relation = $data_relation;
+            self::$data_relation[] = $data_relation;
         }
         return $this;
     }
@@ -746,28 +750,27 @@ trait QueryBuilder
             if ($type === 'get') {
                 $result = $data->map(function ($item) {
                     $keys = get_object_vars($item);
-                    $relation = self::$data_relation;
-//                    foreach ($this->data_relation as $key => $relation) {
-                    $primary_key = $relation['primary_key'];
-                    $foreign_key = $relation['foreign_key'];
-                    $foreign_key2 = $relation['foreign_key2'];
-                    $model = $relation['model'];
-                    $model_many = $relation['model_many'];
-                    $name = $relation['name'];
-                    $name_relation = $relation['relation'];
-                    $query = $relation['query'] ?? null;
-                    if (isset($keys[$primary_key])) {
-                        $item->{$name} =  $this->dataRelation(
-                            $name_relation,
-                            $model,
-                            $model_many,
-                            $foreign_key,
-                            $foreign_key2,
-                            $item->{$primary_key},
-                            $query
-                        );
+                    foreach (self::$data_relation as $key => $relation) {
+                        $primary_key = $relation['primary_key'];
+                        $foreign_key = $relation['foreign_key'];
+                        $foreign_key2 = $relation['foreign_key2'];
+                        $model = $relation['model'];
+                        $model_many = $relation['model_many'];
+                        $name = $relation['name'];
+                        $name_relation = $relation['relation'];
+                        $query = $relation['query'] ?? null;
+                        if (isset($keys[$primary_key])) {
+                            $item->{$name} =  $this->dataRelation(
+                                $name_relation,
+                                $model,
+                                $model_many,
+                                $foreign_key,
+                                $foreign_key2,
+                                $item->{$primary_key},
+                                $query
+                            );
+                        }
                     }
-//                    }
                     return $item;
                 });
                 self::$data_relation = []; // reset when successful
@@ -775,28 +778,27 @@ trait QueryBuilder
             } else {
                 $result = $data->mapFirst(function ($item) {
                     $keys = get_object_vars($item);
-                    $relation = self::$data_relation;
-//                    foreach (static::$data_relation as $key => $relation) {
-                    $primary_key = $relation['primary_key'];
-                    $foreign_key = $relation['foreign_key'];
-                    $foreign_key2 = $relation['foreign_key2'] ?? null;
-                    $model = $relation['model'];
-                    $model_many = $relation['model_many'] ?? null;
-                    $name = $relation['name'];
-                    $name_relation = $relation['relation'];
-                    $query = $relation['query'] ?? null;
-                    if (isset($keys[$primary_key])) {
-                        $item->{$name} = $this->dataRelation(
-                            $name_relation,
-                            $model,
-                            $model_many,
-                            $foreign_key,
-                            $foreign_key2,
-                            $item->{$primary_key},
-                            $query
-                        );
+                    foreach (static::$data_relation as $key => $relation) {
+                        $primary_key = $relation['primary_key'];
+                        $foreign_key = $relation['foreign_key'];
+                        $foreign_key2 = $relation['foreign_key2'] ?? null;
+                        $model = $relation['model'];
+                        $model_many = $relation['model_many'] ?? null;
+                        $name = $relation['name'];
+                        $name_relation = $relation['relation'];
+                        $query = $relation['query'] ?? null;
+                        if (isset($keys[$primary_key])) {
+                            $item->{$name} = $this->dataRelation(
+                                $name_relation,
+                                $model,
+                                $model_many,
+                                $foreign_key,
+                                $foreign_key2,
+                                $item->{$primary_key},
+                                $query
+                            );
+                        }
                     }
-//                    }
                     return $item;
                 });
                 self::$data_relation = []; // reset when successful
