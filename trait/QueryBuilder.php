@@ -729,13 +729,13 @@ trait QueryBuilder
                     }
                 }
             }
-            return $instance;
+            return $this;
         }
         if (method_exists($instance, $name)) {
             $data_relation = $instance->{$name}();
             self::$data_relation = $data_relation;
         }
-        return $instance;
+        return $this;
     }
 
     private function workRelation($data, $type = 'get') {
