@@ -34,9 +34,27 @@ class Collection
         return $is_count ? count($this->data):0;
     }
 
+    public function isEmpty()
+    {
+        return empty($this->data);
+    }
+
+    public function keys()
+    {
+        $data = is_object($this->data) ? (array)$this->data:$this->data;
+        return array_keys($data);
+    }
+
     public function map($fn) {
         foreach ($this->data as $key => $data) {
             $this->data[$key] = $fn($data);
+        }
+        return $this;
+    }
+
+    public function forEach($fn) {
+        foreach ($this->data as $key => $data) {
+            $fn($data, $key);
         }
         return $this;
     }
