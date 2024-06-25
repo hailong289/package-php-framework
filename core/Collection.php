@@ -34,6 +34,13 @@ class Collection
         return $is_count ? count($this->data):0;
     }
 
+    function flat()
+    {
+        $return = [];
+        array_walk_recursive($this->toArray(), function($a) use (&$return) { $return[] = $a; });
+        return $return;
+    }
+
     public function isEmpty()
     {
         return empty($this->data);

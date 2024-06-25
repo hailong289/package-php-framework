@@ -162,7 +162,7 @@ class Database {
         return $this->getCollection(null);
     }
 
-    public function count($key = '*', $as = 'count')
+    public function count($key = '*', $as = 'number')
     {
         $sql = $this->sqlQuery(false, "COUNT($key) as $as");
         $data = $this->query($sql)->fetch(\PDO::FETCH_OBJ);
