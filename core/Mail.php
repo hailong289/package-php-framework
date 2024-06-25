@@ -12,7 +12,7 @@ class Mail {
         $this->mail->SMTPDebug = config_env('MAIL_DEBUG', SMTP::DEBUG_OFF);// Enable verbose debug output
         $this->mail->isSMTP();
         $this->mail->Host = config_env('MAIL_HOST','smtp.gmail.com');
-        $this->mail->SMTPAuth = true;// Enable SMTP authentication
+        $this->mail->SMTPAuth = config_env('MAIL_AUTH', true);// Enable SMTP authentication
         $this->mail->Username = config_env('MAIL_USERNAME','user@gmail.com');// SMTP username
         $this->mail->Password = config_env('MAIL_PASSWORD','password'); // SMTP password
         $this->mail->SMTPSecure = config_env('MAIL_ENCRYPTION', PHPMailer::ENCRYPTION_SMTPS); // Enable TLS encryption; `PHPMailer::ENCRYPTION_SMTPS` also accepted
@@ -21,7 +21,7 @@ class Mail {
 
     public function getMail()
     {
-        return $this->mail;
+        return $this->mail instanceof PHPMailer ? $this->mail:false;
     }
 
     public function setSubject($subject)
@@ -48,8 +48,32 @@ class Mail {
         return $this;
     }
 
+    public function setDebug($number = 0)
+    {
+        $this->mail->SMTPDebug = $number;
+        return $this;
+    }
+
+    public function setEncryption($encryption = PHPMailer::ENCRYPTION_SMTPS)
+    {
+        $this->mail->SMTPSecure = $encryption;
+        return $this;
+    }
+
+    public function setAuth($on_off = true)
+    {
+        $this->mail->SMTPAuth = $on_off;
+        return $this;
+    }
+
     public function to($to, $data = []) {
-        $this->mail->addAddress($to);
+        if(is_array($to)) {
+            foreach ($to as $email) {
+                $this->mail->addAddress($email);
+            }
+        } else {
+            $this->mail->addAddress($to);
+        }
         if (!empty($data)) $this->withData($data);
         return $this;
     }

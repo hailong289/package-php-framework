@@ -57,7 +57,8 @@ if(!function_exists('str_slug')){
         );
         $string = preg_replace($search, $replace, $str);
         $string = preg_replace('/(-)+/', $delimiter, $string);
-        $string = strtolower($string);
+        $string = rtrim(strtolower($string), $delimiter);
+        $string = ltrim($string, $delimiter);
         return $string;
     }
 }
@@ -79,6 +80,7 @@ if(!function_exists('url')){
 if(!function_exists('view_root')){
     function view_root($view)
     {
+        $view = preg_replace('/([.]+)/', '/' , $view);
         if(!file_exists(__DIR__ROOT . '/App/Views/'.$view.'.view.php')){
             throw new \RuntimeException("File App/Views/$view.view.php does not exist", 500);
         }
@@ -96,6 +98,50 @@ if(!function_exists('log_debug')){
     }
 }
 
+if(!function_exists('logs')){
+    interface InterfaceLogs {
+        public function dump(...$args);
+        public function write($data, $name_file = 'debug');
+        public function debug($data);
+    }
+    /**
+     * @return InterfaceLogs|__anonymous@2793
+     */
+    function logs(): object {
+        return new class implements InterfaceLogs {
+            public function dump(...$args) {
+                http_response_code(500);
+                echo "<pre>";
+                print_r($args);
+                echo "</pre>";
+                exit();
+            }
+            public function dump_html(...$args) {
+                http_response_code(500);
+                echo "<pre>";
+                print_r($args, true);
+                echo "</pre>";
+                exit();
+            }
+            function write($data, $name_file = 'debug') {
+                $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
+                $data = json_encode($data);
+                if (!file_exists(__DIR__ROOT .'/storage')) {
+                    mkdir(__DIR__ROOT .'/storage', 0777, true);
+                }
+                file_put_contents(__DIR__ROOT ."/storage/$name_file.log",$date . $data . PHP_EOL, FILE_APPEND);
+                return $this;
+            }
+            function debug($data) {
+                $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
+                $data = json_encode($data);
+                file_put_contents(__DIR__ROOT .'/storage/debug.log',$date . $data . PHP_EOL, FILE_APPEND);
+                return $this;
+            }
+        };
+    }
+}
+
 if(!function_exists('log_write')){
     function log_write($e, $name = 'debug') {
         $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
@@ -109,13 +155,15 @@ if(!function_exists('log_write')){
 if(!function_exists('get_view')){
     function get_view($name, $data = [])
     {
-        if(!file_exists(__DIR__ROOT . '/App/Views/'.$name.'.view.php')){
-            throw new \RuntimeException("File App/Views/$name.view.php does not exist", 500);
-        }
-        if(isset($GLOBALS['share_date_view']) && count($GLOBALS['share_date_view'])) $data = array_merge($data, $GLOBALS['share_date_view']);
-        extract($data);
         $view = preg_replace('/([.]+)/', '/' , $name);
-        require_once __DIR__ROOT . '/App/Views/'.$name.'.view.php';
+        if(!file_exists(__DIR__ROOT . '/App/Views/'.$view.'.view.php')){
+            throw new \RuntimeException("File App/Views/$view.view.php does not exist", 500);
+        }
+        if(isset($GLOBALS['share_data_view']) && count($GLOBALS['share_data_view'])) $data = array_merge($data, $GLOBALS['share_data_view']);
+        extract($data);
+        $file = __DIR__ROOT . '/App/Views/'.$view.'.view.php';
+        require_once $file;
+        return $file;
     }
 }
 
@@ -212,11 +260,15 @@ if(!function_exists('uid')){
 }
 
 if(!function_exists('errors')){
+    /**
+     * @param $key
+     * @return object|InterfaceErrors|mixed|__anonymous@7689
+     */
     function errors($key = ''): object {
         if(!empty($key)) {
             return $GLOBALS['share_data_errors'][$key];
         }
-        return new class() {
+        return new class() implements \System\Interfaces\FunctionInterface\InterfaceErrors {
             function get($key = '') {
                 return $GLOBALS['share_data_errors'][$key];
             }
@@ -226,6 +278,89 @@ if(!function_exists('errors')){
             }
             function all(){
                 return $GLOBALS['share_data_errors'];
+            }
+        };
+    }
+}
+
+if(!function_exists('val')){
+    function val($key = '', $default = null) {
+        return $GLOBALS['share_data_view'][$key] ?? $default;
+    }
+}
+
+if(!function_exists('res')){
+    /**
+     * @return InterfaceRes|__anonymous@8576
+     */
+    function res() {
+        return new class() implements \System\Interfaces\FunctionInterface\InterfaceRes {
+            function view($name, $data = [], $status = 200) {
+                $view = preg_replace('/([.]+)/', '/' , $name);
+                if(!file_exists(__DIR__ROOT . '/App/Views/'.$view.'.view.php')){
+                    throw new \RuntimeException("File App/Views/$view.view.php does not exist", 500);
+                }
+                http_response_code($status);
+                if(count($data)) $GLOBALS['share_data_view'] = $data;
+                extract($data);
+                $file = __DIR__ROOT . '/App/Views/'.$view.'.view.php';
+                require_once $file;
+                return $file;
+            }
+            function data($data = []) {
+                if(count($GLOBALS['share_data_view'])) {
+                    $GLOBALS['share_data_view'] = array_merge($data, $GLOBALS['share_data_view']);
+                } else {
+                    $GLOBALS['share_data_view'] = $data;
+                }
+                return $this;
+            }
+            function json($data, $status = 200){
+                http_response_code($status);
+                header('Accept: application/json');
+                return $data;
+            }
+        };
+    }
+}
+
+
+if(!function_exists('collection')) {
+    function collection($data)
+    {
+        return new \System\Core\Collection($data);
+    }
+}
+
+if (!function_exists('sendJobs')) {
+    /**
+     * @param $job
+     * @return InterfaceSendJob|__anonymous@10121
+     */
+    function sendJobs($job) {
+        $queue = \System\Queue\CreateQueue::instance();
+        return new class ($queue, $job) implements \System\Interfaces\FunctionInterface\InterfaceSendJob {
+            private $queue;
+            private $job;
+            function __construct(\System\Queue\CreateQueue $queue, $job) {
+                $this->queue = $queue;
+                $this->job = $job;
+            }
+            function connection($name) {
+                $this->queue->connection($name);
+                return $this;
+            }
+            function timeout($timeout) {
+                $this->queue->setTimeOut($timeout);
+                return $this;
+            }
+            function queue($name) {
+                $this->queue->setQueue($name);
+                return $this;
+            }
+            function work() {
+                $this->queue->enQueue($this->job);
+                return $this;
             }
         };
     }

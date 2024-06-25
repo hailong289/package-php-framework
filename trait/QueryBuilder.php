@@ -1,560 +1,581 @@
 <?php
-namespace System\Trait;
+namespace System\Traits;
+
+use System\Core\Collection;
 
 trait QueryBuilder
 {
-    private static $tableName = '';
-    private static $where = '';
-    private static $whereExit = '';
-    private static $select = '*';
-    private static $orderBy = '';
-    private static $operator = '';
-    private static $join = '';
-    private static $on = '';
-    private static $page = '';
-    private static $limit = '';
-    private static $subQuery = '';
-    private static $union = '';
-    private static $groupBy = '';
+    private $tableName = '';
+    private $where = '';
+    private $select = '*';
+    private $orderBy = '';
+    private $operator = '';
+    private $join = '';
+    private $on = '';
+    private $page = '';
+    private $limit = '';
+    private $union = '';
+    private $groupBy = '';
     // start query sub
-    private static $startSub = false;
-    private static $tableNameSub = '';
-    private static $whereSub = '';
-    private static $selectSub = '';
-    private static $orderBySub = '';
-    private static $operatorSub = '';
-    private static $joinSub = '';
-    private static $onSub = '';
-    private static $pageSub = '';
-    private static $limitSub = '';
-    private static $groupBySub = '';
-    private static $sqlSub = '';
+    private $startSub = false;
+    private $tableNameSub = '';
+    private $whereSub = '';
+    private $selectSub = '';
+    private $orderBySub = '';
+    private $operatorSub = '';
+    private $joinSub = '';
+    private $onSub = '';
+    private $pageSub = '';
+    private $limitSub = '';
+    private $groupBySub = '';
+    private static $data_relation = [];
 
-    private static function startQuerySub(){ self::$startSub = true; }
-    private static function endQuerySub(){ self::$startSub = false; self::resetSub(); }
-    private static function isQuerySub(){ return self::$startSub; }
-
-    public static function table($tableName)
-    {
-        if(self::isQuerySub()) {
-            self::$tableNameSub = $tableName;
-            return self::modelInstance();
-        }
-        self::$tableName = $tableName;
-        return self::modelInstance();
+    private function startQuerySub() {
+        $this->startSub = true;
     }
 
-    public static function from($tableName)
-    {
-        if(self::isQuerySub()) {
-            self::$tableNameSub = $tableName;
-            return self::modelInstance();
-        }
-        self::$tableName = $tableName;
-        return self::modelInstance();
+    private function endQuerySub() {
+        $this->startSub = false;
+        $this->resetSub();
     }
 
-    public static function subQuery($sql, $name)
-    {
-        if(self::isQuerySub()) {
-            return self::modelInstance();
-        }
-        if(empty($name)) throw new \RuntimeException("table subQuery is not null", 500);
-        self::$tableName = "($sql) as $name";
-        return self::modelInstance();
+    private function isQuerySub() {
+        return $this->startSub;
     }
 
-    public static function union($sql)
+    public function table($tableName)
     {
-        if(self::isQuerySub()) {
-            return self::modelInstance();
+        if ($this->isQuerySub()) {
+            $this->tableNameSub = $tableName;
+            return $this;
         }
-        self::$union = " UNION $sql";
-        return self::modelInstance();
+        $this->tableName = $tableName;
+        return $this;
     }
 
-    public static function union_all($sql)
+    public function from($tableName)
     {
-        if(self::isQuerySub()) {
-            return self::modelInstance();
+        if ($this->isQuerySub()) {
+            $this->tableNameSub = $tableName;
+            return $this;
         }
-        self::$union = " UNION ALL $sql";
-        return self::modelInstance();
+        $this->tableName = $tableName;
+        return $this;
     }
 
-    public static function where($field, $compare = '=', $value = '')
+    public function subQuery($sql, $name)
+    {
+        if ($this->isQuerySub()) {
+            return $this;
+        }
+        if (empty($name)) throw new \RuntimeException("table subQuery is not null", 500);
+        $this->tableName = "($sql) as $name";
+        return $this;
+    }
+
+    public function union($sql)
+    {
+        if ($this->isQuerySub()) {
+            return $this;
+        }
+        $this->union = " UNION $sql";
+        return $this;
+    }
+
+    public function union_all($sql)
+    {
+        if ($this->isQuerySub()) {
+            return $this;
+        }
+        $this->union = " UNION ALL $sql";
+        return $this;
+    }
+
+    public function where($field, $compare = '=', $value = null)
     {
         if (is_callable($field)) {
-            self::startQuerySub();
-            $field(self::modelInstance());
-            $operator = self::operator('AND');
-            $subWhere = self::$whereSub;
-            self::$where .= "{$operator}({$subWhere})";
-            self::endQuerySub();
-            return self::modelInstance();
+            $this->startQuerySub();
+            $field($this);
+            $operator = $this->operator('AND');
+            $subWhere = $this->whereSub;
+            $this->where .= "{$operator}({$subWhere})";
+            $this->endQuerySub();
+            return $this;
         }
-        if(self::isQuerySub()) {
-            $operator = self::operator('AND', true);
-            if(empty($value)) {
+        if ($this->isQuerySub()) {
+            $operator = $this->operator('AND', true);
+            if (is_null($value)) {
                 $value = $compare;
                 $compare = '=';
             }
             $value = (is_numeric($value) ? $value:"'".$value."'");
-            self::$whereSub .= "{$operator}{$field} {$compare} {$value}";
-            return self::modelInstance();
+            $this->whereSub .= "{$operator}{$field} {$compare} {$value}";
+            return $this;
         }
-        $operator = self::operator('AND');
-        if(empty($value)) {
+        $operator = $this->operator('AND');
+        if (is_null($value)) {
             $value = $compare;
             $compare = '=';
         }
         $value = (is_numeric($value) ? $value:"'".$value."'");
-        self::$where .= "{$operator}{$field} {$compare} {$value}";
-        return self::modelInstance();
+        $this->where .= "{$operator}{$field} {$compare} {$value}";
+        return $this;
     }
 
-    public static function orWhere($field, $compare = '=', $value = '')
+    public function orWhere($field, $compare = '=', $value = null)
     {
         if (is_callable($field)) {
-            self::startQuerySub();
-            $field(self::modelInstance());
-            $operator = self::operator('OR');
-            $subWhere = self::$whereSub;
-            self::$where .= "{$operator}({$subWhere})";
-            self::endQuerySub();
-            return self::modelInstance();
+            $this->startQuerySub();
+            $field($this);
+            $operator = $this->operator('OR');
+            $subWhere = $this->whereSub;
+            $this->where .= "{$operator}({$subWhere})";
+            $this->endQuerySub();
+            return $this;
         }
-        if(self::isQuerySub()) {
-            $operator = self::operator('OR', true);
-            if(empty($value)) {
+        if ($this->isQuerySub()) {
+            $operator = $this->operator('OR', true);
+            if (is_null($value)) {
                 $value = $compare;
                 $compare = '=';
             }
             $value = (is_numeric($value) ? $value:"'".$value."'");
-            self::$whereSub .= "{$operator}{$field} {$compare} {$value}";
-            return self::modelInstance();
+            $this->whereSub .= "{$operator}{$field} {$compare} {$value}";
+            return $this;
         }
-        $operator = self::operator("OR");
-        if(empty($value)) {
+        $operator = $this->operator("OR");
+        if (is_null($value)) {
             $value = $compare;
             $compare = '=';
         }
         $value = (is_numeric($value) ? $value:"'".$value."'");
-        self::$where .= "{$operator}{$field} {$compare} {$value}";
-        return self::modelInstance();
+        $this->where .= "{$operator}{$field} {$compare} {$value}";
+        return $this;
     }
 
-    public static function whereLike($field, $value)
-    {
-        if(self::isQuerySub()) {
-            $operator = self::operator('AND', true);
+    public function whereLike($field, $value) {
+        if ($this->isQuerySub()) {
+            $operator = $this->operator('AND', true);
             $value = (is_numeric($value) ? $value:"'".$value."'");
-            self::$whereSub .= "{$operator}{$field} LIKE {$value}";
-            return self::modelInstance();
+            $this->whereSub .= "{$operator}{$field} LIKE {$value}";
+            return $this;
         }
-        $operator = self::operator("AND");
+        $operator = $this->operator("AND");
         $value = (is_numeric($value) ? $value:"'".$value."'");
-        self::$where .= "{$operator}{$field} LIKE {$value}";
-        return self::modelInstance();
+        $this->where .= "{$operator}{$field} LIKE {$value}";
+        return $this;
     }
 
-    public static function orWhereLike($field, $value)
+    public function orWhereLike($field, $value)
     {
-        if(self::isQuerySub()) {
-            $operator = self::operator('OR', true);
+        if ($this->isQuerySub()) {
+            $operator = $this->operator('OR', true);
             $value = (is_numeric($value) ? $value:"'".$value."'");
-            self::$whereSub .= "{$operator}{$field} LIKE {$value}";
-            return self::modelInstance();
+            $this->whereSub .= "{$operator}{$field} LIKE {$value}";
+            return $this;
         }
-        $operator = self::operator("OR");
+        $operator = $this->operator("OR");
         $value = (is_numeric($value) ? $value:"'".$value."'");
-        self::$where .= "{$operator}{$field} LIKE {$value}";
-        return self::modelInstance();
+        $this->where .= "{$operator}{$field} LIKE {$value}";
+        return $this;
     }
 
-    public static function whereIn($field, array $value)
+    public function whereIn($field, array $value)
     {
-        if(!is_array($value)) {
+        if (!is_array($value)) {
             throw new \RuntimeException("Params of {$field} is not array function whereIn", 500);
         }
-        if(self::isQuerySub()) {
-            $operator = self::operator('AND', true);
+        if($this->isQuerySub()) {
+            $operator = $this->operator('AND', true);
             $value = implode(',', $value);
-            self::$whereSub .= "{$operator}{$field} IN ({$value})";
-            return self::modelInstance();
+            $this->whereSub .= "{$operator}{$field} IN ({$value})";
+            return $this;
         }
-        $operator = self::operator("AND");
+        $operator = $this->operator("AND");
         $value = implode(',', $value);
-        self::$where .= "{$operator}{$field} IN ({$value})";
-        return self::modelInstance();
+        $this->where .= "{$operator}{$field} IN ({$value})";
+        return $this;
     }
 
-    public static function orWhereIn($field, $value)
+    public function orWhereIn($field, $value)
     {
-        if(!is_array($value)) {
+        if (!is_array($value)) {
             throw new \RuntimeException("Params of {$field} is not array function whereIn", 500);
         }
-        if(self::isQuerySub()) {
-            $operator = self::operator('OR', true);
+        if ($this->isQuerySub()) {
+            $operator = $this->operator('OR', true);
             $value = implode(',', $value);
-            self::$whereSub .= "{$operator}{$field} IN ({$value})";
-            return self::modelInstance();
+            $this->whereSub .= "{$operator}{$field} IN ({$value})";
+            return $this;
         }
-        $operator = self::operator("OR");
+        $operator = $this->operator("OR");
         $value = implode(',', $value);
-        self::$where .= "{$operator}{$field} IN ({$value})";
-        return self::modelInstance();
+        $this->where .= "{$operator}{$field} IN ({$value})";
+        return $this;
     }
 
-    public static function whereNotIn($field, $value)
+    public function whereNotIn($field, $value)
     {
-        if(!is_array($value)) {
+        if (!is_array($value)) {
             throw new \RuntimeException("Params of {$field} is not array function whereNotIn", 500);
         }
-        if(self::isQuerySub()) {
-            $operator = self::operator('AND', true);
+        if ($this->isQuerySub()) {
+            $operator = $this->operator('AND', true);
             $value = implode(',', $value);
-            self::$whereSub .= "{$operator}{$field} NOT IN ({$value})";
-            return self::modelInstance();
+            $this->whereSub .= "{$operator}{$field} NOT IN ({$value})";
+            return $this;
         }
-        $operator =  self::operator("AND");
+        $operator =  $this->operator("AND");
         $value = implode(',', $value);
-        self::$where .= "{$operator}{$field} NOT IN ({$value})";
-        return self::modelInstance();
+        $this->where .= "{$operator}{$field} NOT IN ({$value})";
+        return $this;
     }
 
-    public static function orWhereNotIn($field, $value)
+    public function orWhereNotIn($field, $value)
     {
-        if(!is_array($value)) {
+        if (!is_array($value)) {
             throw new \RuntimeException("Params of {$field} is not array function whereNotIn", 500);
         }
-        if(self::isQuerySub()) {
-            $operator = self::operator('OR', true);
+        if($this->isQuerySub()) {
+            $operator = $this->operator('OR', true);
             $value = implode(',', $value);
-            self::$whereSub .= "{$operator}{$field} NOT IN ({$value})";
-            return self::modelInstance();
+            $this->whereSub .= "{$operator}{$field} NOT IN ({$value})";
+            return $this;
         }
-        $operator =  self::operator("OR");
+        $operator =  $this->operator("OR");
         $value = implode(',', $value);
-        self::$where .= "{$operator}{$field} NOT IN ({$value})";
-        return self::modelInstance();
+        $this->where .= "{$operator}{$field} NOT IN ({$value})";
+        return $this;
     }
 
-    public static function whereBetween($field, $value)
-    {
-        if(!is_array($value)) {
+    public function whereBetween($field, $value) {
+        if (!is_array($value)) {
             throw new \RuntimeException("Params of {$field} is not array function whereBetween", 500);
         }
-        if(count($value) > 2) {
+        if (count($value) > 2) {
             throw new \RuntimeException("The value in the array is more than 2 function whereBetween", 500);
         }
-        if(self::isQuerySub()) {
-            $operator = self::operator('OR', true);
-            self::$whereSub .= "{$operator}{$field} BETWEEN '{$value[0]}' AND '{$value[1]}'";
-            return self::modelInstance();
+        if ($this->isQuerySub()) {
+            $operator = $this->operator('OR', true);
+            $this->whereSub .= "{$operator}{$field} BETWEEN '{$value[0]}' AND '{$value[1]}'";
+            return $this;
         }
-        $operator = self::operator("AND");
-        self::$where .= "{$operator}{$field} BETWEEN '{$value[0]}' AND '{$value[1]}'";
-        return self::modelInstance();
+        $operator = $this->operator("AND");
+        $this->where .= "{$operator}{$field} BETWEEN '{$value[0]}' AND '{$value[1]}'";
+        return $this;
     }
 
-    public static function whereRaw($sql) {
-        if(self::isQuerySub()) {
-            $operator = self::operator('AND', true);
-            self::$whereSub .= "{$operator}{$sql}";
-            return self::modelInstance();
+    public function whereRaw($sql) {
+        if ($this->isQuerySub()) {
+            $operator = $this->operator('AND', true);
+            $this->whereSub .= "{$operator}{$sql}";
+            return $this;
         }
-        $operator = self::operator("AND");
-        self::$where .= "{$operator}{$sql}";
-        return self::modelInstance();
+        $operator = $this->operator("AND");
+        $this->where .= "{$operator}{$sql}";
+        return $this;
     }
 
-    public static function orWhereRaw($sql) {
-        if(self::isQuerySub()) {
-            $operator = self::operator('OR', true);
-            self::$whereSub .= "{$operator}{$sql}";
-            return self::modelInstance();
+    public function orWhereRaw($sql) {
+        if ($this->isQuerySub()) {
+            $operator = $this->operator('OR', true);
+            $this->whereSub .= "{$operator}{$sql}";
+            return $this;
         }
-        $operator = self::operator("OR");
-        self::$where .= "{$operator}{$sql}";
-        return self::modelInstance();
+        $operator = $this->operator("OR");
+        $this->where .= "{$operator}{$sql}";
+        return $this;
     }
 
-    public static function select($field){
-        if(self::isQuerySub()) {
+    public function select($field) {
+        if ($this->isQuerySub()) {
             $field = (is_array($field)) ? implode(", ", $field):$field;
-            self::$selectSub = $field;
-            return self::modelInstance();
+            $this->selectSub = $field;
+            return $this;
         }
         $field = (is_array($field)) ? implode(", ", $field):$field;
-        self::$select = $field;
-        return self::modelInstance();
+        $this->select = $field;
+        return $this;
     }
 
-    public static function orderBy($field, $orderBy = 'ASC'){
-        if(self::isQuerySub()) {
-            return self::modelInstance();
+    public function orderBy($field, $orderBy = 'ASC') {
+        if ($this->isQuerySub()) {
+            return $this;
         }
-        self::$orderBy = " ORDER BY {$field} {$orderBy} ";
-        return self::modelInstance();
+        $this->orderBy = " ORDER BY {$field} {$orderBy} ";
+        return $this;
     }
 
-    public static function join($table, $function = ''){
-        if(self::isQuerySub()) {
-            return self::modelInstance();
+    public function join($table, $function = '') {
+        if ($this->isQuerySub()) {
+            return $this;
         }
-        if (empty(self::$join)) {
-            self::$join = " INNER JOIN {$table}";
+        if (empty($this->join)) {
+            $this->join = " INNER JOIN {$table}";
         } else {
-            self::$join .= " INNER JOIN {$table}";
+            $this->join .= " INNER JOIN {$table}";
         }
         if (is_callable($function)) {
-            $function(self::modelInstance());
+            $function($this);
         }
-        return self::modelInstance();
+        return $this;
     }
 
-    public static function leftJoin($table, $function = ''){
-        if(self::isQuerySub()) {
-            return self::modelInstance();
+    public function leftJoin($table, $function = '') {
+        if ($this->isQuerySub()) {
+            return $this;
         }
-        if (empty(self::$join)) {
-            self::$join = " LEFT JOIN {$table}";
+        if (empty($this->join)) {
+            $this->join = " LEFT JOIN {$table}";
         } else {
-            self::$join .= " LEFT JOIN {$table}";
+            $this->join .= " LEFT JOIN {$table}";
         }
         if (is_callable($function)) {
-            $function(self::modelInstance());
+            $function($this);
         }
-        return self::modelInstance();
+        return $this;
     }
 
-    public static function rightJoin($table, $function = ''){
-        if(self::isQuerySub()) {
-            return self::modelInstance();
+    public function rightJoin($table, $function = '') {
+        if ($this->isQuerySub()) {
+            return $this;
         }
-        if (empty(self::$join)) {
-            self::$join = " RIGHT JOIN {$table}";
+        if (empty($this->join)) {
+            $this->join = " RIGHT JOIN {$table}";
         } else {
-            self::$join .= " RIGHT JOIN {$table}";
+            $this->join .= " RIGHT JOIN {$table}";
         }
         if (is_callable($function)) {
-            $function(self::modelInstance());
+            $function($this);
         }
-        return self::modelInstance();
+        return $this;
     }
 
-    public static function on($field1, $compare, $field2, $operator = ''){
-        if(self::isQuerySub()) {
-            return self::modelInstance();
+    public function on($field1, $compare, $field2, $operator = '') {
+        if ($this->isQuerySub()) {
+            return $this;
         }
-        if(!empty(self::$on)){
+        if (!empty($this->on)) {
             $operator = empty($operator) ? "AND":$operator;
-            self::$operator = " {$operator} ";
-        }else{
-            self::$operator = " ON ";
+            $this->operator = " {$operator} ";
+        } else {
+            $this->operator = " ON ";
         }
-        $operator = self::$operator;
-        self::$join .= "{$operator} {$field1} {$compare} {$field2}";
-        return self::modelInstance();
+        $operator = $this->operator;
+        $this->join .= "{$operator} {$field1} {$compare} {$field2}";
+        return $this;
     }
 
-    public static function groupBy($field){
-        if(self::isQuerySub()) {
-            return self::modelInstance();
+    public function groupBy($field) {
+        if ($this->isQuerySub()) {
+            return $this;
         }
         $field = is_array($field) ? implode(',',$field):$field;
-        self::$groupBy = " GROUP BY {$field}";
-        return self::modelInstance();
+        $this->groupBy = " GROUP BY {$field}";
+        return $this;
     }
 
-    public static function page($page){
-        if(self::isQuerySub()) {
-            return self::modelInstance();
+    public function page($page) {
+        if ($this->isQuerySub()) {
+            return $this;
         }
-        self::$page = $page;
-        return self::modelInstance();
+        $this->page = $page;
+        return $this;
     }
 
-    public static function limit($limit){
-        if(self::isQuerySub()) {
-            return self::modelInstance();
+    public function limit($limit) {
+        if($this->isQuerySub()) {
+            return $this;
         }
-        self::$limit = $limit;
-        return self::modelInstance();
+        $this->limit = $limit;
+        return $this;
     }
 
 
-    public static function delete(){
-        $sql = self::sqlQuery(true);
-        $query = self::modelInstance()->query($sql);
+    public function delete() {
+        $sql = $this->sqlQuery(true);
+        $query = $this->query($sql);
         if (!empty($query)) {
             return true;
         }
         return false;
     }
 
-    public static function toSqlRaw() {
-        $sql = self::sqlQuery();
+    public function toSqlRaw() {
+        $sql = $this->sqlQuery();
         return $sql;
     }
 
-    public static function showSqlRaw() {
-        $sql = self::sqlQuery();
-        log_debug($sql);
+    public function showSqlRaw() {
+        $sql = $this->sqlQuery();
+        logs()->dump($sql);
     }
 
 
-    public static function clone() {
-        $sql = self::sqlQuery();
+    public function clone() {
+        $sql = $this->sqlQuery();
         return $sql;
     }
 
-    private static function sqlQuery($is_delete = false){
-        $select = self::$select;
-        $tableName = self::$tableName ? self::$tableName:static::$tableName; // ko có sẽ lấy bên model
-        $join = self::$join;
-        $where = self::$where;
-        $whereExit = self::$whereExit;
-        $orderBy = self::$orderBy;
-        $groupBy = self::$groupBy;
-        $fieldTable = static::$field ?? '';
-        $offset = is_numeric(self::$page) && is_numeric(self::$limit) ? ' OFFSET '.self::$page * self::$limit:'';
-        $limit = is_numeric(self::$limit) ? " LIMIT ".self::$limit:'';
-        $union = self::$union;
+    private function sqlQuery($is_delete = false, $query = null, $byId = 0){
+        $select = $this->select;
+        $tableName = $this->tableName;
+        $join = $this->join;
+        $where = $this->where;
+        $orderBy = $this->orderBy;
+        $groupBy = $this->groupBy;
+        $fieldTable = $this->field ?? '';
+        $offset = is_numeric($this->page) && is_numeric($this->limit) ? ' OFFSET '.$this->page * $this->limit:'';
+        $limit = is_numeric($this->limit) ? " LIMIT ".$this->limit:'';
+        $union = $this->union;
 
         if (empty($select)) {
             if (empty($fieldTable)) {
                 $fieldTable = '*';
-            }else{
+            } else {
                 $fieldTable = implode(',', $fieldTable);
             }
             $select = $fieldTable;
         }
 
-        if ($is_delete) {
-            $sql = "DELETE FROM {$tableName}{$where}{$whereExit}{$limit}";
+        if (!empty($query)) { // use count, sum
+            $select = $query;
+        }
+
+        if ($byId) {
+            $sql = "SELECT {$select} FROM {$tableName} WHERE id = '$byId' LIMIT 1";
             $sql = trim($sql);
-            self::reset();
+            $this->reset();
+            return $sql;
+        }
+
+        if ($is_delete) {
+            $sql = "DELETE FROM {$tableName}{$where}{$limit}";
+            $sql = trim($sql);
+            $this->reset();
             return $sql;
         }
 
         $sql = "SELECT {$select} FROM {$tableName}{$join}
-        {$where}{$whereExit}{$groupBy}{$orderBy}{$limit}{$offset}{$union}";
+        {$where}{$groupBy}{$orderBy}{$limit}{$offset}{$union}";
         $sql = trim($sql);
-        self::reset();
+        $this->reset();
         return $sql;
     }
 
-    public static function create($data){
-        $tableName = self::$tableName ? self::$tableName:static::$tableName;
-        $fieldTable = static::$field ?? [];
+    public function create($data) {
+        $tableName = $this->tableName;
+        $fieldTable = $this->field ?? [];
         $fieldTableNone = [];
-        if(!empty($data)){
+        if (!empty($data)) {
             $field = '';
             $value = '';
             foreach($data as $key=>$val){
                 if (!in_array($key, $fieldTable)) {
                     $fieldTableNone[] = $key;
                 }
-                $val = self::setAttribute($key, $val);
+                $val = $this->setAttribute($key, $val);
                 $field .= $key . ',';
                 $value .= "'".$val."'". ",";
             }
-            if (isset(static::$times_auto) && static::$times_auto) {
-                $date_create = static::$date_create ?? 'date_created';
+            if (isset($this->times_auto) && $this->times_auto) {
+                $date_create = $this->date_create ?? 'date_created';
                 $now = date('Y-m-d H:i:s');
                 $field .= "{$date_create},";
                 $value .= "'".$now."'". ",";
             }
-            if(count($fieldTableNone) > 0){
-                $class = get_class(new static());
+            if (count($fieldTableNone) > 0) {
+                $class = get_class($this);
                 $fieldTableNone = implode(',', $fieldTableNone);
                 throw new \RuntimeException("Missing $fieldTableNone in fieldTable class $class", 500);
             }
             $field = rtrim($field, ',');
             $value = rtrim($value, ',');
             $sql = "INSERT INTO $tableName($field) VALUES ($value)";
-            $result = self::modelInstance()->query($sql, true);
-            if($result){
-                return self::where('id','=', $result)->first();
-            }
-            return false;
-        }
-    }
-
-    public static function insert($data){
-        $tableName = self::$tableName ? self::$tableName:static::$tableName; // ko có sẽ lấy bên model
-        if(!empty($data)){
-            $field = '';
-            $value = '';
-            foreach($data as $key=>$val){
-                $val = self::setAttribute($key, $val);
-                $field .= $key . ',';
-                $value .= "'".$val."'". ",";
-            }
-            if (isset(static::$times_auto) && static::$times_auto) {
-                $date_create = static::$date_create ?? 'date_created';
-                $now = date('Y-m-d H:i:s');
-                $field .= "{$date_create},";
-                $value .= "'".$now."'". ",";
-            }
-            $field = rtrim($field, ',');
-            $value = rtrim($value, ',');
-            $sql = "INSERT INTO $tableName($field) VALUES ($value)";
-            $status = self::modelInstance()->query($sql);
-            if($status){
-                return true;
-            }
-            return false;
-        }
-    }
-
-    public static function insertLastId($data){
-        $tableName = self::$tableName ? self::$tableName:static::$tableName; // ko có sẽ lấy bên model
-        if(!empty($data)){
-            $field = '';
-            $value = '';
-            foreach($data as $key=>$val){
-                $val = self::setAttribute($key, $val);
-                $field .= $key . ',';
-                $value .= "'".$val."'". ",";
-            }
-            if (isset(static::$times_auto) && static::$times_auto) {
-                $date_create = static::$date_create ?? 'date_created';
-                $now = date('Y-m-d H:i:s');
-                $field .= "{$date_create},";
-                $value .= "'".$now."'". ",";
-            }
-            $field = rtrim($field, ',');
-            $value = rtrim($value, ',');
-            $sql = "INSERT INTO $tableName($field) VALUES ($value)";
-            $result = self::modelInstance()->query($sql, true);
-            if($result){
+            $result = $this->query($sql, true);
+            $result = $this->findById($result)->value();
+            $this->reset();
+            if ($result) {
                 return $result;
             }
             return false;
         }
     }
 
-    public static function update($data, $fieldOrId = null){
-        $tableName = self::$tableName ? self::$tableName:static::$tableName; // ko có sẽ lấy bên model
-        if(!empty($data)){
+    public function insert($data) {
+        $tableName = $this->tableName;
+        if (!empty($data)) {
+            $field = '';
+            $value = '';
+            foreach($data as $key=>$val){
+                $val = $this->setAttribute($key, $val);
+                $field .= $key . ',';
+                $value .= "'".$val."'". ",";
+            }
+            if (isset($this->times_auto) && $this->times_auto) {
+                $date_create = $this->date_create ?? 'date_created';
+                $now = date('Y-m-d H:i:s');
+                $field .= "{$date_create},";
+                $value .= "'".$now."'". ",";
+            }
+            $field = rtrim($field, ',');
+            $value = rtrim($value, ',');
+            $sql = "INSERT INTO $tableName($field) VALUES ($value)";
+            $status = $this->query($sql);
+            $this->reset();
+            if ($status) {
+                return true;
+            }
+            return false;
+        }
+    }
+
+    public function insertLastId($data) {
+        $tableName = $this->tableName;
+        if (!empty($data)) {
+            $field = '';
+            $value = '';
+            foreach($data as $key=>$val){
+                $val = $this->setAttribute($key, $val);
+                $field .= $key . ',';
+                $value .= "'".$val."'". ",";
+            }
+            if (isset($this->times_auto) && $this->times_auto) {
+                $date_create = $this->date_create ?? 'date_created';
+                $now = date('Y-m-d H:i:s');
+                $field .= "{$date_create},";
+                $value .= "'".$now."'". ",";
+            }
+            $field = rtrim($field, ',');
+            $value = rtrim($value, ',');
+            $sql = "INSERT INTO $tableName($field) VALUES ($value)";
+            $result = $this->query($sql, true);
+            $this->reset();
+            if ($result) {
+                return $result;
+            }
+            return false;
+        }
+    }
+
+    public function update($data, $fieldOrId = null) {
+        $tableName = $this->tableName;
+        if (!empty($data)) {
             $compare = '';
             foreach($data as $key=>$val){
-                $val = self::setAttribute($key, $val);
+                $val = $this->setAttribute($key, $val);
                 $compare .= $key." = '".$val."', ";
             }
-            if (isset(static::$times_auto) && static::$times_auto) {
-                $date_update = static::$date_update ?? 'date_updated';
+            if (isset($this->times_auto) && $this->times_auto) {
+                $date_update = $this->date_update ?? 'date_updated';
                 $now = date('Y-m-d H:i:s');
                 $compare .= $date_update." = '".$now."', ";
             }
             $where = '';
-            if(empty($fieldOrId)) {
-                $where = self::$where;
+            if (empty($fieldOrId)) {
+                $where = $this->where;
             } else {
-                if(is_array($fieldOrId)){
+                if (is_array($fieldOrId)) {
                     foreach ($fieldOrId as $key=>$value){
                         if (empty($where)) {
                             $where = " WHERE {$key} = '$value'";
@@ -562,94 +583,295 @@ trait QueryBuilder
                             $where .= " AND {$key} = '$value'";
                         }
                     }
-                }else{
+                } else {
                     $where = " WHERE id = $fieldOrId";
                 }
             }
             $compare = rtrim($compare, ", ");
             $sql = "UPDATE {$tableName} SET {$compare}{$where}";
-            $status = self::modelInstance()->query($sql);
-            if($status){
+            $status = $this->query($sql);
+            $this->reset();
+            if ($status) {
                 return true;
             }
             return false;
         }
     }
 
-    private static function reset() {
-        // reset
-        self::$tableName = '';
-        self::$where = '';
-        self::$select = '*';
-        self::$orderBy = '';
-        self::$operator = '';
-        self::$join = '';
-        self::$on = '';
-        self::$whereExit = '';
-        self::$page = '';
-        self::$limit = '';
-        self::$union = '';
-        self::$groupBy = '';
-    }
-
-    private static function resetSub() {
-        // reset
-        self::$tableNameSub = '';
-        self::$whereSub = '';
-        self::$selectSub = '';
-        self::$orderBySub = '';
-        self::$operatorSub = '';
-        self::$joinSub = '';
-        self::$onSub = '';
-        self::$pageSub = '';
-        self::$limitSub = '';
-        self::$groupBySub = '';
-    }
-
-    private static function operator($name, $isSub = false) {
-        if($isSub) {
-            if (!empty(self::$whereSub)) {
-                self::$operatorSub = " $name ";
+    public function updateOrInsert($data, $fieldOrId) {
+        $tableName = $this->tableName;
+        $where = '';
+        if (is_array($fieldOrId)) {
+            foreach ($fieldOrId as $key=>$value){
+                if (empty($where)) {
+                    $where = " WHERE {$key} = '$value'";
+                } else {
+                    $where .= " AND {$key} = '$value'";
+                }
             }
-            return self::$operatorSub;
-        }
-        if (empty(self::$where)) {
-            self::$operator = " WHERE ";
         } else {
-            self::$operator = " $name ";
+            $where = " WHERE id = $fieldOrId";
         }
-        return self::$operator;
+        $sql_has_data = "SELECT count(*) as count FROM {$tableName}{$where} LIMIT 1";
+        $has_data = $this->query($sql_has_data)->fetch(\PDO::FETCH_OBJ);
+        if (!empty($has_data->count)) {
+            return $this->update($data, $fieldOrId);
+        }
+        return $this->insert($data);
     }
 
-    private static function getAttribute($item, $is_array = false)
-    {
+    private function reset() {
+        // reset
+        $this->tableName = '';
+        $this->where = '';
+        $this->select = '*';
+        $this->orderBy = '';
+        $this->operator = '';
+        $this->join = '';
+        $this->on = '';
+        $this->page = '';
+        $this->limit = '';
+        $this->union = '';
+        $this->groupBy = '';
+    }
+
+    private function resetSub() {
+        // reset
+        $this->tableNameSub = '';
+        $this->whereSub = '';
+        $this->selectSub = '';
+        $this->orderBySub = '';
+        $this->operatorSub = '';
+        $this->joinSub = '';
+        $this->onSub = '';
+        $this->pageSub = '';
+        $this->limitSub = '';
+        $this->groupBySub = '';
+    }
+
+    private function operator($name, $isSub = false) {
+        if ($isSub) {
+            if (!empty($this->whereSub)) {
+                $this->operatorSub = " $name ";
+            }
+            return $this->operatorSub;
+        }
+        if (empty($this->where)) {
+            $this->operator = " WHERE ";
+        } else {
+            $this->operator = " $name ";
+        }
+        return $this->operator;
+    }
+
+    private function getAttribute($item, $is_array = false) {
+        $instance = $this->getModel();
         $keys = array_keys($is_array ? $item:get_object_vars($item));
         foreach ($keys as $key) {
             $name = ucfirst($key);
-            if(method_exists(self::modelInstance(), "getAttribute$name")) {
-                if($is_array) {
-                    $item[$key] = self::modelInstance()->{"getAttribute$name"}($item[$key]);
+            if (method_exists($instance, "getAttribute$name")) {
+                if ($is_array) {
+                    $item[$key] = $instance->{"getAttribute$name"}($item[$key]);
                 } else {
-                    $item->{$key} = self::modelInstance()->{"getAttribute$name"}($item->{$key});
+                    $item->{$key} = $instance->{"getAttribute$name"}($item->{$key});
                 }
             }
-            if(!empty(static::$hiddenField)) {
-                foreach (static::$hiddenField as $key_hidden) {
-                    if($is_array) {
-                        if(array_key_exists($key_hidden,$item)) unset($item[$key_hidden]);
+            if (!empty($this->hiddenField)) {
+                foreach ($this->hiddenField as $key_hidden) {
+                    if ($is_array) {
+                        if (array_key_exists($key_hidden,$item)) {
+                            unset($item[$key_hidden]);
+                        }
                     } else {
-                        if(array_key_exists($key_hidden,(array)$item)) unset($item->{$key_hidden});
+                        if (array_key_exists($key_hidden,(array)$item)) {
+                            unset($item->{$key_hidden});
+                        }
                     }
                 }
             }
         }
         return $item;
     }
-    private static function setAttribute($key, $val){
-        if(method_exists(self::modelInstance(), "setAttribute$key")) {
-            $val = self::modelInstance()->{"setAttribute$key"}($val);
+    private function setAttribute($key, $val) {
+        $instance = $this->getModel();
+        if (method_exists($instance, "setAttribute$key")) {
+            $val = $instance->{"setAttribute$key"}($val);
         }
         return $val;
     }
 
+    // relation
+    public function with($name) {
+        $instance = $this->getModel();
+        if (is_array($name)) {
+            foreach ($name as $key=>$value) {
+                if (is_numeric($key)) {
+                    $explode = explode(':', $value);
+                    $relation = $explode[0] ?? $value;
+                    if (method_exists($instance, $relation)) {
+                        $data_relation = $instance->{$relation}();
+                        self::$data_relation[] = $data_relation;
+                        if (!empty($explode[1]) && !empty(self::$data_relation)) {
+                            $key_last = array_key_last(self::$data_relation);
+                            self::$data_relation[$key_last]['query'] = function ($query) use ($explode) {
+                                return $query->select($explode[1]);
+                            };
+                        }
+                    }
+                } else {
+                    // query
+                    $query = $value;
+                    $relation = $key;
+                    if (method_exists($instance, $relation)) {
+                        $data_relation = $instance->{$relation}();
+                        self::$data_relation[] = $data_relation;
+                        if(!empty(self::$data_relation)) {
+                            $key_last = array_key_last(self::$data_relation);
+                            self::$data_relation[$key_last]['query'] = $query;
+                        }
+                    }
+                }
+            }
+            return $this;
+        }
+        if (method_exists($instance, $name)) {
+            $data_relation = $instance->{$name}();
+            self::$data_relation[] = $data_relation;
+        }
+        return $this;
+    }
+
+    private function workRelation($data, $type = 'get') {
+        if (empty(self::$data_relation)) {
+            return false;
+        }
+        if ($data instanceof Collection) {
+            if ($type === 'get') {
+                $result = $data->map(function ($item) {
+                    $keys = get_object_vars($item);
+                    foreach (self::$data_relation as $key => $relation) {
+                        $primary_key = $relation['primary_key'];
+                        $foreign_key = $relation['foreign_key'];
+                        $foreign_key2 = $relation['foreign_key2'];
+                        $model = $relation['model'];
+                        $model_many = $relation['model_many'];
+                        $name = $relation['name'];
+                        $name_relation = $relation['relation'];
+                        $query = $relation['query'] ?? null;
+                        if (isset($keys[$primary_key])) {
+                            $item->{$name} =  $this->dataRelation(
+                                $name_relation,
+                                $model,
+                                $model_many,
+                                $foreign_key,
+                                $foreign_key2,
+                                $item->{$primary_key},
+                                $query
+                            );
+                        }
+                    }
+                    return $item;
+                });
+                self::$data_relation = []; // reset when successful
+                return $result;
+            } else {
+                $result = $data->mapFirst(function ($item) {
+                    $keys = get_object_vars($item);
+                    foreach (self::$data_relation as $key => $relation) {
+                        $primary_key = $relation['primary_key'];
+                        $foreign_key = $relation['foreign_key'];
+                        $foreign_key2 = $relation['foreign_key2'] ?? null;
+                        $model = $relation['model'];
+                        $model_many = $relation['model_many'] ?? null;
+                        $name = $relation['name'];
+                        $name_relation = $relation['relation'];
+                        $query = $relation['query'] ?? null;
+                        if (isset($keys[$primary_key])) {
+                            $item->{$name} = $this->dataRelation(
+                                $name_relation,
+                                $model,
+                                $model_many,
+                                $foreign_key,
+                                $foreign_key2,
+                                $item->{$primary_key},
+                                $query
+                            );
+                        }
+                    }
+                    return $item;
+                });
+                self::$data_relation = []; // reset when successful
+                return $result;
+            }
+        }
+    }
+
+    private function dataRelation(
+        $relation,
+        $model,
+        $model_many,
+        $foreign_key,
+        $foreign_key2,
+        $primary_key,
+        $query
+    ) {
+        $instance = $this;
+        if ($relation === $this->HAS_MANY) {
+            $db_table = class_exists($model) ? (new $model):$this->table($model);
+            if (!empty($query)) {
+                $db_table = $query($db_table);
+            }
+            $sql = $db_table->where($foreign_key, $primary_key)->clone();
+            $data = $instance->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+            return $instance->getCollection($data)->values();
+        } else if($relation === $this->BELONG_TO) {
+            $db_table = class_exists($model) ? (new $model):$this->table($model);
+            if (!empty($query)) {
+                $db_table = $query($db_table);
+            }
+            $sql = $db_table->where($foreign_key, $primary_key)->clone();
+            $data = $instance->query($sql)->fetch(\PDO::FETCH_OBJ);
+            return $instance->getCollection($data)->value();
+        } else if($relation === $this->MANY_TO_MANY) {
+            // get id 3rd table
+            $db_table_many = class_exists($model_many) ? (new $model_many):$this->table($model_many);
+            $sql_tb_3rd =  $db_table_many->where($foreign_key, $primary_key)->clone();
+            $data_tb_3rd = $instance->query($sql_tb_3rd)->fetchAll(\PDO::FETCH_OBJ);
+            $id_join = $instance->getCollection($data_tb_3rd)->dataColumn($foreign_key2)->values();
+            if(!empty($id_join)) {
+                $db_table = class_exists($model) ? (new $model):$this->table($model);
+                if (!empty($query)) {
+                    $db_table = $query($db_table);
+                }
+                $sql = $db_table->whereIn('id', $id_join)->clone();
+                $data = $instance->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+                return $instance->getCollection($data)->values();
+            }
+            return [];
+        } else if($relation === $this->BELONG_TO_MANY) {
+            // get id 3rd table
+            $db_table_many = class_exists($model_many) ? (new $model_many):$this->table($model_many);
+            $sql_tb_3rd =  $db_table_many->where($foreign_key, $primary_key)->clone();
+            $data_tb_3rd = $instance->query($sql_tb_3rd)->fetchAll(\PDO::FETCH_OBJ);
+            $id_join = $instance->getCollection($data_tb_3rd)->dataColumn($foreign_key2)->toArray();
+            if(!empty($id_join)) {
+                $db_table = class_exists($model) ? (new $model):$this->table($model);
+                if (!empty($query)) {
+                    $db_table = $query($db_table);
+                }
+                $sql = $db_table->whereIn('id', $id_join)->clone();
+                $data = $instance->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+                return $instance->getCollection($data)->values();
+            }
+            return [];
+        } else { // has one
+            $db_table = class_exists($model) ? (new $model):$this->table($model);
+            if (!empty($query)) {
+                $db_table = $query($db_table);
+            }
+            $sql = $db_table->where($foreign_key, $primary_key)->clone();
+            $data = $instance->query($sql)->fetch(\PDO::FETCH_OBJ);
+            return $instance->getCollection($data)->value();
+        }
+    }
 }

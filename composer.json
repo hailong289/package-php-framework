@@ -11,27 +11,26 @@
         }
     ],
     "require": {
-        "php": ">=7.4"
+        "php": ">=7.4",
+        "symfony/console": "^6.4",
+        "phpmailer/phpmailer": "v6.9.1"
     },
     "autoload": {
         "psr-4": {
             "System\\Trait\\": "trait/",
             "System\\Core\\": "core/",
-            "System\\Middleware\\": "middleware/",
-            "System\\Queue\\": "queue/"
+            "System\\Queue\\": "queue/",
+            "Scripts\\": "scripts/",
+            "System\\Interfaces\\": "interfaces/"
         },
         "classmap": [
             "trait/",
             "core/",
-            "middleware/",
-            "queue/"
+            "queue/",
+            "scripts/",
+            "interfaces"
         ],
         "files": ["core/function.php"]
-    },
-    "scripts": {
-        "post-package-install": [
-            "composer dump-autoload"
-        ]
     },
     "minimum-stability": "dev",
     "prefer-stable" : true,

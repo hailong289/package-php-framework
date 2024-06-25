@@ -1,20 +1,33 @@
 <?php
-$folder = explode('/', $name_view);
-if (count($folder) > 1) {
-    unset($folder[count($folder) - 1]);
-    $folder = implode('/', $folder);
-    if (!file_exists(__DIR__ROOT .'/App/Views/'.$folder)) {
-        if (!mkdir($concurrentDirectory = __DIR__ROOT . '/App/Views/'.$folder, 0777, true) && !is_dir($concurrentDirectory)) {
-            throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
-            exit();
+namespace Scripts;
+class ViewScript extends \System\Core\Command
+{
+    protected $command = 'create:view';
+    protected $command_description = 'Create a new view';
+    protected $arguments = [
+        'name_view'
+    ];
+    protected $options = [];
+
+    public function handle()
+    {
+        $name_view = $this->getArgument('name_view');
+        $folder = explode('/', $name_view);
+        if (count($folder) > 1) {
+            unset($folder[count($folder) - 1]);
+            $folder = implode('/', $folder);
+            if (!file_exists(__DIR__ROOT .'/App/Views/'.$folder)) {
+                if (!mkdir($concurrentDirectory = __DIR__ROOT . '/App/Views/'.$folder, 0777, true) && !is_dir($concurrentDirectory)) {
+                    $this->output()->text(sprintf('Directory "%s" was not created', $concurrentDirectory));
+                    return;
+                }
+            }
+        } else {
+            $folder = $name_view;
         }
-    }
-} else {
-    $folder = $name_view;
-}
-$concurrentDirectory = __DIR__ROOT . "/App/Views/$name_view.view.php";
-if (!file_exists($concurrentDirectory)) {
-    file_put_contents($concurrentDirectory,(<<<HTML
+        $concurrentDirectory = __DIR__ROOT . "/App/Views/$name_view.view.php";
+        if (!file_exists($concurrentDirectory)) {
+            file_put_contents($concurrentDirectory,(<<<HTML
 <!doctype html>
 <html lang="en">
 <head>
@@ -28,10 +41,12 @@ if (!file_exists($concurrentDirectory)) {
 </body>
 </html>
 HTML), FILE_APPEND);
-    if (!file_exists($concurrentDirectory)) {
-        throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
+            if (!file_exists($concurrentDirectory)) {
+                $this->output()->text(sprintf('Directory "%s" was not created', $concurrentDirectory));
+            }
+            $this->output()->text("View $name_view create successfully");
+        } else {
+            $this->output()->text("View $name_view already exist");
+        }
     }
-    echo "View $name_view create successfully";
-} else {
-    echo "View $name_view already exist";
 }

@@ -1,13 +1,13 @@
 <?php
 namespace System\Core;
 
-use System\Middleware\Kernel;
+use Middleware\Kernel;
 
 class Router {
-    protected static $method = 'GET';
-    protected static $action;
-    protected static $path;
-    protected static $routers;
+    private static $method = 'GET';
+    private static $action;
+    private static $path;
+    private static $routers;
     private static $name_middleware = '';
     private static $prefix = '';
     protected static $path_load_file;
@@ -33,11 +33,13 @@ class Router {
         $current_router = [];
         $url = preg_replace('/((&|\?)([a-z_]+)=(.*)|(&|\?)([a-z_]+)=)/i','', $url);
         $method = $_REQUEST['_method'] ?? $method;
-        foreach ($routers as $router){
+        $number_router = 0;
+        foreach ($routers as $key=>$router){
             $path_router = $router['path_load_file'] && endsWith($router['path'], '/') ? substr($router['path'], 0, -1):$router['path'];
             $method_router = $router['method'];
             $action_router = $router['action'];
             $check_has_params = preg_match('/\d+/', $url);
+            $check_url_slug = preg_match('/([A-Za-z0-9-]+)/',$url);
 //            $check_query_string = preg_match('/(&|\?)([a-z_]+)=([a-z0-9]+)/i', $url);
             $check_router_param = preg_match('/{([a-z]+)}/',$path_router);
             if (!$check_has_params && !$check_router_param) {
@@ -73,15 +75,46 @@ class Router {
                         $current_router = $router;
                     }
                 }
+            } else if($check_url_slug && $check_router_param && empty($action)) { // check router slug
+                $path_arr = array_values(array_filter(explode('/',$path_router)));
+                $url_arr =  array_values(array_filter(explode('/', $url)));
+                if(
+                    count($path_arr) === count($url_arr) &&
+                    $method_router === $method
+                ){
+                    $number = 0;
+                    foreach ($path_arr as $key=>$item) {
+                        if(!empty($url_arr[$key]) && $url_arr[$key] == $item){
+                            $number++;
+                        }
+                    }
+
+                    if($number_router <= $number) {
+                        $number_router = $number;
+                    } else {
+                        continue;
+                    }
+
+                    if ($path === $path_router) {
+                        throw new \RuntimeException("Duplicate router", 500);
+                    }
+                    $params = array_diff($url_arr, $path_arr);
+                    $action = array_merge($action_router, $params);
+                    $path = $path_router;
+                    $current_router = $router;
+                }
             }
         }
-
-        if(empty($action) || count($current_router) == 0) throw new \RuntimeException("Not found", 404);
+        if(empty($action) || count($current_router) == 0) {
+            throw new \RuntimeException("Not found", 404);
+        }
         $names = $current_router['middleware'];
         if($names && is_string($names)) {
             $result = $this->middlewareWork($names);
             if($result->error_code){
                 echo json_encode($result);
+                exit();
+            } elseif (empty($result)) {
                 exit();
             }
         }elseif ($names && is_array($names)){
@@ -90,6 +123,9 @@ class Router {
             foreach ($names as $name){
                 $result = $this->middlewareWork($name);
                 if($result->error_code){
+                    $errors_return[] = $result;
+                    $is_error = true;
+                } elseif (empty($result)) {
                     $errors_return[] = $result;
                     $is_error = true;
                 }
@@ -149,7 +185,7 @@ class Router {
         return new static();
     }
     public static function patch($name, $action): Router {
-        self::$method = 'PATH';
+        self::$method = 'PATCH';
         self::$path = self::$prefix . (preg_match('/^\//', $name) ? $name: '/'.$name);
         self::$path = self::$path_load_file . self::$path;
         self::$action = $action;
@@ -250,5 +286,10 @@ class Router {
                 'middleware_not_exist' => 1
             ];
         }
+    }
+    
+    public static function list()
+    {
+        return self::$routers;
     }
 }
