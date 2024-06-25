@@ -45,14 +45,8 @@ class FormRequest extends Request {
         $validate = Validation::create($request->all(), $this->rules());
         if(!empty($validate->errors())) {
             $this->data_errors = $validate->errors();
-            if ($is_json) {
-                echo json_encode([
-                    'errors' => $validate->errors()
-                ]);
-                exit();
-            }
             $GLOBALS['share_data_errors'] = [
-                'errors' => $validate->errors()
+                'errors' => $this->data_errors
             ];
         }
         $this->data = $validate->data();
