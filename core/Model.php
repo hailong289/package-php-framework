@@ -233,4 +233,9 @@ class Model {
         $table = self::getTable();
         return self::DB()->table($table)->with($name);
     }
+
+    public static function query($sql) {
+        $table = self::getTable();
+        return self::DB()->table($table)->query($sql);
+    }
 }
