@@ -365,3 +365,18 @@ if (!function_exists('sendJobs')) {
         };
     }
 }
+
+if(!function_exists('cache')) {
+    function cache($name, $data) {
+        if (!file_exists(__DIR__ROOT .'/storage/cache')) {
+            mkdir(__DIR__ROOT .'/storage/cache', 0777, true);
+        }
+        $data_cache = file_get_contents(__DIR__ROOT ."/storage/cache/$name.cache");
+        if (empty($data_cache)) {
+            file_put_contents(__DIR__ROOT ."/storage/cache/$name.cache", serialize($data));
+            return $data;
+        } else {
+            return unserialize($data_cache);
+        }
+    }
+}

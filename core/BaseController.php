@@ -1,6 +1,5 @@
 <?php
 namespace System\Core;
-use System\Middleware\Kernel;
 class BaseController extends \stdClass {
     public function model($names) {
         $result = [];
@@ -8,31 +7,22 @@ class BaseController extends \stdClass {
             foreach ($names as $name){
                 $variable = str_replace('App\\Models\\','', $name);
                 $model = $name;
-                if(file_exists(path_root($model.'.php'))){
-                    require_once path_root($model.'.php');
-                    if(class_exists($model)){
-                        $model = new $model();
-                        if($model instanceof Model) {
-                            $this->{$variable} = $model;
-                        }
-                        return $model instanceof Model ? $model:$model;
-                    }else{
-                        throw new \RuntimeException("Model $name does not exits", 500);
-                    }
+                if(class_exists($model)){
+                    $model = new $model();
+                    $this->{$variable} = new $model();
+                    return $this->{$variable};
+                }else{
+                    throw new \RuntimeException("Model $name does not exits", 500);
                 }
             }
-        }else{
+        } else {
             $model = $names;
-            if(file_exists(path_root($model.'.php'))){
-                require_once path_root($model.'.php');
-                if(class_exists($model)){
-                    if($model instanceof Model) {
-                        return new $model();
-                    }
-                    return new $model();
-                } else {
-                    throw new \RuntimeException("Model $names does not exits", 500);
-                }
+            if(class_exists($model)){
+                $model = new $model();
+                $this->{$variable} = new $model();
+                return $this->{$variable};
+            }else{
+                throw new \RuntimeException("Model $model does not exits", 500);
             }
         }
     }
@@ -51,7 +41,7 @@ class BaseController extends \stdClass {
 
     public function middleware($name)
     {
-        $kernel = new Kernel();
+        $kernel = new \Middleware\Kernel();
         try {
             if(!empty($kernel->routerMiddleware[$name])){
                 $class = $kernel->routerMiddleware[$name];

@@ -7,7 +7,8 @@ class Model {
     {
         $call_class = get_called_class();
         $var = get_class_vars($call_class);
-        $db = new Database($call_class, $var);
+        $db = new Database();
+        $db->setModel($call_class, $var);
         return $db;
     }
 

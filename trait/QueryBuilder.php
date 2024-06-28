@@ -401,6 +401,14 @@ trait QueryBuilder
         return false;
     }
 
+    public function softDelete($data = []) {
+        $status = $this->update($data);
+        if ($status) {
+            return true;
+        }
+        return false;
+    }
+
     public function toSqlRaw() {
         $sql = $this->sqlQuery();
         return $sql;

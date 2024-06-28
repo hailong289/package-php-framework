@@ -3,9 +3,10 @@ namespace System\Core;
 class Connection{
     private static $instance = null, $conn = null,$instance_redis = null, $redis = null;
     private function __construct($environment = "default", $host = "mysql", $type = 1){
+        $DB = cache('config', DATABASE);
         if($type == 1) {
             // Ket nói database
-            $db_connection = DATABASE[$host][$environment];
+            $db_connection = $DB[$host][$environment];
             try{
                 //    cấu hình dsn
                 $dsn = "$host:dbname=".$db_connection['DATABASE_NAME'].";host=".$db_connection['HOST'];
@@ -26,7 +27,7 @@ class Connection{
             // connect redis
             try {
                 self::$redis = new \Redis();
-                $connection = DATABASE[$host][$environment];
+                $connection = $DB[$host][$environment];
                 $host = $connection['host'];
                 $port = $connection['port'];
                 $username = $connection['username'];

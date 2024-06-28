@@ -9,14 +9,20 @@ class Database {
     private static $log = [];
     private static $collection;
     private $model;
-    public function __construct($model = '', $column = [])
+    public function __construct()
     {
         self::$__conn = Connection::getInstance(DB_ENVIRONMENT, DB_CONNECTION);
-        if (!empty($model)) {
-            foreach ($column as $key => $value) {
+    }
+
+    public function setModel($model, $vars)
+    {
+        if (class_exists($model)) {
+            foreach ($vars as $key => $value) {
                 $this->{$key} = $value;
             }
             $this->model = $model;
+        } else {
+            throw new \Exception("Class {$model} in Models does not exist");
         }
     }
 
