@@ -46,7 +46,7 @@ class CreateQueue
                         'connection' => 'database',
                         'timeout' => $this->timeout
                     ], JSON_UNESCAPED_UNICODE);
-                    Database::table('jobs')->insert([
+                    Database::instance()->table('jobs')->insert([
                         'data' => $data,
                         'queue' => $this->queue,
                         'created_at' => date(' Y-m-d H:i:s')
