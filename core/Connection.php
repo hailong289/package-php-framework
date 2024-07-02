@@ -1,10 +1,10 @@
 <?php
 namespace System\Core;
 class Connection{
-    private static $instance = null, $conn = null,$instance_redis = null, $redis = null;
+    private static $instance = null, $conn = null,$instance_redis = null, $redis = null,$instance_rabbitMQ = null, $rabbitMQ = null;
     private function __construct($environment = "default", $host = "mysql", $type = 1){
         $DB = cache('config', DATABASE);
-        if($type == 1) {
+        if($type === 1) {
             // Ket nói database
             $db_connection = $DB[$host][$environment];
             try{
@@ -20,10 +20,11 @@ class Connection{
                 self::$conn = $conn;
 
             }catch (PDOException $e){
+                if (DEBUG_LOG) log_write($e,'connection');
                 $mess = $e->getMessage();
                 throw new \RuntimeException($mess, $e->getCode() ?? 503);
             }
-        } else if($type == 2) {
+        } else if($type === 2) {
             // connect redis
             try {
                 self::$redis = new \Redis();
@@ -41,7 +42,27 @@ class Connection{
                     self::$redis->rawCommand('auth', $username, $password);
                 }
             }catch (\Throwable $e) {
+                if (DEBUG_LOG) log_write($e,'connection');
                 throw new \RuntimeException("Connect redis failed. Error: ".$e->getMessage(), 503);
+            }
+        } else if ($type === 3) {
+            // connect rabbit mq
+            $host = config_env('RABBITMQ_HOST','localhost');
+            $port = config_env('RABBITMQ_PORT',5672);
+            $user = config_env('RABBITMQ_USER','guest');
+            $pass = config_env('RABBITMQ_PASSWORD','guest');
+            $vhost = config_env('RABBITMQ_VHOST','/');
+            try {
+                self::$rabbitMQ = new \PhpAmqpLib\Connection\AMQPStreamConnection(
+                    $host,
+                    $port,
+                    $user,
+                    $pass,
+                    $vhost
+                );
+            } catch (\Throwable $e) {
+                if (DEBUG_LOG) log_write($e,'connection');
+                throw new \RuntimeException("Connect rabbitMQ failed. Error: ".$e->getMessage(), 503);
             }
         }
     }
@@ -59,6 +80,14 @@ class Connection{
             self::$instance_redis = self::$redis;
         }
         return self::$instance_redis;
+    }
+
+    public static function instanceRabbitMQ($environment = 'default', $host ='rabbitMQ'){
+        if(self::$instance_rabbitMQ == null){
+            $connection_rabbitMQ = new Connection($environment, $host, 3);
+            self::$instance_rabbitMQ = self::$rabbitMQ;
+        }
+        return self::$instance_rabbitMQ;
     }
 
 }
