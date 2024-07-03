@@ -51,7 +51,7 @@ class CreateQueue
                     $channel = $rabbitMQ->channel();
                     $channel->queue_declare($this->queue, false, true, false, false);
                     $attributes = [
-                        'delivery_mode' => 2,
+                        'delivery_mode' => \PhpAmqpLib\Message\AMQPMessage::DELIVERY_MODE_PERSISTENT,
                         'content_type' => 'application/json',
                     ];
                     $msg = new \PhpAmqpLib\Message\AMQPMessage(
