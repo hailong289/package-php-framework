@@ -172,6 +172,7 @@ class QueueScript extends \System\Core\Command
 
     private function stopQueue($db, $payload, $class, $uid, $e)
     {
+        $class = str_replace('Queue\\Jobs\\','', $class);
         try {
             if ($this->connection === 'database') {
                 if ($db instanceof \System\Core\Database) {
@@ -181,7 +182,7 @@ class QueueScript extends \System\Core\Command
                         'class' => $class,
                         'error' => $e->getMessage()
                     ]);
-                    $db::table('failed_jobs')->insert([
+                    $db::instance()->table('failed_jobs')->insert([
                         'data' => $data,
                         'queue' => 'failed_jobs',
                         'exception' => $e->getMessage() . ". Trace: " . base64_encode($e->getTraceAsString()),
@@ -217,7 +218,7 @@ class QueueScript extends \System\Core\Command
             if ($db instanceof \System\Core\Database) {
                 $table = $this->jobs_queue === 'rollback_failed_job' ? 'failed_jobs':'jobs';
                 $queue = $this->jobs_queue === 'rollback_failed_job' ? 'failed_jobs':$this->jobs_queue;
-                $db::table($table)->where('queue', $queue)->where('id', $index)->delete();
+                $db::instance()->table($table)->where('queue', $queue)->where('id', $index)->delete();
             } else if ($db instanceof \Redis) {
                 $queue_name = $this->jobs_queue;
                 if ($queue_name === 'rollback_failed_job') {
