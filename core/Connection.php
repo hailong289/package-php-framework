@@ -52,14 +52,29 @@ class Connection{
             $user = config_env('RABBITMQ_USER','guest');
             $pass = config_env('RABBITMQ_PASSWORD','guest');
             $vhost = config_env('RABBITMQ_VHOST','/');
+            $scheme = config_env('RABBITMQ_SCHEME','');
+            $options = config_env('RABBITMQ_OPTIONS',[
+                'capath' => '/etc/ssl/certs'
+            ]);
             try {
-                self::$rabbitMQ = new \PhpAmqpLib\Connection\AMQPStreamConnection(
-                    $host,
-                    $port,
-                    $user,
-                    $pass,
-                    $vhost
-                );
+                if($scheme === "amqps") {
+                    self::$rabbitMQ = new \PhpAmqpLib\Connection\AMQPSSLConnection(
+                        $host,
+                        $port,
+                        $user,
+                        $pass,
+                        $vhost,
+                        $options
+                    );
+                } else {
+                    self::$rabbitMQ = new \PhpAmqpLib\Connection\AMQPStreamConnection(
+                        $host,
+                        $port,
+                        $user,
+                        $pass,
+                        $vhost
+                    );
+                }
             } catch (\Throwable $e) {
                 if (DEBUG_LOG) log_write($e,'connection');
                 throw new \RuntimeException("Connect rabbitMQ failed. Error: ".$e->getMessage(), 503);
