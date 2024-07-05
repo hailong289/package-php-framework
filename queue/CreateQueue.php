@@ -40,7 +40,7 @@ class CreateQueue
                     Redis::cacheRPush($tag_queue, $data_queue, 0);
                 } elseif ($this->connection === 'database') {
                     $data = json_encode($data_queue, JSON_UNESCAPED_UNICODE);
-                    Database::table('jobs')->insert([
+                    Database::instance()->table('jobs')->insert([
                         'data' => $data,
                         'queue' => $this->queue,
                         'created_at' => date(' Y-m-d H:i:s')
@@ -63,40 +63,12 @@ class CreateQueue
                     $channel->close();
                     $rabbitMQ->close();
                 }
-            } catch (\Exception $e) {
-                $code = (int)$e->getCode();
-                if($is_api) {
-                    echo json_encode([
-                        "message" => $e->getMessage(),
-                        "code" => $code,
-                        "line" => $e->getLine(),
-                        "file" => $e->getFile(),
-                        "trace" => $e->getTraceAsString()
-                    ]);
-                    exit();
-                }
-                Response::view("error.index", [
-                    "message" => $e->getMessage(),
-                    "code" => $code,
-                    "line" => $e->getLine(),
-                    "file" => $e->getFile(),
-                    "trace" => $e->getTraceAsString()
-                ]);
-                exit();
+            } catch (\Throwable $e) {
+                throw $e;
             }
         } else {
-            if($is_api) {
-                echo json_encode([
-                    "message" => "Class handle in $class does not exit",
-                    "code" => 500
-                ]);
-                exit();
-            }
-            Response::view("error.index", [
-                "message" => "Function handle in class $class does not exit",
-                "code" => 500,
-            ]);
-            exit();
+            $class = get_class($class);
+            throw new \Exception("Function handle in class $class does not exit", 500);
         }
     }
 
@@ -104,19 +76,7 @@ class CreateQueue
         if($connection === 'redis' || $connection === 'database') {
             $this->connection = $connection;
         } else {
-            $is_api = (new Request())->isJson();
-            if($is_api) {
-                echo json_encode([
-                    "message" => "Connection not supported",
-                    "code" => 500
-                ]);
-                exit();
-            }
-            Response::view("error.index", [
-                "message" => "Connection not supported",
-                "code" => 500,
-            ]);
-            exit();
+            throw new \Exception('Connection not supported', 500);
         }
         return $this;
     }

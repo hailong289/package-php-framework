@@ -11,7 +11,9 @@ class Database {
     private $model;
     public function __construct()
     {
-        self::$__conn = Connection::getInstance(DB_ENVIRONMENT, DB_CONNECTION);
+        $env = config_env('DB_ENVIRONMENT', 'default');
+        $con = config_env('DB_CONNECTION', 'mysql');
+        self::$__conn = Connection::getInstance($env, $con);
     }
 
     public function setModel($model, $vars)
@@ -75,21 +77,27 @@ class Database {
 
     public static function beginTransaction(){
         if(self::$__conn == null) {
-            self::$__conn = Connection::getInstance(DB_ENVIRONMENT, DB_CONNECTION);
+            $env = config_env('DB_ENVIRONMENT', 'default');
+            $con = config_env('DB_CONNECTION', 'mysql');
+            self::$__conn = Connection::getInstance($env, $con);
         }
         return self::$__conn->beginTransaction();
     }
 
     public static function commit(){
         if(self::$__conn == null) {
-            self::$__conn = Connection::getInstance(DB_ENVIRONMENT, DB_CONNECTION);
+            $env = config_env('DB_ENVIRONMENT', 'default');
+            $con = config_env('DB_CONNECTION', 'mysql');
+            self::$__conn = Connection::getInstance($env, $con);
         }
         return self::$__conn->commit();
     }
 
     public static function rollBack(){
         if(self::$__conn == null) {
-            self::$__conn = Connection::getInstance(DB_ENVIRONMENT, DB_CONNECTION);
+            $env = config_env('DB_ENVIRONMENT', 'default');
+            $con = config_env('DB_CONNECTION', 'mysql');
+            self::$__conn = Connection::getInstance($env, $con);
         }
         return self::$__conn->rollBack();
     }

@@ -3,11 +3,14 @@ namespace System\Core;
 
 class Model {
 
-    private static function DB()
+    private static function DB($env = 'default', $connection = 'mysql', $change_conn = false)
     {
         $call_class = get_called_class();
         $var = get_class_vars($call_class);
         $db = new Database();
+        if ($change_conn) {
+            $db::connection($env, $connection);
+        }
         $db->setModel($call_class, $var);
         return $db;
     }
@@ -25,6 +28,12 @@ class Model {
     {
         $table = self::getTable();
         return self::DB()->table($table);
+    }
+
+    public static function connection($env = 'default', $connection = 'mysql')
+    {
+        $table = self::getTable();
+        return self::DB($env = 'default', $connection = 'mysql', true)->table($table);
     }
 
     public static function from($tableName) {

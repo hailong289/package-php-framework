@@ -54,7 +54,11 @@ class Connection{
             $vhost = config_env('RABBITMQ_VHOST','/');
             $scheme = config_env('RABBITMQ_SCHEME','');
             $options = config_env('RABBITMQ_OPTIONS',[
-                'capath' => '/etc/ssl/certs'
+                'cafile' => null,
+                'local_cert' =>null,
+                'local_key' => null,
+                'verify_peer' => false,
+                'passphrase' => null,
             ]);
             try {
                 if($scheme === "amqps") {
