@@ -19,7 +19,7 @@ class Connection{
                 $conn = new \PDO($dsn,$db_connection['USERNAME'],$db_connection['PASSWORD'],$options);
                 self::$conn = $conn;
 
-            }catch (PDOException $e){
+            }catch (\PDOException $e){
                 if (DEBUG_LOG) log_write($e,'connection');
                 $mess = $e->getMessage();
                 throw new \RuntimeException($mess, $e->getCode() ?? 503);

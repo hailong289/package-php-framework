@@ -9,10 +9,11 @@ class Database {
     private static $log = [];
     private static $collection;
     private $model;
-    public function __construct()
+
+    public function __construct($environment = null, $connection = null)
     {
-        $env = config_env('DB_ENVIRONMENT', 'default');
-        $con = config_env('DB_CONNECTION', 'mysql');
+        $env = $environment ?? config_env('DB_ENVIRONMENT', 'default');
+        $con = $connection ?? config_env('DB_CONNECTION', 'mysql');
         self::$__conn = Connection::getInstance($env, $con);
     }
 
@@ -71,8 +72,7 @@ class Database {
     }
 
     public static function connection($env, $connection = 'mysql'){
-        self::$__conn = Connection::getInstance($env, $connection);
-        return new static();
+        return new Database($env, $connection);
     }
 
     public static function beginTransaction(){
@@ -111,7 +111,6 @@ class Database {
         $sql = $this->sqlQuery();
         $data = $this->query($sql)->fetchAll(\PDO::FETCH_OBJ);
         if (!empty($data)) {
-//            logs()->dump($this);
             $data = $this->getCollection($data)->map(fn ($item) => self::getAttribute($item));
             $data_relation = $this->workRelation($data, 'get');
             if (!empty($data_relation)) $data = $data_relation;
