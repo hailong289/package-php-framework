@@ -3,246 +3,200 @@ namespace System\Core;
 
 class Model {
 
-    private static function DB($env = null, $connection = null)
+    private static function init($env = null, $connection = null, $not_set_tb = false)
     {
         $call_class = get_called_class();
         $var = get_class_vars($call_class);
         $db = new Database($env, $connection);
         $db->setModel($call_class, $var);
-        return $db;
-    }
-
-    private static function getTable()
-    {
-        $call_class = get_called_class();
-        $list_vars = get_class_vars($call_class);
+        // set table
         $variable = str_replace('App\\Models\\','', $call_class);
         $tableName = strtolower($variable);
-        return $list_vars['tableName'] ?? $tableName;
+        $table = $var['tableName'] ?? $tableName;
+        if ($not_set_tb === false) {
+            $db->table($table);
+        }
+        return $db;
     }
 
     public static function instance()
     {
-        $table = self::getTable();
-        return self::DB()->table($table);
+        return self::init();
     }
 
     public static function connection($env = 'default', $connection = 'mysql')
     {
-        $table = self::getTable();
-        return self::DB($env, $connection)->table($table);
+        return self::init($env, $connection);
     }
 
     public static function from($tableName) {
-        return self::DB()->from($tableName);
+        return self::init(null, null, true)->from($tableName);
     }
 
     public static function subQuery($sql, $name) {
-        $table = self::getTable();
-        return self::DB()->table($table)->subQuery($sql, $name);
+        return self::init()->subQuery($sql, $name);
     }
 
     public static function union($sql) {
-        $table = self::getTable();
-        return self::DB()->table($table)->union($sql);
+        return self::init()->union($sql);
     }
 
     public static function union_all($sql) {
-        $table = self::getTable();
-        return self::DB()->table($table)->union_all($sql);
+        return self::init()->union_all($sql);
     }
 
     public static function where($field, $compare = '=', $value = null) {
-        $table = self::getTable();
-        return self::DB()->table($table)->where($field, $compare, $value);
+        return self::init()->where($field, $compare, $value);
     }
 
     public static function orWhere($field, $compare = '=', $value = null) {
-        $table = self::getTable();
-        return self::DB()->table($table)->orWhere($field, $compare, $value);
+        return self::init()->orWhere($field, $compare, $value);
     }
 
     public static function whereLike($field, $value) {
-        $table = self::getTable();
-        return self::DB()->table($table)->whereLike($field, $value);
+        return self::init()->whereLike($field, $value);
     }
 
     public static function orWhereLike($field, $value) {
-        $table = self::getTable();
-        return self::DB()->table($table)->orWhereLike($field, $value);
+        return self::init()->orWhereLike($field, $value);
     }
 
     public static function whereIn($field, array $value) {
-        $table = self::getTable();
-        return self::DB()->table($table)->whereIn($field, $value);
+        return self::init()->whereIn($field, $value);
     }
 
     public static function orWhereIn($field, array $value) {
-        $table = self::getTable();
-        return self::DB()->table($table)->orWhereIn($field, $value);
+        return self::init()->orWhereIn($field, $value);
     }
 
     public static function whereNotIn($field, array $value) {
-        $table = self::getTable();
-        return self::DB()->table($table)->whereNotIn($field, $value);
+        return self::init()->whereNotIn($field, $value);
     }
 
     public static function orWhereNotIn($field, array $value) {
-        $table = self::getTable();
-        return self::DB()->table($table)->orWhereNotIn($field, $value);
+        return self::init()->orWhereNotIn($field, $value);
     }
 
     public static function whereBetween($field, array $value) {
-        $table = self::getTable();
-        return self::DB()->table($table)->whereBetween($field, $value);
+        return self::init()->whereBetween($field, $value);
     }
 
     public static function whereRaw($sql) {
-        $table = self::getTable();
-        return self::DB()->table($table)->whereRaw($sql);
+        return self::init()->whereRaw($sql);
     }
 
     public static function orWhereRaw($sql) {
-        $table = self::getTable();
-        return self::DB()->table($table)->orWhereRaw($sql);
+        return self::init()->orWhereRaw($sql);
     }
 
     public static function select($field) {
-        $table = self::getTable();
-        return self::DB()->table($table)->select($field);
+        return self::init()->select($field);
     }
 
     public static function orderBy($field, $orderBy = 'ASC') {
-        $table = self::getTable();
-        return self::DB()->table($table)->orderBy($field, $orderBy);
+        return self::init()->orderBy($field, $orderBy);
     }
-    public static function join($table, $function = '') {
-        $table = self::getTable();
-        return self::DB()->table($table)->orWhereRaw($table, $function);
+    public static function join($table, $function = null) {
+        return self::init()->join($table, $function);
     }
 
-    public static function leftJoin($table, $function) {
-        $table = self::getTable();
-        return self::DB()->table($table)->leftJoin($table, $function);
+    public static function leftJoin($table, $function = null) {
+        return self::init()->leftJoin($table, $function);
     }
 
-    public static function rightJoin($table, $function) {
-        $table = self::getTable();
-        return self::DB()->table($table)->rightJoin($table, $function);
+    public static function rightJoin($table, $function = null) {
+        return self::init()->rightJoin($table, $function);
     }
 
     public static function on($field1, $compare, $field2, $operator = '') {
-        $table = self::getTable();
-        return self::DB()->table($table)->on($field1, $compare, $field2, $operator);
+        return self::init()->on($field1, $compare, $field2, $operator);
     }
 
     public static function groupBy($field) {
-        $table = self::getTable();
-        return self::DB()->table($table)->groupBy($field);
+        return self::init()->groupBy($field);
     }
 
     public static function page($page) {
-        $table = self::getTable();
-        return self::DB()->table($table)->page($page);
+        return self::init()->page($page);
     }
 
     public static function limit($limit) {
-        $table = self::getTable();
-        return self::DB()->table($table)->limit($limit);
+        return self::init()->limit($limit);
     }
 
     public static function delete() {
-        $table = self::getTable();
-        return self::DB()->table($table)->delete();
+        return self::init()->delete();
     }
 
     public static function toSqlRaw() {
-        $table = self::getTable();
-        return self::DB()->table($table)->toSqlRaw();
+        return self::init()->toSqlRaw();
     }
 
     public static function showSqlRaw() {
-        $table = self::getTable();
-        return self::DB()->table($table)->showSqlRaw();
+        return self::init()->showSqlRaw();
     }
 
     public static function clone() {
-        $table = self::getTable();
-        return self::DB()->table($table)->clone();
+        return self::init()->clone();
     }
 
     public static function create($data) {
-        $table = self::getTable();
-        return self::DB()->table($table)->create($data);
+        return self::init()->create($data);
     }
 
     public static function insert($data) {
-        $table = self::getTable();
-        return self::DB()->table($table)->insert($data);
+        return self::init()->insert($data);
     }
 
     public static function insertLastId($data) {
-        $table = self::getTable();
-        return self::DB()->table($table)->insertLastId($limit);
+        return self::init()->insertLastId($limit);
     }
 
     public static function update($data, $fieldOrId = null) {
-        $table = self::getTable();
-        return self::DB()->table($table)->update($data, $fieldOrId);
+        return self::init()->update($data, $fieldOrId);
     }
 
     public static function updateOrInsert($data, $fieldOrId) {
-        $table = self::getTable();
-        return self::DB()->table($table)->updateOrInsert($data, $fieldOrId);
+        return self::init()->updateOrInsert($data, $fieldOrId);
     }
 
     public static function get() {
-        $table = self::getTable();
-        return self::DB()->table($table)->get();
+        return self::init()->get();
     }
 
     public static function getArray() {
-        $table = self::getTable();
-        return self::DB()->table($table)->getArray();
+        return self::init()->getArray();
     }
 
     public static function first() {
-        $table = self::getTable();
-        return self::DB()->table($table)->first();
+        return self::init()->first();
     }
 
     public static function firstArray() {
-        $table = self::getTable();
-        return self::DB()->table($table)->firstArray();
+        return self::init()->firstArray();
     }
 
     public static function findById($id) {
-        $table = self::getTable();
-        return self::DB()->table($table)->findById($id);
+        return self::init()->findById($id);
     }
 
     public static function find($id) {
-        $table = self::getTable();
-        return self::DB()->table($table)->find($id);
+        return self::init()->find($id);
     }
 
     public static function count($key = '*', $as = 'count') {
-        $table = self::getTable();
-        return self::DB()->table($table)->count($key, $as);
+        return self::init()->count($key, $as);
     }
 
     public static function sum($key = '*', $as = '') {
-        $table = self::getTable();
-        return self::DB()->table($table)->sum($key, $as);
+        return self::init()->sum($key, $as);
     }
 
     public static function with($name) {
-        $table = self::getTable();
-        return self::DB()->table($table)->with($name);
+        return self::init()->with($name);
     }
 
     public static function query($sql) {
-        $table = self::getTable();
-        return self::DB()->table($table)->query($sql);
+        return self::init()->query($sql);
     }
 }
