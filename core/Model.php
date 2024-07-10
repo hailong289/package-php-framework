@@ -192,8 +192,8 @@ class Model {
         return self::init()->sum($key, $as);
     }
 
-    public static function with($name) {
-        return self::init()->with($name);
+    public static function with($name, $useN1Query = false) {
+        return self::init()->with($name, $useN1Query);
     }
 
     public static function query($sql) {
