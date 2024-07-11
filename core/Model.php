@@ -111,15 +111,15 @@ class Model {
     }
     public static function join($table, $function = '') {
         $table = self::getTable();
-        return self::DB()->table($table)->orWhereRaw($table, $function);
+        return self::DB()->table($table)->join($table, $function);
     }
 
-    public static function leftJoin($table, $function) {
+    public static function leftJoin($table, $function = '') {
         $table = self::getTable();
         return self::DB()->table($table)->leftJoin($table, $function);
     }
 
-    public static function rightJoin($table, $function) {
+    public static function rightJoin($table, $function = '') {
         $table = self::getTable();
         return self::DB()->table($table)->rightJoin($table, $function);
     }
