@@ -4,6 +4,7 @@ class Connection{
     private static $instance = null, $conn = null,$instance_redis = null, $redis = null,$instance_rabbitMQ = null, $rabbitMQ = null;
     private function __construct($environment = "default", $host = "mysql", $type = 1){
         $DB = cache('config', DATABASE);
+        $enable_debug = config_env('DEBUG_LOG_CONNECTION', false);
         if($type === 1) {
             // Ket nói database
             $db_connection = $DB[$host][$environment];
@@ -20,7 +21,7 @@ class Connection{
                 self::$conn = $conn;
 
             }catch (\PDOException $e){
-                if (DEBUG_LOG) log_write($e,'connection');
+                if ($enable_debug) log_write($e,'connection');
                 $mess = $e->getMessage();
                 throw new \RuntimeException($mess, $e->getCode() ?? 503);
             }
@@ -42,7 +43,7 @@ class Connection{
                     self::$redis->rawCommand('auth', $username, $password);
                 }
             }catch (\Throwable $e) {
-                if (DEBUG_LOG) log_write($e,'connection');
+                if ($enable_debug) log_write($e,'connection');
                 throw new \RuntimeException("Connect redis failed. Error: ".$e->getMessage(), 503);
             }
         } else if ($type === 3) {
@@ -80,7 +81,7 @@ class Connection{
                     );
                 }
             } catch (\Throwable $e) {
-                if (DEBUG_LOG) log_write($e,'connection');
+                if ($enable_debug) log_write($e,'connection');
                 throw new \RuntimeException("Connect rabbitMQ failed. Error: ".$e->getMessage(), 503);
             }
         }
