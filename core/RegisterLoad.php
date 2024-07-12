@@ -45,12 +45,12 @@ class RegisterLoad
         if (is_array($pathName)) {
             foreach ($pathName as $name) {
                 $link_path = __DIR__ROOT . "/$name";
-                $files = glob("$link_path/*.php") ?? [];
+                $files = rglob("$link_path/*.php") ?? [];
                 $this->loadFiles($files);
             }
         } else {
             $link_path = __DIR__ROOT . "/$pathName";
-            $files = glob("$link_path/*.php") ?? [];
+            $files = rglob("$link_path/*.php") ?? [];
             $this->loadFiles($files);
         }
         return $this;
