@@ -99,16 +99,11 @@ if(!function_exists('log_debug')){
 }
 
 if(!function_exists('logs')){
-    interface InterfaceLogs {
-        public function dump(...$args);
-        public function write($data, $name_file = 'debug');
-        public function debug($data);
-    }
     /**
      * @return InterfaceLogs|__anonymous@2793
      */
     function logs(): object {
-        return new class implements InterfaceLogs {
+        return new class implements \System\Interfaces\InterfaceLogs\Log {
             public function dump(...$args) {
                 http_response_code(500);
                 echo "<pre>";

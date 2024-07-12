@@ -37,10 +37,12 @@ class Database {
 
     public function query($sql, $last_id = false){
         try {
-            if(self::$enableLog) $startTime = microtime(true);
+            if(self::$enableLog) {
+                $startTime = microtime(true);
+            }
             $statement = self::$__conn->prepare($sql);
             $statement->execute();
-            if(self::$enableLog) {
+            if (self::$enableLog) {
                 $endTime = microtime(true);
                 $executionTime = $endTime - $startTime;
                 self::$log[] = [
@@ -48,7 +50,9 @@ class Database {
                     'executionTime' => "Query took " . $executionTime . " seconds to execute."
                 ];
             }
-            if($last_id) return self::$__conn->lastInsertId();
+            if ($last_id) {
+                return self::$__conn->lastInsertId();
+            }
             return $statement;
         } catch (\Throwable $th) {
             throw $th;
