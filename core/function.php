@@ -370,6 +370,17 @@ if(!function_exists('cache')) {
         if (is_null($name)) {
             return new class implements \System\Interfaces\FunctionInterface\InterfaceCacheFile {
                 public function set($name, $data = []){
+                    $folder = explode('/', $name);
+                    if (count($folder) > 1) {
+                        unset($folder[count($folder) - 1]);
+                        $folder = implode('/', $folder);
+                        $path_cache = __DIR__ROOT .'/storage/cache/'.$folder;
+                        if (!file_exists($path_cache)) {
+                            if (!mkdir($path_cache, 0777, true) && !is_dir($path_cache)) {
+                                throw new \Exception(sprintf('Directory "%s" was not created', $path_cache));
+                            }
+                        }
+                    }
                     file_put_contents(__DIR__ROOT ."/storage/cache/$name.cache", serialize($data));
                     return $this;
                 }
