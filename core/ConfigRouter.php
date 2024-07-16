@@ -15,7 +15,6 @@ class ConfigRouter extends Router {
         } else {
             http_response_code(500);
             throw new \RuntimeException("File $name in router does not exit", 500);
-            return;
         }
         self::$path_load_file = '';
         return $this;
@@ -33,7 +32,6 @@ class ConfigRouter extends Router {
     public function work() {
         if(empty($this->pathArray)) {
             throw new \RuntimeException('Name function add() is not null', 500);
-            return;
         }
 
         foreach ($this->pathArray as $name=>$fileName) {

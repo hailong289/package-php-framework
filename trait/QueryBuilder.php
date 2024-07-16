@@ -893,17 +893,20 @@ trait QueryBuilder
         $query
     ) {
         $instance = $this;
+        $whereName = 'where';
+        $key_fetch = 'fetch';
+        $key_value = 'value';
+        if (is_array($primary_key)) {
+            $whereName = 'whereIn';
+            $key_fetch = 'fetchAll';
+            $key_value = 'values';
+        }
         if ($relation === $this->HAS_MANY) {
             $db_table = class_exists($model) ? (new $model):$this->table($model);
             if (!empty($query)) {
                 $db_table = $query($db_table);
             }
-            if (is_array($primary_key)) {
-                $db_table = $db_table->whereIn($foreign_key, $primary_key);
-            } else {
-                $db_table = $db_table->where($foreign_key, $primary_key);
-            }
-            $sql = $db_table->clone();
+            $sql = $db_table->{$whereName}($foreign_key, $primary_key)->clone();
             $data = $instance->query($sql)->fetchAll(\PDO::FETCH_OBJ);
             return $instance->getCollection($data)->values();
         } else if($relation === $this->BELONG_TO) {
@@ -911,25 +914,13 @@ trait QueryBuilder
             if (!empty($query)) {
                 $db_table = $query($db_table);
             }
-            if (is_array($primary_key)) {
-                $db_table = $db_table->whereIn($foreign_key, $primary_key);
-            } else {
-                $db_table = $db_table->where($foreign_key, $primary_key);
-            }
-            $key_value = is_array($primary_key) ? 'values':'value';
-            $key_fetch = is_array($primary_key) ? 'fetchAll':'fetch';
-            $sql = $db_table->clone();
+            $sql = $db_table->{$whereName}($foreign_key, $primary_key)->clone();
             $data = $instance->query($sql)->{$key_fetch}(\PDO::FETCH_OBJ);
             return $instance->getCollection($data)->{$key_value}();
         } else if($relation === $this->MANY_TO_MANY) {
             // get id 3rd table
             $db_table_many = class_exists($model_many) ? (new $model_many):$this->table($model_many);
-            if (is_array($primary_key)) {
-                $db_table_many = $db_table_many->whereIn($foreign_key, $primary_key);
-            } else {
-                $db_table_many = $db_table_many->where($foreign_key, $primary_key);
-            }
-            $sql_tb_3rd =  $db_table_many->clone();
+            $sql_tb_3rd =  $db_table_many->{$whereName}($foreign_key, $primary_key)->clone();
             $data_tb_3rd = $instance->query($sql_tb_3rd)->fetchAll(\PDO::FETCH_OBJ);
             $id_join = $instance->getCollection($data_tb_3rd)->dataColumn($foreign_key2)->toArray();
             if(!empty($id_join)) {
@@ -962,12 +953,7 @@ trait QueryBuilder
         } else if($relation === $this->BELONG_TO_MANY) {
             // get id 3rd table
             $db_table_many = class_exists($model_many) ? (new $model_many):$this->table($model_many);
-            if (is_array($primary_key)) {
-                $db_table_many = $db_table_many->whereIn($foreign_key, $primary_key);
-            } else {
-                $db_table_many = $db_table_many->where($foreign_key, $primary_key);
-            }
-            $sql_tb_3rd =  $db_table_many->clone();
+            $sql_tb_3rd =  $db_table_many->{$whereName}($foreign_key, $primary_key)->clone();
             $data_tb_3rd = $instance->query($sql_tb_3rd)->fetchAll(\PDO::FETCH_OBJ);
             $id_join = $instance->getCollection($data_tb_3rd)->dataColumn($foreign_key2)->toArray();
             if(!empty($id_join)) {
@@ -1002,14 +988,7 @@ trait QueryBuilder
             if (!empty($query)) {
                 $db_table = $query($db_table);
             }
-            if (is_array($primary_key)) {
-                $db_table = $db_table->whereIn($foreign_key, $primary_key);
-            } else {
-                $db_table = $db_table->where($foreign_key, $primary_key);
-            }
-            $key_value = is_array($primary_key) ? 'values':'value';
-            $key_fetch = is_array($primary_key) ? 'fetchAll':'fetch';
-            $sql = $db_table->clone();
+            $sql = $db_table->{$whereName}($foreign_key, $primary_key)->clone();
             $data = $instance->query($sql)->{$key_fetch}(\PDO::FETCH_OBJ);
             return $instance->getCollection($data)->{$key_value}();
         }

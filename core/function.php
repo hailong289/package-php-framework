@@ -362,10 +362,31 @@ if (!function_exists('sendJobs')) {
 }
 
 if(!function_exists('cache')) {
-    function cache($name, $data) {
+    function cache($name = null, $data = []) {
         if (!file_exists(__DIR__ROOT .'/storage/cache')) {
             mkdir(__DIR__ROOT .'/storage/cache', 0777, true);
         }
+
+        if (is_null($name)) {
+            return new class implements \System\Interfaces\FunctionInterface\InterfaceCacheFile {
+                public function set($name, $data = []){
+                    file_put_contents(__DIR__ROOT ."/storage/cache/$name.cache", serialize($data));
+                    return $this;
+                }
+                public function get($name){
+                    $data_cache = file_get_contents(__DIR__ROOT ."/storage/cache/$name.cache");
+                    return unserialize($data_cache ?? '');
+                }
+                public function clear($name){
+                    $file = __DIR__ROOT ."/storage/cache/$name.cache";
+                    if(file_exists($file)){
+                        unlink($file);
+                    }
+                    return $this;
+                }
+            };
+        }
+
         $data_cache = file_get_contents(__DIR__ROOT ."/storage/cache/$name.cache");
         if (empty($data_cache)) {
             file_put_contents(__DIR__ROOT ."/storage/cache/$name.cache", serialize($data));
