@@ -84,8 +84,15 @@ class Collection
 
     public function filter($fn) {
         foreach ($this->data as $key => $data) {
-            if($fn($data)) $this->data[$key] = $data;
-            else unset($this->data[$key]);
+            if($fn($data)) {
+                $this->data[$key] = $data;
+            } else {
+                if (is_array($this->data)) {
+                    unset($this->data[$key]);
+                } else {
+                    unset($this->data->{$key});
+                }
+            }
         }
         return $this;
     }

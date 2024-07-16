@@ -777,7 +777,8 @@ trait QueryBuilder
                     $name = $relation['name'];
                     $name_relation = $relation['relation'];
                     $query = $relation['query'] ?? null;
-                    $primary_key_arr = $items_map_key->map(function ($item) use ($primary_key) {
+                    $items_map = clone $items_map_key;
+                    $primary_key_arr = $items_map->map(function ($item) use ($primary_key) {
                         $keys = get_object_vars($item);
                         if (isset($keys[$primary_key])) {
                             return $item->{$primary_key};
@@ -787,7 +788,7 @@ trait QueryBuilder
                         return $item > 0;
                     })->values();
                     if (!empty($primary_key_arr)) {
-                        self::$data_relation[$name] = $this->dataRelation(
+                        self::$data_relation[$key][$name] = $this->dataRelation(
                             $name_relation,
                             $model,
                             $model_many,
@@ -800,7 +801,6 @@ trait QueryBuilder
                     }
 
                 }
-
                 $result = $items->map(function ($item) {
                     $keys = get_object_vars($item);
                     foreach (self::$data_relation as $key => $relation) {
@@ -813,14 +813,19 @@ trait QueryBuilder
                         $name_relation = $relation['relation'];
                         $query = $relation['query'] ?? null;
                         if (isset($keys[$primary_key])) {
-                            if (!empty(self::$data_relation[$name])) {
-                                $item->{$name} = collection(self::$data_relation[$name])->filter(function ($value) use ($item, $foreign_key, $primary_key) {
+                            if (!empty(self::$data_relation[$key][$name])) {
+                                $values = self::$data_relation[$key][$name];
+                                $key_value = in_array($name_relation, [
+                                    $this->BELONG_TO,
+                                    $this->HAS_ONE
+                                ]) ? 'value':'values';
+                                $item->{$name} = collection($values)->filter(function ($value) use ($item, $foreign_key, $primary_key) {
                                     if (is_array($value->{$foreign_key})) {
                                         return in_array($item->{$primary_key}, $value->{$foreign_key});
                                     } else {
                                         return $item->{$primary_key} === $value->{$foreign_key};
                                     }
-                                })->values();
+                                })->{$key_value}();
                             } else { // n + 1 query
                                 if (!empty($relation['n1Query'])) {
                                     $item->{$name} = $this->dataRelation(
@@ -911,9 +916,11 @@ trait QueryBuilder
             } else {
                 $db_table = $db_table->where($foreign_key, $primary_key);
             }
+            $key_value = is_array($primary_key) ? 'values':'value';
+            $key_fetch = is_array($primary_key) ? 'fetchAll':'fetch';
             $sql = $db_table->clone();
-            $data = $instance->query($sql)->fetch(\PDO::FETCH_OBJ);
-            return $instance->getCollection($data)->value();
+            $data = $instance->query($sql)->{$key_fetch}(\PDO::FETCH_OBJ);
+            return $instance->getCollection($data)->{$key_value}();
         } else if($relation === $this->MANY_TO_MANY) {
             // get id 3rd table
             $db_table_many = class_exists($model_many) ? (new $model_many):$this->table($model_many);
@@ -979,10 +986,10 @@ trait QueryBuilder
                         $foreign_key,
                         $foreign_key2
                     ) {
-                         $item->{$foreign_key} = collection($data_tb_3rd)->filter(function ($value) use ($item, $name_primary_key, $foreign_key2) {
-                              return $item->{$name_primary_key} == $value->{$foreign_key2};
-                         })->dataColumn($foreign_key)->toArray();
-                         return $item;
+                        $item->{$foreign_key} = collection($data_tb_3rd)->filter(function ($value) use ($item, $name_primary_key, $foreign_key2) {
+                            return $item->{$name_primary_key} == $value->{$foreign_key2};
+                        })->dataColumn($foreign_key)->toArray();
+                        return $item;
                     })->values();
                     return $data;
                 } else {
@@ -1000,9 +1007,11 @@ trait QueryBuilder
             } else {
                 $db_table = $db_table->where($foreign_key, $primary_key);
             }
+            $key_value = is_array($primary_key) ? 'values':'value';
+            $key_fetch = is_array($primary_key) ? 'fetchAll':'fetch';
             $sql = $db_table->clone();
-            $data = $instance->query($sql)->fetch(\PDO::FETCH_OBJ);
-            return $instance->getCollection($data)->value();
+            $data = $instance->query($sql)->{$key_fetch}(\PDO::FETCH_OBJ);
+            return $instance->getCollection($data)->{$key_value}();
         }
     }
 }
