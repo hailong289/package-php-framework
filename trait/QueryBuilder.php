@@ -425,7 +425,14 @@ trait QueryBuilder
         return $sql;
     }
 
-    private function sqlQuery($is_delete = false, $query = null, $byId = 0){
+    private function sqlQuery(
+        $is_delete = false,
+        $query = null,
+        $byId = 0,
+        $page = null,
+        $limit = null,
+        $not_reset = false
+    ){
         $select = $this->select;
         $tableName = $this->tableName;
         $join = $this->join;
@@ -433,8 +440,10 @@ trait QueryBuilder
         $orderBy = $this->orderBy;
         $groupBy = $this->groupBy;
         $fieldTable = $this->field ?? '';
-        $offset = is_numeric($this->page) && is_numeric($this->limit) ? ' OFFSET '.$this->page * $this->limit:'';
-        $limit = is_numeric($this->limit) ? " LIMIT ".$this->limit:'';
+        $page = $page ?? $this->page ?? '';
+        $limit = $limit ?? $this->limit ?? '';
+        $offset = is_numeric($page) && is_numeric($limit) ? ' OFFSET '.$page * $limit:'';
+        $limit = is_numeric($limit) ? " LIMIT ".$limit:'';
         $union = $this->union;
 
         if (empty($select)) {
@@ -467,7 +476,9 @@ trait QueryBuilder
         $sql = "SELECT {$select} FROM {$tableName}{$join}
         {$where}{$groupBy}{$orderBy}{$limit}{$offset}{$union}";
         $sql = trim($sql);
-        $this->reset();
+        if (!$not_reset) {
+            $this->reset();
+        }
         return $sql;
     }
 
@@ -946,7 +957,7 @@ trait QueryBuilder
                     })->values();
                     return $data;
                 } else {
-                    return $instance->getCollection($data)->values();
+                    return $data->values();
                 }
             }
             return [];
@@ -979,7 +990,7 @@ trait QueryBuilder
                     })->values();
                     return $data;
                 } else {
-                    return $instance->getCollection($data)->values();
+                    return $data->values();
                 }
             }
             return [];

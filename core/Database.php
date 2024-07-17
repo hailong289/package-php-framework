@@ -201,5 +201,59 @@ class Database {
         }
         return $this->getCollection(null);
     }
+
+    public function pagination($limit = 10, $page = 1)
+    {
+        if ($page < 0) {
+            throw new \Exception("Pages cannot be less than 0");
+        }
+        $page = $page === 0 ? 1 : $page;
+        $page -= 1;
+        $sql = $this->sqlQuery(false,null, 0, $page, $limit);
+        $data = $this->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+        if (!empty($data)) {
+            $data = $this->getCollection($data)->map(fn ($item) => self::getAttribute($item));
+            $data_relation = $this->workRelation($data, 'get');
+            if (!empty($data_relation)) $data = $data_relation;
+            return $data->values();
+        }
+        return $this->getCollection([])->values();
+    }
+
+    public function paginationWithCount($limit = 10, $page = 1)
+    {
+        if ($page < 0) {
+            throw new \Exception("Pages cannot be less than 0");
+        }
+        $page = $page === 0 ? 1 : $page;
+        $page -= 1;
+        $sql_count = $this->sqlQuery(false, "COUNT(*) as count", 0, null,null, true);
+        $dataCount = $this->query($sql_count)->fetch(\PDO::FETCH_OBJ);
+        if (!empty($dataCount->count)) {
+            $sql = $this->sqlQuery(false,null, 0, $page, $limit);
+            $data = $this->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+            if (!empty($data)) {
+                $data = $this->getCollection($data)->map(fn ($item) => self::getAttribute($item));
+                $data_relation = $this->workRelation($data, 'get');
+                if (!empty($data_relation)) $data = $data_relation;
+                return [
+                    "total" => $dataCount->count,
+                    "items" => $data->values(),
+                    "page" => $page === 0 ? 1 : $page,
+                    "limit" => $limit,
+                    "total_page" => ceil($dataCount->count / $limit),
+                ];
+            }
+        } else {
+            $this->reset();
+        }
+        return $this->getCollection([
+            "total" => $dataCount->count,
+            "items" => [],
+            "page" => $page,
+            "limit" => $limit,
+            "total_page" => ceil($dataCount->count / $limit),
+        ])->values();
+    }
 }
 

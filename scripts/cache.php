@@ -9,7 +9,7 @@ class CacheScript extends \System\Core\Command
 
     public function handle()
     {
-        $cache = glob(__DIR__ROOT.'/storage/cache/*.cache');
+        $cache = rglob(__DIR__ROOT.'/storage/cache/*.cache');
         if (!empty($cache)) {
             foreach($cache as $item){
                 if(file_exists($item)){
