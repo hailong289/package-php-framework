@@ -33,7 +33,6 @@ class ConfigRouter extends Router {
         if(empty($this->pathArray)) {
             throw new \RuntimeException('Name function add() is not null', 500);
         }
-
         foreach ($this->pathArray as $name=>$fileName) {
             self::$path_load_file = '/'. $name;
             $this->loadFile($fileName);

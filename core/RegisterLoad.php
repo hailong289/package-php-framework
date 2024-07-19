@@ -12,6 +12,12 @@ class RegisterLoad
         return $this;
     }
 
+    public function registerSession()
+    {
+        session_start();
+        return $this;
+    }
+
     public function languageLoad($name = null)
     {
         $lang = $name ?? LANGUAGE;
