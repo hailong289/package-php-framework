@@ -7,7 +7,8 @@ class Response {
         header('Location: ' . $path, true, $status);
         exit();
     }
-    public static function json($data = [], $status = 500, $headers = [], $options = 0){
+    
+    public static function json($data = [], $status = 200, $headers = [], $options = 0){
         header('Accept: application/json; charset=utf-8', true, $status);
         self::setHeaders($headers);
         return $data;
