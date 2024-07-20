@@ -401,6 +401,14 @@ trait QueryBuilder
         return false;
     }
 
+    public function softDelete($data = []) {
+        $status = $this->update($data);
+        if ($status) {
+            return true;
+        }
+        return false;
+    }
+
     public function toSqlRaw() {
         $sql = $this->sqlQuery();
         return $sql;
@@ -417,7 +425,14 @@ trait QueryBuilder
         return $sql;
     }
 
-    private function sqlQuery($is_delete = false, $query = null, $byId = 0){
+    private function sqlQuery(
+        $is_delete = false,
+        $query = null,
+        $byId = 0,
+        $page = null,
+        $limit = null,
+        $not_reset = false
+    ){
         $select = $this->select;
         $tableName = $this->tableName;
         $join = $this->join;
@@ -425,8 +440,10 @@ trait QueryBuilder
         $orderBy = $this->orderBy;
         $groupBy = $this->groupBy;
         $fieldTable = $this->field ?? '';
-        $offset = is_numeric($this->page) && is_numeric($this->limit) ? ' OFFSET '.$this->page * $this->limit:'';
-        $limit = is_numeric($this->limit) ? " LIMIT ".$this->limit:'';
+        $page = $page ?? $this->page ?? '';
+        $limit = $limit ?? $this->limit ?? '';
+        $offset = is_numeric($page) && is_numeric($limit) ? ' OFFSET '.$page * $limit:'';
+        $limit = is_numeric($limit) ? " LIMIT ".$limit:'';
         $union = $this->union;
 
         if (empty($select)) {
@@ -459,7 +476,9 @@ trait QueryBuilder
         $sql = "SELECT {$select} FROM {$tableName}{$join}
         {$where}{$groupBy}{$orderBy}{$limit}{$offset}{$union}";
         $sql = trim($sql);
-        $this->reset();
+        if (!$not_reset) {
+            $this->reset();
+        }
         return $sql;
     }
 
@@ -701,7 +720,7 @@ trait QueryBuilder
     }
 
     // relation
-    public function with($name) {
+    public function with($name, $useN1Query = false) {
         $instance = $this->getModel();
         if (is_array($name)) {
             foreach ($name as $key=>$value) {
@@ -711,11 +730,14 @@ trait QueryBuilder
                     if (method_exists($instance, $relation)) {
                         $data_relation = $instance->{$relation}();
                         self::$data_relation[] = $data_relation;
-                        if (!empty($explode[1]) && !empty(self::$data_relation)) {
+                        if (!empty(self::$data_relation)) {
                             $key_last = array_key_last(self::$data_relation);
-                            self::$data_relation[$key_last]['query'] = function ($query) use ($explode) {
-                                return $query->select($explode[1]);
-                            };
+                            self::$data_relation[$key_last]['n1Query'] = $useN1Query;
+                            if (!empty($explode[1])) {
+                                self::$data_relation[$key_last]['query'] = function ($query) use ($explode) {
+                                    return $query->select($explode[1]);
+                                };
+                            }
                         }
                     }
                 } else {
@@ -728,6 +750,7 @@ trait QueryBuilder
                         if(!empty(self::$data_relation)) {
                             $key_last = array_key_last(self::$data_relation);
                             self::$data_relation[$key_last]['query'] = $query;
+                            self::$data_relation[$key_last]['n1Query'] = $useN1Query;
                         }
                     }
                 }
@@ -737,6 +760,10 @@ trait QueryBuilder
         if (method_exists($instance, $name)) {
             $data_relation = $instance->{$name}();
             self::$data_relation[] = $data_relation;
+            if(!empty(self::$data_relation)) {
+                $key_last = array_key_last(self::$data_relation);
+                self::$data_relation[$key_last]['n1Query'] = $useN1Query;
+            }
         }
         return $this;
     }
@@ -747,7 +774,45 @@ trait QueryBuilder
         }
         if ($data instanceof Collection) {
             if ($type === 'get') {
-                $result = $data->map(function ($item) {
+                $items_map_key = clone $data;
+                $items = clone $data;
+                foreach (self::$data_relation as $key => $relation) {
+                    if (!empty($relation['n1Query'])) {
+                        break;
+                    }
+                    $primary_key = $relation['primary_key'];
+                    $foreign_key = $relation['foreign_key'];
+                    $foreign_key2 = $relation['foreign_key2'];
+                    $model = $relation['model'];
+                    $model_many = $relation['model_many'];
+                    $name = $relation['name'];
+                    $name_relation = $relation['relation'];
+                    $query = $relation['query'] ?? null;
+                    $items_map = clone $items_map_key;
+                    $primary_key_arr = $items_map->map(function ($item) use ($primary_key) {
+                        $keys = get_object_vars($item);
+                        if (isset($keys[$primary_key])) {
+                            return $item->{$primary_key};
+                        }
+                        return 0;
+                    })->filter(function ($item) {
+                        return $item > 0;
+                    })->values();
+                    if (!empty($primary_key_arr)) {
+                        self::$data_relation[$key][$name] = $this->dataRelation(
+                            $name_relation,
+                            $model,
+                            $model_many,
+                            $foreign_key,
+                            $foreign_key2,
+                            $primary_key_arr,
+                            $primary_key,
+                            $query
+                        );
+                    }
+
+                }
+                $result = $items->map(function ($item) {
                     $keys = get_object_vars($item);
                     foreach (self::$data_relation as $key => $relation) {
                         $primary_key = $relation['primary_key'];
@@ -759,15 +824,36 @@ trait QueryBuilder
                         $name_relation = $relation['relation'];
                         $query = $relation['query'] ?? null;
                         if (isset($keys[$primary_key])) {
-                            $item->{$name} =  $this->dataRelation(
-                                $name_relation,
-                                $model,
-                                $model_many,
-                                $foreign_key,
-                                $foreign_key2,
-                                $item->{$primary_key},
-                                $query
-                            );
+                            if (!empty(self::$data_relation[$key][$name])) {
+                                $values = self::$data_relation[$key][$name];
+                                $key_value = in_array($name_relation, [
+                                    $this->BELONG_TO,
+                                    $this->HAS_ONE
+                                ]) ? 'value':'values';
+                                $item->{$name} = collection($values)->filter(function ($value) use ($item, $foreign_key, $primary_key) {
+                                    if (is_array($value->{$foreign_key})) {
+                                        return in_array($item->{$primary_key}, $value->{$foreign_key});
+                                    } else {
+                                        return $item->{$primary_key} === $value->{$foreign_key};
+                                    }
+                                })->{$key_value}();
+                            } else { // n + 1 query
+                                if (!empty($relation['n1Query'])) {
+                                    $item->{$name} = $this->dataRelation(
+                                        $name_relation,
+                                        $model,
+                                        $model_many,
+                                        $foreign_key,
+                                        $foreign_key2,
+                                        $item->{$primary_key},
+                                        $primary_key,
+                                        $query
+                                    );
+                                } else {
+                                    $item->{$name} = null;
+                                }
+                            }
+
                         }
                     }
                     return $item;
@@ -794,6 +880,7 @@ trait QueryBuilder
                                 $foreign_key,
                                 $foreign_key2,
                                 $item->{$primary_key},
+                                $primary_key,
                                 $query
                             );
                         }
@@ -813,15 +900,24 @@ trait QueryBuilder
         $foreign_key,
         $foreign_key2,
         $primary_key,
+        $name_primary_key,
         $query
     ) {
         $instance = $this;
+        $whereName = 'where';
+        $key_fetch = 'fetch';
+        $key_value = 'value';
+        if (is_array($primary_key)) {
+            $whereName = 'whereIn';
+            $key_fetch = 'fetchAll';
+            $key_value = 'values';
+        }
         if ($relation === $this->HAS_MANY) {
             $db_table = class_exists($model) ? (new $model):$this->table($model);
             if (!empty($query)) {
                 $db_table = $query($db_table);
             }
-            $sql = $db_table->where($foreign_key, $primary_key)->clone();
+            $sql = $db_table->{$whereName}($foreign_key, $primary_key)->clone();
             $data = $instance->query($sql)->fetchAll(\PDO::FETCH_OBJ);
             return $instance->getCollection($data)->values();
         } else if($relation === $this->BELONG_TO) {
@@ -829,29 +925,13 @@ trait QueryBuilder
             if (!empty($query)) {
                 $db_table = $query($db_table);
             }
-            $sql = $db_table->where($foreign_key, $primary_key)->clone();
-            $data = $instance->query($sql)->fetch(\PDO::FETCH_OBJ);
-            return $instance->getCollection($data)->value();
+            $sql = $db_table->{$whereName}($foreign_key, $primary_key)->clone();
+            $data = $instance->query($sql)->{$key_fetch}(\PDO::FETCH_OBJ);
+            return $instance->getCollection($data)->{$key_value}();
         } else if($relation === $this->MANY_TO_MANY) {
             // get id 3rd table
             $db_table_many = class_exists($model_many) ? (new $model_many):$this->table($model_many);
-            $sql_tb_3rd =  $db_table_many->where($foreign_key, $primary_key)->clone();
-            $data_tb_3rd = $instance->query($sql_tb_3rd)->fetchAll(\PDO::FETCH_OBJ);
-            $id_join = $instance->getCollection($data_tb_3rd)->dataColumn($foreign_key2)->values();
-            if(!empty($id_join)) {
-                $db_table = class_exists($model) ? (new $model):$this->table($model);
-                if (!empty($query)) {
-                    $db_table = $query($db_table);
-                }
-                $sql = $db_table->whereIn('id', $id_join)->clone();
-                $data = $instance->query($sql)->fetchAll(\PDO::FETCH_OBJ);
-                return $instance->getCollection($data)->values();
-            }
-            return [];
-        } else if($relation === $this->BELONG_TO_MANY) {
-            // get id 3rd table
-            $db_table_many = class_exists($model_many) ? (new $model_many):$this->table($model_many);
-            $sql_tb_3rd =  $db_table_many->where($foreign_key, $primary_key)->clone();
+            $sql_tb_3rd =  $db_table_many->{$whereName}($foreign_key, $primary_key)->clone();
             $data_tb_3rd = $instance->query($sql_tb_3rd)->fetchAll(\PDO::FETCH_OBJ);
             $id_join = $instance->getCollection($data_tb_3rd)->dataColumn($foreign_key2)->toArray();
             if(!empty($id_join)) {
@@ -859,9 +939,59 @@ trait QueryBuilder
                 if (!empty($query)) {
                     $db_table = $query($db_table);
                 }
-                $sql = $db_table->whereIn('id', $id_join)->clone();
+                $id_join = array_unique($id_join);
+                $sql = $db_table->whereIn($name_primary_key, $id_join)->clone();
                 $data = $instance->query($sql)->fetchAll(\PDO::FETCH_OBJ);
-                return $instance->getCollection($data)->values();
+                $data = $instance->getCollection($data);
+                if (is_array($primary_key)) {
+                    $data = $data->map(function ($item) use (
+                        $data_tb_3rd,
+                        $name_primary_key,
+                        $foreign_key,
+                        $foreign_key2
+                    ) {
+                        $item->{$foreign_key} = collection($data_tb_3rd)->filter(function ($value) use ($item, $name_primary_key, $foreign_key2) {
+                            return $item->{$name_primary_key} == $value->{$foreign_key2};
+                        })->dataColumn($foreign_key)->toArray();
+                        return $item;
+                    })->values();
+                    return $data;
+                } else {
+                    return $data->values();
+                }
+            }
+            return [];
+        } else if($relation === $this->BELONG_TO_MANY) {
+            // get id 3rd table
+            $db_table_many = class_exists($model_many) ? (new $model_many):$this->table($model_many);
+            $sql_tb_3rd =  $db_table_many->{$whereName}($foreign_key, $primary_key)->clone();
+            $data_tb_3rd = $instance->query($sql_tb_3rd)->fetchAll(\PDO::FETCH_OBJ);
+            $id_join = $instance->getCollection($data_tb_3rd)->dataColumn($foreign_key2)->toArray();
+            if(!empty($id_join)) {
+                $db_table = class_exists($model) ? (new $model):$this->table($model);
+                if (!empty($query)) {
+                    $db_table = $query($db_table);
+                }
+                $id_join = array_unique($id_join);
+                $sql = $db_table->whereIn($name_primary_key, $id_join)->clone();
+                $data = $instance->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+                $data = $instance->getCollection($data);
+                if (is_array($primary_key)) {
+                    $data = $data->map(function ($item) use (
+                        $data_tb_3rd,
+                        $name_primary_key,
+                        $foreign_key,
+                        $foreign_key2
+                    ) {
+                        $item->{$foreign_key} = collection($data_tb_3rd)->filter(function ($value) use ($item, $name_primary_key, $foreign_key2) {
+                            return $item->{$name_primary_key} == $value->{$foreign_key2};
+                        })->dataColumn($foreign_key)->toArray();
+                        return $item;
+                    })->values();
+                    return $data;
+                } else {
+                    return $data->values();
+                }
             }
             return [];
         } else { // has one
@@ -869,9 +999,9 @@ trait QueryBuilder
             if (!empty($query)) {
                 $db_table = $query($db_table);
             }
-            $sql = $db_table->where($foreign_key, $primary_key)->clone();
-            $data = $instance->query($sql)->fetch(\PDO::FETCH_OBJ);
-            return $instance->getCollection($data)->value();
+            $sql = $db_table->{$whereName}($foreign_key, $primary_key)->clone();
+            $data = $instance->query($sql)->{$key_fetch}(\PDO::FETCH_OBJ);
+            return $instance->getCollection($data)->{$key_value}();
         }
     }
 }

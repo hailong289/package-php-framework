@@ -84,8 +84,15 @@ class Collection
 
     public function filter($fn) {
         foreach ($this->data as $key => $data) {
-            if($fn($data)) $this->data[$key] = $data;
-            else unset($this->data[$key]);
+            if($fn($data)) {
+                $this->data[$key] = $data;
+            } else {
+                if (is_array($this->data)) {
+                    unset($this->data[$key]);
+                } else {
+                    unset($this->data->{$key});
+                }
+            }
         }
         return $this;
     }
@@ -108,5 +115,11 @@ class Collection
     public function last()
     {
         return $this->count() ? $this->data[$this->count() - 1]:$this->data;
+    }
+
+    public function chunk($number, $callback)
+    {
+        $chunk = array_chunk($this->data, $number);
+        $callback($chunk);
     }
 }

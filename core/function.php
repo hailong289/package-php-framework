@@ -99,16 +99,11 @@ if(!function_exists('log_debug')){
 }
 
 if(!function_exists('logs')){
-    interface InterfaceLogs {
-        public function dump(...$args);
-        public function write($data, $name_file = 'debug');
-        public function debug($data);
-    }
     /**
      * @return InterfaceLogs|__anonymous@2793
      */
     function logs(): object {
-        return new class implements InterfaceLogs {
+        return new class implements \System\Interfaces\InterfaceLogs\Log {
             public function dump(...$args) {
                 http_response_code(500);
                 echo "<pre>";
@@ -363,5 +358,65 @@ if (!function_exists('sendJobs')) {
                 return $this;
             }
         };
+    }
+}
+
+if(!function_exists('cache')) {
+    function cache($name = null, $data = []) {
+        if (!file_exists(__DIR__ROOT .'/storage/cache')) {
+            mkdir(__DIR__ROOT .'/storage/cache', 0777, true);
+        }
+
+        if (is_null($name)) {
+            return new class implements \System\Interfaces\FunctionInterface\InterfaceCacheFile {
+                public function set($name, $data = []){
+                    $folder = explode('/', $name);
+                    if (count($folder) > 1) {
+                        unset($folder[count($folder) - 1]);
+                        $folder = implode('/', $folder);
+                        $path_cache = __DIR__ROOT .'/storage/cache/'.$folder;
+                        if (!file_exists($path_cache)) {
+                            if (!mkdir($path_cache, 0777, true) && !is_dir($path_cache)) {
+                                throw new \Exception(sprintf('Directory "%s" was not created', $path_cache));
+                            }
+                        }
+                    }
+                    file_put_contents(__DIR__ROOT ."/storage/cache/$name.cache", serialize($data));
+                    return $this;
+                }
+                public function get($name){
+                    $data_cache = file_get_contents(__DIR__ROOT ."/storage/cache/$name.cache");
+                    return unserialize($data_cache ?? '');
+                }
+                public function clear($name){
+                    $file = __DIR__ROOT ."/storage/cache/$name.cache";
+                    if(file_exists($file)){
+                        unlink($file);
+                    }
+                    return $this;
+                }
+            };
+        }
+
+        $data_cache = file_get_contents(__DIR__ROOT ."/storage/cache/$name.cache");
+        if (empty($data_cache)) {
+            file_put_contents(__DIR__ROOT ."/storage/cache/$name.cache", serialize($data));
+            return $data;
+        } else {
+            return unserialize($data_cache);
+        }
+    }
+}
+
+if(!function_exists('rglob')) {
+    function rglob($pattern, $flags = 0) {
+        $files = glob($pattern, $flags);
+        foreach (glob(dirname($pattern).'/*', GLOB_ONLYDIR|GLOB_NOSORT) as $dir) {
+            $files = array_merge(
+                [],
+                ...[$files, rglob($dir . "/" . basename($pattern), $flags)]
+            );
+        }
+        return $files;
     }
 }

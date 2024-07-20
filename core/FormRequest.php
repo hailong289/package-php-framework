@@ -60,15 +60,20 @@ class FormRequest extends Request {
 
     public function data()
     {
-        return new class implements DataInterface {
+        $data = $this->data;
+        return new class($data) implements DataInterface {
+            private $items;
+            function __construct($data) {
+                $this->items = $data;
+            }
             function value() {
-                return $this->data;
+                return $this->items;
             }
             function toArray() {
-                return convert_to_array($this->data);
+                return convert_to_array($this->items);
             }
             function toJson() {
-                return convert_to_object($this->data);
+                return convert_to_object($this->items);
             }
         };
     }

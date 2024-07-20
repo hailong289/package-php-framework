@@ -27,13 +27,13 @@ class Router {
     }
 
     private function handle($url, $method){
-        $routers = self::$routers;
         $action = '';
         $path = '';
         $current_router = [];
         $url = preg_replace('/((&|\?)([a-z_]+)=(.*)|(&|\?)([a-z_]+)=)/i','', $url);
         $method = $_REQUEST['_method'] ?? $method;
         $number_router = 0;
+        $routers = cache('router', self::$routers);
         foreach ($routers as $key=>$router){
             $path_router = $router['path_load_file'] && endsWith($router['path'], '/') ? substr($router['path'], 0, -1):$router['path'];
             $method_router = $router['method'];

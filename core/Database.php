@@ -9,14 +9,23 @@ class Database {
     private static $log = [];
     private static $collection;
     private $model;
-    public function __construct($model = '', $column = [])
+
+    public function __construct($environment = null, $connection = null)
     {
-        self::$__conn = Connection::getInstance(DB_ENVIRONMENT, DB_CONNECTION);
-        if (!empty($model)) {
-            foreach ($column as $key => $value) {
+        $env = $environment ?? config_env('DB_ENVIRONMENT', 'default');
+        $con = $connection ?? config_env('DB_CONNECTION', 'mysql');
+        self::$__conn = Connection::getInstance($env, $con);
+    }
+
+    public function setModel($model, $vars)
+    {
+        if (class_exists($model)) {
+            foreach ($vars as $key => $value) {
                 $this->{$key} = $value;
             }
             $this->model = $model;
+        } else {
+            throw new \Exception("Class {$model} in Models does not exist");
         }
     }
 
@@ -28,10 +37,12 @@ class Database {
 
     public function query($sql, $last_id = false){
         try {
-            if(self::$enableLog) $startTime = microtime(true);
+            if(self::$enableLog) {
+                $startTime = microtime(true);
+            }
             $statement = self::$__conn->prepare($sql);
             $statement->execute();
-            if(self::$enableLog) {
+            if (self::$enableLog) {
                 $endTime = microtime(true);
                 $executionTime = $endTime - $startTime;
                 self::$log[] = [
@@ -39,7 +50,9 @@ class Database {
                     'executionTime' => "Query took " . $executionTime . " seconds to execute."
                 ];
             }
-            if($last_id) return self::$__conn->lastInsertId();
+            if ($last_id) {
+                return self::$__conn->lastInsertId();
+            }
             return $statement;
         } catch (\Throwable $th) {
             throw $th;
@@ -63,27 +76,32 @@ class Database {
     }
 
     public static function connection($env, $connection = 'mysql'){
-        self::$__conn = Connection::getInstance($env, $connection);
-        return new static();
+        return new Database($env, $connection);
     }
 
     public static function beginTransaction(){
         if(self::$__conn == null) {
-            self::$__conn = Connection::getInstance(DB_ENVIRONMENT, DB_CONNECTION);
+            $env = config_env('DB_ENVIRONMENT', 'default');
+            $con = config_env('DB_CONNECTION', 'mysql');
+            self::$__conn = Connection::getInstance($env, $con);
         }
         return self::$__conn->beginTransaction();
     }
 
     public static function commit(){
         if(self::$__conn == null) {
-            self::$__conn = Connection::getInstance(DB_ENVIRONMENT, DB_CONNECTION);
+            $env = config_env('DB_ENVIRONMENT', 'default');
+            $con = config_env('DB_CONNECTION', 'mysql');
+            self::$__conn = Connection::getInstance($env, $con);
         }
         return self::$__conn->commit();
     }
 
     public static function rollBack(){
         if(self::$__conn == null) {
-            self::$__conn = Connection::getInstance(DB_ENVIRONMENT, DB_CONNECTION);
+            $env = config_env('DB_ENVIRONMENT', 'default');
+            $con = config_env('DB_CONNECTION', 'mysql');
+            self::$__conn = Connection::getInstance($env, $con);
         }
         return self::$__conn->rollBack();
     }
@@ -97,7 +115,6 @@ class Database {
         $sql = $this->sqlQuery();
         $data = $this->query($sql)->fetchAll(\PDO::FETCH_OBJ);
         if (!empty($data)) {
-//            logs()->dump($this);
             $data = $this->getCollection($data)->map(fn ($item) => self::getAttribute($item));
             $data_relation = $this->workRelation($data, 'get');
             if (!empty($data_relation)) $data = $data_relation;
@@ -183,6 +200,60 @@ class Database {
             return $data;
         }
         return $this->getCollection(null);
+    }
+
+    public function pagination($limit = 10, $page = 1)
+    {
+        if ($page < 0) {
+            throw new \Exception("Pages cannot be less than 0");
+        }
+        $page = $page === 0 ? 1 : $page;
+        $page -= 1;
+        $sql = $this->sqlQuery(false,null, 0, $page, $limit);
+        $data = $this->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+        if (!empty($data)) {
+            $data = $this->getCollection($data)->map(fn ($item) => self::getAttribute($item));
+            $data_relation = $this->workRelation($data, 'get');
+            if (!empty($data_relation)) $data = $data_relation;
+            return $data->values();
+        }
+        return $this->getCollection([])->values();
+    }
+
+    public function paginationWithCount($limit = 10, $page = 1)
+    {
+        if ($page < 0) {
+            throw new \Exception("Pages cannot be less than 0");
+        }
+        $page = $page === 0 ? 1 : $page;
+        $page -= 1;
+        $sql_count = $this->sqlQuery(false, "COUNT(*) as count", 0, null,null, true);
+        $dataCount = $this->query($sql_count)->fetch(\PDO::FETCH_OBJ);
+        if (!empty($dataCount->count)) {
+            $sql = $this->sqlQuery(false,null, 0, $page, $limit);
+            $data = $this->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+            if (!empty($data)) {
+                $data = $this->getCollection($data)->map(fn ($item) => self::getAttribute($item));
+                $data_relation = $this->workRelation($data, 'get');
+                if (!empty($data_relation)) $data = $data_relation;
+                return [
+                    "total" => $dataCount->count,
+                    "items" => $data->values(),
+                    "page" => $page === 0 ? 1 : $page,
+                    "limit" => $limit,
+                    "total_page" => ceil($dataCount->count / $limit),
+                ];
+            }
+        } else {
+            $this->reset();
+        }
+        return $this->getCollection([
+            "total" => $dataCount->count,
+            "items" => [],
+            "page" => $page,
+            "limit" => $limit,
+            "total_page" => ceil($dataCount->count / $limit),
+        ])->values();
     }
 }
 

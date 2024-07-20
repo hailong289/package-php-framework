@@ -1,5 +1,6 @@
 <?php
 namespace System\Queue;
+use System\Core\Connection;
 use System\Core\Database;
 use System\Core\Redis;
 use System\Core\Request;
@@ -23,69 +24,51 @@ class CreateQueue
         $reflectionClass = new \ReflectionClass($class);
         if (method_exists($class,'handle')) {
             try {
+                $data_queue = [
+                    'uid' => uid(),
+                    'payload' => get_object_vars($class),
+                    'class' => $reflectionClass->getShortName(),
+                    'queue' => $this->queue,
+                    'connection' => $this->connection,
+                    'timeout' => $this->timeout
+                ];
                 if($this->connection === 'redis') {
                     $redis = Redis::work();
                     if(!$redis->isConnected()) {
                         throw new \RuntimeException('Redis connection is failed');
                     }
-                    Redis::cacheRPush($tag_queue, [
-                        'uid' => uid(),
-                        'payload' => $class,
-                        'class' => $reflectionClass->getShortName(),
-                        'queue' => $this->queue,
-                        'connection' => 'redis',
-                        'timeout' => $this->timeout
-                    ], 0);
+                    Redis::cacheRPush($tag_queue, $data_queue, 0);
                 } elseif ($this->connection === 'database') {
-
-                    $data = json_encode([
-                        'uid' => uid(),
-                        'payload' => get_object_vars($class),
-                        'class' => $reflectionClass->getShortName(),
-                        'queue' => $this->queue,
-                        'connection' => 'database',
-                        'timeout' => $this->timeout
-                    ], JSON_UNESCAPED_UNICODE);
+                    $data = json_encode($data_queue, JSON_UNESCAPED_UNICODE);
                     Database::instance()->table('jobs')->insert([
                         'data' => $data,
                         'queue' => $this->queue,
                         'created_at' => date(' Y-m-d H:i:s')
                     ]);
+                } else if ($this->connection === 'rabbitMQ') {
+                    $data = json_encode($data_queue, JSON_UNESCAPED_UNICODE);
+                    $rabbitMQ = Connection::instanceRabbitMQ();
+                    $channel = $rabbitMQ->channel();
+                    $channel->queue_declare($this->queue, false, true, false, false);
+                    $attributes = [
+                        'delivery_mode' => \PhpAmqpLib\Message\AMQPMessage::DELIVERY_MODE_PERSISTENT,
+                        'content_type' => 'application/json',
+                    ];
+                    $msg = new \PhpAmqpLib\Message\AMQPMessage(
+                        $data,
+                        $attributes
+                    );
+                    $channel->basic_publish($msg, '', $this->queue);
+                    // close connection
+                    $channel->close();
+                    $rabbitMQ->close();
                 }
-            } catch (\Exception $e) {
-                $code = (int)$e->getCode();
-                if($is_api) {
-                    echo json_encode([
-                        "message" => $e->getMessage(),
-                        "code" => $code,
-                        "line" => $e->getLine(),
-                        "file" => $e->getFile(),
-                        "trace" => $e->getTraceAsString()
-                    ]);
-                    exit();
-                }
-                Response::view("error.index", [
-                    "message" => $e->getMessage(),
-                    "code" => $code,
-                    "line" => $e->getLine(),
-                    "file" => $e->getFile(),
-                    "trace" => $e->getTraceAsString()
-                ]);
-                exit();
+            } catch (\Throwable $e) {
+                throw $e;
             }
         } else {
-            if($is_api) {
-                echo json_encode([
-                    "message" => "Class handle in $class does not exit",
-                    "code" => 500
-                ]);
-                exit();
-            }
-            Response::view("error.index", [
-                "message" => "Function handle in class $class does not exit",
-                "code" => 500,
-            ]);
-            exit();
+            $class = get_class($class);
+            throw new \Exception("Function handle in class $class does not exit", 500);
         }
     }
 
@@ -93,19 +76,7 @@ class CreateQueue
         if($connection === 'redis' || $connection === 'database') {
             $this->connection = $connection;
         } else {
-            $is_api = (new Request())->isJson();
-            if($is_api) {
-                echo json_encode([
-                    "message" => "Connection not supported",
-                    "code" => 500
-                ]);
-                exit();
-            }
-            Response::view("error.index", [
-                "message" => "Connection not supported",
-                "code" => 500,
-            ]);
-            exit();
+            throw new \Exception('Connection not supported', 500);
         }
         return $this;
     }

@@ -5,11 +5,11 @@ class Redis {
 
     public function __construct()
     {
-        self::$redis = Connection::getInstanceRedis(DB_ENVIRONMENT, REDIS_CONNECTION);
+        self::$redis = Connection::getInstanceRedis(config_env('DB_ENVIRONMENT','default'), config_env('REDIS_CONNECTION','redis'));
     }
 
     public static function work() {
-        self::$redis = Connection::getInstanceRedis(DB_ENVIRONMENT, REDIS_CONNECTION);
+        self::$redis = Connection::getInstanceRedis(config_env('DB_ENVIRONMENT','default'), config_env('REDIS_CONNECTION','redis'));
         return self::$redis;
     }
 

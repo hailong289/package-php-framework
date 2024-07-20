@@ -1,6 +1,8 @@
 <?php
 namespace Scripts;
 
+use System\Core\Connection;
+
 class QueueScript extends \System\Core\Command
 {
     protected $command = 'queue:run';
@@ -36,15 +38,20 @@ class QueueScript extends \System\Core\Command
         } else {
             ini_set('max_execution_time', $this->timeout); // timeout all job
         }
-        $db = $this->getDB();
+
+        if ($this->connection === 'rabbitMQ' && $this->jobs_queue !== 'rollback_failed_job') {
+            $this->workQueueRabbit();
+            return;
+        }
+
+        $db = $this->getDB($this->connection === 'rabbitMQ' ? 'database':'');
         if($db) {
             sleep(1);
             $queues = $this->getQueueList($db);
-
             foreach ($queues as $key=>$queue) {
-                $key = $this->connection === 'database' ? $queue['id']:$key;
+                $key = $this->connection === 'database' || $this->connection === 'rabbitMQ' ? $queue['id']:$key;
                 $this->clearQueue($db, $queue, $key);
-                if ($this->connection === 'database') {
+                if ($this->connection === 'database' || $this->connection === 'rabbitMQ') {
                     $queue = json_decode($queue['data'], true);
                 } else {
                     $queue = json_decode($queue, true);
@@ -84,12 +91,27 @@ class QueueScript extends \System\Core\Command
     }
 
 
-    private function getDB()
+    private function getDB($conn = '')
     {
+        $connection = $conn ? $conn:$this->connection;
         $db = '';
-        if($this->connection === 'database') {
+        if($connection === 'database') {
             try {
                 $db = new \System\Core\Database();
+            }catch (\Throwable $e) {
+                $this->output()->error([
+                    "message" => $e->getMessage(),
+                    "code" => $e->getCode(),
+                    "line" => $e->getLine(),
+                    "file" => $e->getFile(),
+                    "trace" => $e->getTraceAsString()
+                ]);
+                return false;
+            }
+
+        } elseif ($connection === 'rabbitMQ') {
+            try {
+                $db = Connection::instanceRabbitMQ();
             }catch (\Throwable $e) {
                 $this->output()->error([
                     "message" => $e->getMessage(),
@@ -118,7 +140,6 @@ class QueueScript extends \System\Core\Command
                     "file" => $e->getFile(),
                     "trace" => $e->getTraceAsString()
                 ]);
-                log_write($e);
                 return false;
             }
         }
@@ -174,7 +195,7 @@ class QueueScript extends \System\Core\Command
     {
         $class = str_replace('Queue\\Jobs\\','', $class);
         try {
-            if ($this->connection === 'database') {
+            if ($this->connection === 'database' || $this->connection === 'rabbitMQ') {
                 if ($db instanceof \System\Core\Database) {
                     $data = json_encode([
                         'uid' => $uid,
@@ -189,7 +210,7 @@ class QueueScript extends \System\Core\Command
                         'created_at' => date('Y-m-d H:i:s')
                     ]);
                 }
-            } else {
+            } else if ($this->connection === 'redis')  {
                 if ($db instanceof \Redis) {
                     $data = json_encode([
                         'uid' => $uid,
@@ -211,6 +232,59 @@ class QueueScript extends \System\Core\Command
             ]);
             log_write($e);
         }
+    }
+
+    public function workQueueRabbit()
+    {
+        ini_set('error_reporting', E_STRICT);
+        $db = $this->getDB();
+        $queue = $this->jobs_queue;
+        $channel = $db->channel();
+        $channel->queue_declare($queue, false, true, false, false);
+
+        $callback = function (\PhpAmqpLib\Message\AMQPMessage $msg) {
+            $db = $this->getDB('database');
+            $queue = json_decode($msg->body, true);
+            $key = 0;
+            $uid = $queue['uid'];
+            $class = "Queue\\Jobs\\{$queue['class']}";
+            $payload = $queue['payload'];
+            $timeout = $queue['timeout'] ?? 0;
+            if ($timeout > 0 && empty($timeout_options)) {
+                $this->timeout = $timeout;
+                ini_set('max_execution_time', $timeout); // timeout one job
+            }
+            $this->output()->text("$class running ");
+            $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
+            try {
+                if (method_exists($class, 'handle')) {
+                    $this->queueRunning = [
+                        'key' => $key,
+                        'queue' => $queue,
+                        'payload' => $payload,
+                        'uid' => $uid,
+                        'class' => $class
+                    ];
+                    $this->startRunQueue($db, $queue, $key, $class, $payload, $uid);
+                } else {
+                    $this->stopQueue($db, $payload, $class, $uid, new \Exception("Function handle in class $class does not exit"));
+                    $this->output()->text("$class failed ");
+                }
+            } catch (\Throwable $e) {
+                $this->stopQueue($db, $payload, $class, $uid, $e);
+                $this->output()->text("$class failed ");
+            }
+        };
+
+        $channel->basic_qos(null, 1, null);
+        $channel->basic_consume($queue, '', false, false, false, false, $callback);
+
+        while (count($channel->callbacks)) {
+            $channel->wait();
+        }
+
+        $channel->close();
+        $db->close();
     }
 
     private function clearQueue($db, $queue_first, $index) {
@@ -242,10 +316,8 @@ class QueueScript extends \System\Core\Command
         $error = error_get_last();
         if(!is_null($error)) {
             $seconds = $this->timeout > 1 ? 'seconds':'second';
-            if (strpos($error['message'], "Maximum execution time of {$this->timeout} {$seconds} exceeded") === false) {
-                echo 'Other error: ' . print_r($error, true);
-            } else {
-                $db = $this->getDB();
+            if (strpos($error['message'], "Maximum execution time of {$this->timeout} {$seconds} exceeded") !== false){
+                $db = $this->getDB($this->connection === 'rabbitMQ' ? 'database':'');
                 if (!empty($this->queueRunning) && $db) {
                     $key = $this->queueRunning['key'];
                     $queue = $this->queueRunning['queue'];
@@ -255,13 +327,13 @@ class QueueScript extends \System\Core\Command
                     $this->stopQueue($db, $payload, $class, $uid, new \Exception("Timeout queue"));
                     $this->clearQueue($db, $queue, $key);
                     $this->output()->text("$class failed. Error: Timeout queue".PHP_EOL);
-                    $queues = $this->getQueueList($db);
-                    if($queues) { // Continue running despite the timeout error until the job ends
-                        $command = 'php cli.php queue:run ';
-                        if(!empty($this->getArgument('connection'))) $command .= "{$this->getArgument('connection')} ";
-                        if(!empty($this->getOption('queue'))) $command .= "{$this->getOption('queue')} ";
-                        passthru($command);
-                    }
+//                    $queues = $this->getQueueList($db); do not continue when failed job timeout
+//                    if($queues) { // Continue running despite the timeout error until the job ends
+//                        $command = 'php cli.php queue:run ';
+//                        if(!empty($this->getArgument('connection'))) $command .= "{$this->getArgument('connection')} ";
+//                        if(!empty($this->getOption('queue'))) $command .= "{$this->getOption('queue')} ";
+//                        passthru($command);
+//                    }
                 }
             }
         }

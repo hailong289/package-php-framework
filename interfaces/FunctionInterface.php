@@ -20,3 +20,9 @@ interface InterfaceSendJob {
     public function queue($name);
     public function work();
 }
+
+interface InterfaceCacheFile {
+    public function set($name, $data = []);
+    public function get($name);
+    public function clear($name);
+}

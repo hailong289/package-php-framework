@@ -35,8 +35,7 @@ class Validation {
     }
 
     public function data() {
-
-         return !count((array)self::$data) ? json_decode(json_encode(self::$data)):null;
+         return count((array)self::$data) ? json_decode(json_encode(self::$data)):null;
     }
 
     public function errorsArray() {
