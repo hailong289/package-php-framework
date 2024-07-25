@@ -149,7 +149,7 @@ class Model {
     }
 
     public static function insertLastId($data) {
-        return self::init()->insertLastId($limit);
+        return self::init()->insertLastId($data);
     }
 
     public static function update($data, $fieldOrId = null) {
