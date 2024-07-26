@@ -330,34 +330,24 @@ if(!function_exists('collection')) {
 if (!function_exists('sendJobs')) {
     /**
      * @param $job
-     * @return InterfaceSendJob|__anonymous@10121
+     * @param $queue_name
+     * @param $connection
+     * @param $timeout
+     * @return void
+     * @throws Throwable
      */
-    function sendJobs($job) {
+    function sendJobs($job, $queue_name = null, $connection = null, $timeout = null) {
         $queue = \Hola\Queue\CreateQueue::instance();
-        return new class ($queue, $job) implements \Hola\Interfaces\FunctionInterface\InterfaceSendJob {
-            private $queue;
-            private $job;
-            function __construct(\Hola\Queue\CreateQueue $queue, $job) {
-                $this->queue = $queue;
-                $this->job = $job;
-            }
-            function connection($name) {
-                $this->queue->connection($name);
-                return $this;
-            }
-            function timeout($timeout) {
-                $this->queue->setTimeOut($timeout);
-                return $this;
-            }
-            function queue($name) {
-                $this->queue->setQueue($name);
-                return $this;
-            }
-            function work() {
-                $this->queue->enQueue($this->job);
-                return $this;
-            }
-        };
+        if (!is_null($queue_name)) {
+            $queue->setQueue($queue_name);
+        }
+        if (!is_null($connection)) {
+            $queue->connection($connection);
+        }
+        if (!is_null($timeout)) {
+            $queue->setTimeOut($timeout);
+        }
+        $queue->enQueue($job);
     }
 }
 

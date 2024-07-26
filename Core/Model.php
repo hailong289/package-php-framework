@@ -199,4 +199,15 @@ class Model {
     public static function query($sql) {
         return self::init()->query($sql);
     }
+
+    public function save()
+    {
+        $data = convert_to_array($this);
+        $id = 0;
+        if (isset($data['id'])) {
+            $id = $data['id'];
+            unset($data['id']);
+        }
+        return self::init()->updateOrInsert($data, $id);
+    }
 }
