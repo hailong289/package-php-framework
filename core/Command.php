@@ -1,5 +1,5 @@
 <?php
-namespace System\Core;
+namespace Hola\Core;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Helper\ProgressBar;

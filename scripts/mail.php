@@ -2,7 +2,7 @@
 
 namespace Scripts;
 
-use System\Core\Command;
+use Hola\Core\Command;
 
 class MailScript extends Command
 {
@@ -28,7 +28,7 @@ class MailScript extends Command
             }
             file_put_contents($concurrentDirectory, '<?php
 namespace Mails;
-use System\Core\Mail;
+use Hola\Core\Mail;
 class '.$name_mail.' extends Mail {
     protected $useQueue = false;
     public function __construct()

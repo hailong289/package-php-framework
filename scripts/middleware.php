@@ -1,6 +1,6 @@
 <?php
 namespace Scripts;
-class MiddlewareScript extends \System\Core\Command
+class MiddlewareScript extends \Hola\Core\Command
 {
     protected $command = 'create:middleware';
     protected $command_description = 'Create a new middleware';
@@ -25,8 +25,8 @@ class MiddlewareScript extends \System\Core\Command
                 mkdir(__DIR__ROOT . "/middleware");
             }
             file_put_contents($concurrentDirectory, '<?php
-namespace System\Middleware;
-use System\Core\Request;
+namespace Hola\Middleware;
+use Hola\Core\Request;
 
 class ' . $name_middleware . ' {
      public function handle(Request $request){

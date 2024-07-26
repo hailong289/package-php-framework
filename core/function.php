@@ -103,7 +103,7 @@ if(!function_exists('logs')){
      * @return InterfaceLogs|__anonymous@2793
      */
     function logs(): object {
-        return new class implements \System\Interfaces\InterfaceLogs\Log {
+        return new class implements \Hola\Interfaces\InterfaceLogs\Log {
             public function dump(...$args) {
                 http_response_code(500);
                 echo "<pre>";
@@ -263,7 +263,7 @@ if(!function_exists('errors')){
         if(!empty($key)) {
             return $GLOBALS['share_data_errors'][$key];
         }
-        return new class() implements \System\Interfaces\FunctionInterface\InterfaceErrors {
+        return new class() implements \Hola\Interfaces\FunctionInterface\InterfaceErrors {
             function get($key = '') {
                 return $GLOBALS['share_data_errors'][$key];
             }
@@ -289,7 +289,7 @@ if(!function_exists('res')){
      * @return InterfaceRes|__anonymous@8576
      */
     function res() {
-        return new class() implements \System\Interfaces\FunctionInterface\InterfaceRes {
+        return new class() implements \Hola\Interfaces\FunctionInterface\InterfaceRes {
             function view($name, $data = [], $status = 200) {
                 $view = preg_replace('/([.]+)/', '/' , $name);
                 if(!file_exists(__DIR__ROOT . '/App/Views/'.$view.'.view.php')){
@@ -323,7 +323,7 @@ if(!function_exists('res')){
 if(!function_exists('collection')) {
     function collection($data)
     {
-        return new \System\Core\Collection($data);
+        return new \Hola\Core\Collection($data);
     }
 }
 
@@ -333,11 +333,11 @@ if (!function_exists('sendJobs')) {
      * @return InterfaceSendJob|__anonymous@10121
      */
     function sendJobs($job) {
-        $queue = \System\Queue\CreateQueue::instance();
-        return new class ($queue, $job) implements \System\Interfaces\FunctionInterface\InterfaceSendJob {
+        $queue = \Hola\Queue\CreateQueue::instance();
+        return new class ($queue, $job) implements \Hola\Interfaces\FunctionInterface\InterfaceSendJob {
             private $queue;
             private $job;
-            function __construct(\System\Queue\CreateQueue $queue, $job) {
+            function __construct(\Hola\Queue\CreateQueue $queue, $job) {
                 $this->queue = $queue;
                 $this->job = $job;
             }
@@ -368,7 +368,7 @@ if(!function_exists('cache')) {
         }
 
         if (is_null($name)) {
-            return new class implements \System\Interfaces\FunctionInterface\InterfaceCacheFile {
+            return new class implements \Hola\Interfaces\FunctionInterface\InterfaceCacheFile {
                 public function set($name, $data = []){
                     $folder = explode('/', $name);
                     if (count($folder) > 1) {

@@ -1,9 +1,9 @@
 <?php
 namespace Scripts;
 
-use System\Core\Connection;
+use Hola\Core\Connection;
 
-class QueueScript extends \System\Core\Command
+class QueueScript extends \Hola\Core\Command
 {
     protected $command = 'queue:run';
     protected $command_description = 'Run a queue';
@@ -97,7 +97,7 @@ class QueueScript extends \System\Core\Command
         $db = '';
         if($connection === 'database') {
             try {
-                $db = new \System\Core\Database();
+                $db = new \Hola\Core\Database();
             }catch (\Throwable $e) {
                 $this->output()->error([
                     "message" => $e->getMessage(),
@@ -124,7 +124,7 @@ class QueueScript extends \System\Core\Command
             }
         } else {
             try {
-                $db = \System\Core\Redis::work();
+                $db = \Hola\Core\Redis::work();
                 if (!$db->isConnected()) {
                     $this->output()->error([
                         "message" => 'Redis connection is failed',
@@ -149,7 +149,7 @@ class QueueScript extends \System\Core\Command
     private function getQueueList($db)
     {
         try {
-            if ($db instanceof \System\Core\Database) {
+            if ($db instanceof \Hola\Core\Database) {
                 $table = $this->jobs_queue === 'rollback_failed_job' ? 'failed_jobs' : 'jobs';
                 $queue = $this->jobs_queue === 'rollback_failed_job' ? 'failed_jobs' : $this->jobs_queue;
                 return $db->table($table)->where('queue', $queue)->get()->toArray();
@@ -196,7 +196,7 @@ class QueueScript extends \System\Core\Command
         $class = str_replace('Queue\\Jobs\\','', $class);
         try {
             if ($this->connection === 'database' || $this->connection === 'rabbitMQ') {
-                if ($db instanceof \System\Core\Database) {
+                if ($db instanceof \Hola\Core\Database) {
                     $data = json_encode([
                         'uid' => $uid,
                         'payload' => $payload,
@@ -289,7 +289,7 @@ class QueueScript extends \System\Core\Command
 
     private function clearQueue($db, $queue_first, $index) {
         try {
-            if ($db instanceof \System\Core\Database) {
+            if ($db instanceof \Hola\Core\Database) {
                 $table = $this->jobs_queue === 'rollback_failed_job' ? 'failed_jobs':'jobs';
                 $queue = $this->jobs_queue === 'rollback_failed_job' ? 'failed_jobs':$this->jobs_queue;
                 $db::instance()->table($table)->where('queue', $queue)->where('id', $index)->delete();

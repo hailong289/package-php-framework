@@ -1,10 +1,10 @@
 <?php
-namespace System\Queue;
-use System\Core\Connection;
-use System\Core\Database;
-use System\Core\Redis;
-use System\Core\Request;
-use System\Core\Response;
+namespace Hola\Queue;
+use Hola\Core\Connection;
+use Hola\Core\Database;
+use Hola\Core\Redis;
+use Hola\Core\Request;
+use Hola\Core\Response;
 
 class CreateQueue
 {

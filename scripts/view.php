@@ -1,6 +1,6 @@
 <?php
 namespace Scripts;
-class ViewScript extends \System\Core\Command
+class ViewScript extends \Hola\Core\Command
 {
     protected $command = 'create:view';
     protected $command_description = 'Create a new view';

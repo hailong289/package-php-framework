@@ -1,5 +1,5 @@
 <?php
-namespace System\Interfaces\InterfaceLogs;
+namespace Hola\Interfaces\InterfaceLogs;
 
 interface Log {
     public function dump(...$args);

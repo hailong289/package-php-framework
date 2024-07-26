@@ -1,6 +1,6 @@
 <?php
 
-namespace System\Interfaces\FunctionInterface;
+namespace Hola\Interfaces\FunctionInterface;
 
 interface InterfaceErrors {
     public function get($key = '');

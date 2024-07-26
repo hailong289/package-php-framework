@@ -1,8 +1,8 @@
 <?php
 namespace Scripts;
-use System\Core\Command;
+use Hola\Core\Command;
 
-class CommandScript extends \System\Core\Command
+class CommandScript extends \Hola\Core\Command
 {
     protected $command = 'create:command';
     protected $command_description = 'Create a new command';
@@ -28,7 +28,7 @@ class CommandScript extends \System\Core\Command
             }
             file_put_contents($concurrentDirectory, '<?php
 namespace Commands;
-use System\Core\Command;
+use Hola\Core\Command;
 class '.$name_command.' extends Command {
     public function __construct()
     {

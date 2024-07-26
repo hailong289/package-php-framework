@@ -1,7 +1,7 @@
 <?php
 
-namespace System\Core;
-use System\Interfaces\FormRequestInterface\DataInterface;
+namespace Hola\Core;
+use Hola\Interfaces\FormRequestInterface\DataInterface;
 
 class FormRequest extends Request {
     private $data_errors = null;

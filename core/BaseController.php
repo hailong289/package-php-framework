@@ -1,5 +1,5 @@
 <?php
-namespace System\Core;
+namespace Hola\Core;
 class BaseController extends \stdClass {
     public function model($names) {
         $result = [];

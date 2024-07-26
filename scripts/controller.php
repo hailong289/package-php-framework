@@ -1,6 +1,6 @@
 <?php
 namespace Scripts;
-class ControllerScript extends \System\Core\Command
+class ControllerScript extends \Hola\Core\Command
 {
     protected $command = 'create:controller';
     protected $command_description = 'Create a new controller';
@@ -36,7 +36,7 @@ class ControllerScript extends \System\Core\Command
         if (!file_exists(__DIR__ROOT . "/App/Controllers/$name_controller.php")) {
             file_put_contents(__DIR__ROOT . "/App/Controllers/$name_controller.php", "<?php
 namespace App\Controllers;
-use System\Core\BaseController;
+use Hola\Core\BaseController;
 class {$name_controller} extends BaseController {
     public function __construct(){}
 } 

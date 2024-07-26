@@ -1,8 +1,8 @@
 <?php
 namespace Scripts;
-use System\Core\Router;
+use Hola\Core\Router;
 
-class RouterScript extends \System\Core\Command
+class RouterScript extends \Hola\Core\Command
 {
     protected $command = 'router:list';
     protected $command_description = 'a list of routes';

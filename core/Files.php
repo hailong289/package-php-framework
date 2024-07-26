@@ -1,6 +1,6 @@
 <?php
 
-namespace System\Core;
+namespace Hola\Core;
 
 class Files {
 

@@ -1,6 +1,6 @@
 <?php
 namespace Scripts;
-class CacheScript extends \System\Core\Command
+class CacheScript extends \Hola\Core\Command
 {
     protected $command = 'clear:cache';
     protected $command_description = 'clear cache';

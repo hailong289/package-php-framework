@@ -1,5 +1,5 @@
 <?php
-namespace System\Core;
+namespace Hola\Core;
 
 class Session {
     public static function set($key, $value){

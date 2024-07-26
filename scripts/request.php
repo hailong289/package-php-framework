@@ -1,6 +1,6 @@
 <?php
 namespace Scripts;
-class RequestScript extends \System\Core\Command
+class RequestScript extends \Hola\Core\Command
 {
     protected $command = 'create:request';
     protected $command_description = 'Create a new form request';
@@ -20,7 +20,7 @@ class RequestScript extends \System\Core\Command
             }
             file_put_contents($concurrentDirectory, '<?php
 namespace Request;
-use System\Core\FormRequest;
+use Hola\Core\FormRequest;
 
 class '.$name_request.' extends FormRequest
 {

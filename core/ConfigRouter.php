@@ -1,5 +1,5 @@
 <?php
-namespace System\Core;
+namespace Hola\Core;
 class ConfigRouter extends Router {
     private $default = 'web';
     private $pathArray = [];

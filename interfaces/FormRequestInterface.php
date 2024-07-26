@@ -1,5 +1,5 @@
 <?php
-namespace System\Interfaces\FormRequestInterface;
+namespace Hola\Interfaces\FormRequestInterface;
 
 interface DataInterface {
     public function value();

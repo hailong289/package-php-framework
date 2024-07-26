@@ -1,6 +1,6 @@
 <?php
-namespace System\Core;
-use System\Traits\QueryBuilder;
+namespace Hola\Core;
+use Hola\Traits\QueryBuilder;
 
 class Database {
     use QueryBuilder;

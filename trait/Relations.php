@@ -1,6 +1,6 @@
 <?php
 
-namespace System\Traits;
+namespace Hola\Traits;
 
 trait Relations {
 

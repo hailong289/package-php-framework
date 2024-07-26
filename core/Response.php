@@ -1,6 +1,6 @@
 <?php
 
-namespace System\Core;
+namespace Hola\Core;
 
 class Response {
     public static function redirectTo($path, $status = 302, $headers = []){

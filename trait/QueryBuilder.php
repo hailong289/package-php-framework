@@ -1,7 +1,7 @@
 <?php
-namespace System\Traits;
+namespace Hola\Traits;
 
-use System\Core\Collection;
+use Hola\Core\Collection;
 
 trait QueryBuilder
 {

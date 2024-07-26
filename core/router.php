@@ -1,5 +1,5 @@
 <?php
-namespace System\Core;
+namespace Hola\Core;
 
 use Middleware\Kernel;
 

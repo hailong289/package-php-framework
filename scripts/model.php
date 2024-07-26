@@ -1,6 +1,6 @@
 <?php
 namespace Scripts;
-class ModelScript extends \System\Core\Command
+class ModelScript extends \Hola\Core\Command
 {
     protected $command = 'create:model';
     protected $command_description = 'Create a new model';
@@ -26,7 +26,7 @@ class ModelScript extends \System\Core\Command
             }
             file_put_contents($concurrentDirectory, '<?php
 namespace App\Models;
-use System\Core\Model;
+use Hola\Core\Model;
 
 class ' . $name_model . ' extends Model {
     protected static $tableName = "' . $name_table . '";

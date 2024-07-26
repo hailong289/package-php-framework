@@ -1,6 +1,6 @@
 <?php
 namespace Scripts;
-class JobsScript extends \System\Core\Command
+class JobsScript extends \Hola\Core\Command
 {
     protected $command = 'create:jobs';
     protected $command_description = 'Create a new job';
