@@ -2,12 +2,16 @@
 namespace Hola\Core;
 
 class Model {
+    private static $db;
 
     private static function init($env = null, $connection = null, $not_set_tb = false)
     {
         $call_class = get_called_class();
         $var = get_class_vars($call_class);
-        $db = new Database($env, $connection);
+        if (self::$db === null) {
+            self::$db = new Database($env, $connection);
+        }
+        $db = self::$db;
         $db->setModel($call_class, $var);
         // set table
         $variable = str_replace('App\\Models\\','', $call_class);
