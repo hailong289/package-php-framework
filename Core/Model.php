@@ -30,7 +30,10 @@ class Model {
 
     public static function connection($env = 'default', $connection = 'mysql')
     {
-        return self::init($env, $connection);
+        self::resetDB();
+        $db = self::init($env, $connection);
+        self::resetDB();
+        return $db;
     }
 
     public static function from($tableName) {
@@ -131,6 +134,11 @@ class Model {
     public static function delete() {
         return self::init()->delete();
     }
+    
+    public static function softDelete($data)
+    {
+        return self::init()->softDelete($data);
+    }
 
     public static function toSqlRaw() {
         return self::init()->toSqlRaw();
@@ -213,5 +221,10 @@ class Model {
             unset($data['id']);
         }
         return self::init()->updateOrInsert($data, $id);
+    }
+
+    public static function resetDB()
+    {
+        self::$db = null;
     }
 }
