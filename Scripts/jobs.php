@@ -1,5 +1,5 @@
 <?php
-namespace Scripts;
+namespace Hola\Scripts;
 class JobsScript extends \Hola\Core\Command
 {
     protected $command = 'create:jobs';

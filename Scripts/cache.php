@@ -1,5 +1,5 @@
 <?php
-namespace Scripts;
+namespace Hola\Scripts;
 class CacheScript extends \Hola\Core\Command
 {
     protected $command = 'clear:cache';

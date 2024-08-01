@@ -1,5 +1,5 @@
 <?php
-namespace Scripts;
+namespace Hola\Scripts;
 use Hola\Core\Command;
 
 class CommandScript extends \Hola\Core\Command
