@@ -23,25 +23,26 @@ class Container
         return self::$instance;
     }
 
-    public function bind($abstract, $factory = null): void
-    {
-        $this->make($abstract, $factory = null);
+    private function get($abstract) {
+        return isset($this->bindings[$abstract]) ? $this->bindings[$abstract]:$abstract;
     }
 
-    public function make($abstract, $factory = null) {
+    public function set($abstract, $factory = null): void
+    {
         if (is_null($factory)) {
             $factory = $abstract;
         }
-
         if (!$factory instanceof \Closure) {
             if (!is_string($factory)) {
                 throw new \TypeError(self::class.'::bind(): Argument #2 ($factory) must be of type Closure|string|null');
             }
             $factory = $this->getClosure($factory);
         }
-
         $this->bindings[$abstract] = $factory();
-        $this->build($this->bindings[$abstract]);
+    }
+
+    public function make($abstract, $factory = null) {
+        return $this->build($abstract, $factory = null);
     }
 
     private function getClosure($factory)
@@ -60,35 +61,34 @@ class Container
         // set class name with namespace and method name
         try {
             $this->resolveCallback($callable);
+
+            if (empty($this->callbackClass)) {
+                throw new \TypeError(self::class.'::call(): Class must not be empty');
+            }
+
             $methodReflection = new \ReflectionMethod($this->callbackClass, $this->callbackMethod);
             $methodParams = $methodReflection->getParameters();
-
             $dependencies = [];
 
             // loop with dependencies/parameters
             foreach ($methodParams as $param) {
-
                 $type = $param->getType(); // check type
-
                 if ($type && $type instanceof \ReflectionNamedType) { /// if parameter is a class
                     $name = $param->getClass()->newInstance(); // create insrance
                     array_push($dependencies, $name); // push  to $dependencies array
-                } else {  /// Normal parameter
-                    $name = $param->getName();
-                    if (array_key_exists($name, this->callbackMethodParams)) { // check exist in $parameters
-                        array_push($dependencies, this->callbackMethodParams[$name]); // push  to $dependencies array
-                    }
                 }
+            }
 
+            foreach ($this->callbackMethodParams as $value) {
+                array_push($dependencies, $value);
             }
 
             // make class instance
-            $initClass = $this->build($this->callbackClass, $this->callbackMethodParams);
+            $initClass = $this->build($this->callbackClass);
 
             // call method with $dependencies/parameters
             return $methodReflection->invoke($initClass, ...$dependencies);
         } catch (\Throwable $exception) {
-            log_debug($exception);
             throw new \BadMethodCallException($exception->getMessage());
         }
     }
@@ -110,16 +110,25 @@ class Container
 
         // set class name with namespace
         $this->callbackClass = $segments[0];
+        unset($segments[0]);
 
         // set method name . if method name not provided then default method __invoke
-        $this->callbackMethod = isset($segments[1]) ? $segments[1] : '__invoke';
-
-        $this->callbackMethodParams = isset($segments[2]) ? $segments[2] : [];
-
+        if (isset($segments[1])) {
+            $this->callbackMethod = $segments[1];
+            unset($segments[1]);
+        } else {
+            $this->callbackMethod = '__invoke';
+        }
+        // set method params
+        if (isset($segments[2])) {
+            $this->callbackMethodParams = array_values($segments);
+        } else {
+            $this->callbackMethodParams = [];
+        }
     }
 
 
-    private function build($class, $parameters = [])
+    private function build($class)
     {
         try {
             $classReflection = new \ReflectionClass($class);
@@ -133,8 +142,6 @@ class Container
             return new $class;
         }
 
-        $constructorParams = $constructor->getParameters();
-
         $dependencies = [];
 
         /*
@@ -143,9 +150,9 @@ class Container
         $dependencies = $constructor->getParameters();
 
         $instances = $this->resolveConstructorDependencies($dependencies);
+
         // finally pass dependancy and param to class instance
-    
-        return $classReflection->newInstance($instances);
+        return $classReflection->newInstanceArgs($instances);
     }
 
     private function resolveConstructorDependencies(array $dependencies): array
@@ -155,10 +162,9 @@ class Container
             $class = $this->getReflectionClassFromParameter($dependency);
             if ($class instanceof \ReflectionClass) {
                 $abstract = $class->getName();
-                $array[$dependency->getName()] = $this->build($this->bindings[$abstract]);
+                $array[$dependency->getName()] = $this->build($this->get($abstract));
             }
         }
-
         return $array;
     }
 
