@@ -11,7 +11,7 @@ class Model {
         if (self::$db === null) {
             self::$db = new Database($env, $connection);
         }
-        $db = self::$db;
+        $db = clone self::$db;
         $db->setModel($call_class, $var);
         // set table
         $variable = str_replace('App\\Models\\','', $call_class);
