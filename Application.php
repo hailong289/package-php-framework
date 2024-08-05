@@ -44,6 +44,36 @@ class Application extends Container
     {
         header('Content-Type: application/json; charset=utf-8');
     }
+    
+    public function registerCommand()
+    {
+        $app = new \Symfony\Component\Console\Application();
+        $command_dir = glob(__DIR__ROOT .'/commands/*.php');
+        $array_command = [];
+        if (!empty($command_dir)) {
+            foreach($command_dir as $item){
+                $item = str_replace('.php','',$item);
+                $class = str_replace('commands/','\Commands\\',$item);
+                $array_command[] = $this->make($class);
+            }
+        }
+        $array_command = array_merge($array_command, [
+            $this->make(\Hola\Scripts\ControllerScript::class),
+            $this->make(\Hola\Scripts\ModelScript::class),
+            $this->make(\Hola\Scripts\ViewScript::class),
+            $this->make(\Hola\Scripts\RequestScript::class),
+            $this->make(\Hola\Scripts\MiddlewareScript::class),
+            $this->make(\Hola\Scripts\QueueScript::class),
+            $this->make(\Hola\Scripts\CommandScript::class),
+            $this->make(\Hola\Scripts\MailScript::class),
+            $this->make(\Hola\Scripts\RouterScript::class),
+            $this->make(\Hola\Scripts\CacheScript::class),
+        ]);
+        foreach ($array_command as $item) {
+            $app->add($item);
+        }
+        $app->run();
+    }
 
     private function work()
     {

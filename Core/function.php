@@ -410,3 +410,12 @@ if(!function_exists('rglob')) {
         return $files;
     }
 }
+
+if (!function_exists('app')) {
+    function app($abstract = null) {
+        if (is_null($abstract)) {
+            return \Hola\Container\Container::instance();
+        }
+        return \Hola\Container\Container::instance()->make($abstract);
+    }
+}
