@@ -145,7 +145,7 @@ class Request extends \stdClass {
         return true;
     }
     public function all(){
-        $method = $_SERVER['REQUEST_METHOD'];
+        $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         $is_get = $method == 'GET' ? true:false;
         $is_post = $method == 'POST' ? true:false;
         $is_patch = $method == 'PATCH' ? true:false;
@@ -171,7 +171,7 @@ class Request extends \stdClass {
     }
 
     public function headers($key){
-        $headers = getallheaders();
+        $headers = !function_exists('getallheaders') ? [] : getallheaders();
         return $headers[$key] ?? null;
     }
 
