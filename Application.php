@@ -48,13 +48,14 @@ class Application extends Container
     public function registerCommand()
     {
         $app = new \Symfony\Component\Console\Application();
-        $command_dir = glob(__DIR__ROOT .'/commands/*.php');
+        $command_dir = scandir(__DIR__ROOT .'/commands');
+        $command_dir = array_diff($command_dir, array('.', '..'));
+
         $array_command = [];
         if (!empty($command_dir)) {
             foreach($command_dir as $item){
                 $item = str_replace('.php','',$item);
-                $class = str_replace('commands/','\Commands\\',$item);
-                $array_command[] = $this->make($class);
+                $array_command[] = $this->make("Commands\\$item");
             }
         }
         $array_command = array_merge($array_command, [
