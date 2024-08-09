@@ -10,11 +10,15 @@ class CreateQueue
 {
     private $queue = 'jobs';
     private $timeout = 0;
-    public $connection = QUEUE_WORK;
+    private $connection = QUEUE_WORK;
+    private static $instance = null;
     function __construct() {}
     
-    public static function instance(){
-        return new CreateQueue();
+    public static function instance() {
+        if (is_null(self::$instance)) {
+            self::$instance = new CreateQueue();
+        }
+        return self::$instance;
     }
     
     //create a function to add new element
