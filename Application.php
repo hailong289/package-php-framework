@@ -101,7 +101,11 @@ class Application extends Container
         if (is_array($return) || is_object($return)) {
             echo json_encode($return);
         } else if (is_file($return)) { // return file
-            return $this;
+            $ext = pathinfo($return, PATHINFO_EXTENSION);
+            if ($ext === 'php' || $ext === 'html') {
+                return $this;
+            }
+            echo file_get_contents($return);
         } else {
             http_response_code($code);
             echo $return;
