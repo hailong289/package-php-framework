@@ -212,6 +212,14 @@ class Model {
         return self::init()->query($sql);
     }
 
+    public static function pagination($limit = 10, $page = 1) {
+        return self::init()->pagination($limit, $page);
+    }
+
+    public static function paginationWithCount($limit = 10, $page = 1) {
+        return self::init()->paginationWithCount($limit, $page);
+    }
+
     public function save()
     {
         $data = convert_to_array($this);
@@ -223,7 +231,7 @@ class Model {
         return self::init()->updateOrInsert($data, $id);
     }
 
-    public static function resetDB()
+    private static function resetDB()
     {
         self::$db = null;
     }
