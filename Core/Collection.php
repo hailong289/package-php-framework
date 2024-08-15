@@ -117,9 +117,14 @@ class Collection
         return $this->count() ? $this->data[$this->count() - 1]:$this->data;
     }
 
-    public function chunk($number, $callback)
+    public function chunk($number, $callback = null)
     {
         $chunk = array_chunk($this->data, $number);
-        $callback($chunk);
+        if (is_callable($callback)) {
+            $callback($chunk);
+            return;
+        }
+        $this->data = $chunk;
+        return $this;
     }
 }
