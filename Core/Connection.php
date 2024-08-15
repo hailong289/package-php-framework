@@ -3,7 +3,7 @@ namespace Hola\Core;
 class Connection{
     private static $instance = null, $conn = null,$instance_redis = null, $redis = null,$instance_rabbitMQ = null, $rabbitMQ = null;
     private function __construct($environment = "default", $host = "mysql", $type = 1){
-        $DB = cache('config', DATABASE);
+        $DB = cache('config', config('database'));
         $enable_debug = config_env('DEBUG_LOG_CONNECTION', false);
         if($type === 1) {
             // Ket nói database
