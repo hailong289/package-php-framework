@@ -435,36 +435,14 @@ if (!function_exists('config')) {
             throw new \RuntimeException("File $name_config.php does not exist", 500);
         }
         $config_file = require($file);
-        $stringKey = '';
         foreach ($arr_config as $key) {
-            $stringKey .= '['.$key.']';
-        }
-        $stringKey = 'config_file'.$stringKey;
-        $keys = parseKeyPath($stringKey);
-        $value = getValueFromArray($config_file, $keys);
-        return $value;
-    }
-}
-
-if (!function_exists('parseKeyPath')) {
-    function parseKeyPath($keyPath) {
-        // Regular expression to match keys within brackets
-        preg_match_all('/\[(.*?)\]/', $keyPath, $matches);
-        return $matches[1];
-    }
-}
-
-
-if (!function_exists('getValueFromArray')) {
-    function getValueFromArray($array, $keys) {
-        foreach ($keys as $key) {
-            if (isset($array[$key])) {
-                $array = $array[$key];
+            if (isset($config_file[$key])) {
+                $config_file = $config_file[$key];
             } else {
                 return null; // Key does not exist
             }
         }
-        return $array;
+        return $config_file;
     }
 }
 
