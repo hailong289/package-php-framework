@@ -14,15 +14,13 @@ interface InterfaceRes {
     public function json($data, $status = 200);
 }
 
-interface InterfaceSendJob {
-    public function connection($name);
-    public function timeout($timeout);
-    public function queue($name);
-    public function work();
-}
-
 interface InterfaceCacheFile {
     public function set($name, $data = []);
     public function get($name);
     public function clear($name);
+}
+
+interface InterfaceConfig {
+    public function set($name, $value);
+    public function get($name);
 }

@@ -8,11 +8,15 @@ use Hola\Core\Response;
 
 class CreateQueue
 {
-    private $queue = 'jobs';
+    private $queue;
     private $timeout = 0;
-    private $connection = QUEUE_WORK;
+    private $connection;
     private static $instance = null;
-    function __construct() {}
+    function __construct() {
+        $this->connection = config('queue.default_connection');
+        $this->queue = config('queue.queue_default');
+        $this->timeout = config('queue.timeout');
+    }
     
     public static function instance() {
         if (is_null(self::$instance)) {
@@ -38,7 +42,7 @@ class CreateQueue
                 ];
                 if($this->connection === 'redis') {
                     $redis = Redis::work();
-                    if(!$redis->isConnected()) {
+                    if (!$redis->isConnected()) {
                         throw new \RuntimeException('Redis connection is failed');
                     }
                     Redis::cacheRPush($tag_queue, $data_queue, 0);
@@ -76,8 +80,8 @@ class CreateQueue
         }
     }
 
-    public function connection($connection = QUEUE_WORK) {
-        if($connection === 'redis' || $connection === 'database') {
+    public function connection($connection) {
+        if($connection === 'redis' || $connection === 'database' || $connection === 'rabbitMQ') {
             $this->connection = $connection;
         } else {
             throw new \Exception('Connection not supported', 500);

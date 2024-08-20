@@ -423,26 +423,52 @@ if (!function_exists('app')) {
 if (!function_exists('config')) {
     function config($name = null) {
         if (is_null($name)) {
-            return new class {
-
+            return new class implements \Hola\Interfaces\FunctionInterface\InterfaceConfig {
+                function set($name, $value) {
+                    $arr_config = explode('.', $name);
+                    $name_config = $arr_config[0];
+                    unset($arr_config[0]);
+                    $config = $GLOBALS['config'][$name_config] ?? [];
+                    $this->editByKey($config, $arr_config, $value);
+                    $GLOBALS['config'][$name_config] = $config;
+                }
+                function get($name) {
+                    $arr_config = explode('.', $name);
+                    $name_config = $arr_config[0];
+                    unset($arr_config[0]);
+                    $config = $GLOBALS['config'][$name_config] ?? [];
+                    return $this->last($arr_config, $config);
+                }
+                function last($keys, $items) {
+                    foreach ($keys as $key) {
+                        if (isset($items[$key])) {
+                            $items = $items[$key];
+                        } else {
+                            return null; // Key does not exist
+                        }
+                    }
+                    return $items;
+                }
+                function editByKey(&$array, $keys, $value) {
+                    if (is_array($array) && !empty($keys)) {
+                        $key = array_shift($keys);
+                        if (empty($keys)) {
+                            if (isset($array[$key])) {
+                                $array[$key] = $value;
+                            }
+                        } else {
+                            if (isset($array[$key]) && is_array($array[$key])) {
+                                $this->editByKey($array[$key], $keys, $value);
+                            }
+                        }
+                    }
+                }
             };
         }
         $arr_config = explode('.', $name);
         $name_config = $arr_config[0];
         unset($arr_config[0]);
-        $file = __DIR__ROOT ."/config/$name_config.php";
-        if (!file_exists($file)) {
-            throw new \RuntimeException("File $name_config.php does not exist", 500);
-        }
-        $config_file = require($file);
-        foreach ($arr_config as $key) {
-            if (isset($config_file[$key])) {
-                $config_file = $config_file[$key];
-            } else {
-                return null; // Key does not exist
-            }
-        }
-        return $config_file;
+        $config = $GLOBALS['config'][$name_config] ?? [];
+        return config()->last($arr_config, $config);
     }
 }
-

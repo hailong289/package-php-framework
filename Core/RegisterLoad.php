@@ -37,6 +37,24 @@ class RegisterLoad
         return $this;
     }
     
+    public function loadConfig()
+    {
+        $config = rglob(__DIR__ROOT ."/config/*.php") ?? [];
+        foreach ($config as $item) {
+            if (file_exists($item)) {
+                if ($item === __DIR__ROOT ."/config/constant.php") {
+                    require_once $item;
+                } else {
+                    $end = end(explode("/", $item));
+                    $end = str_replace('.php', '', $end);
+                    $GLOBALS['config'][$end] = require($item);
+                }
+            } else {
+                throw new \Exception("File $item does not exist");
+            }
+        }
+    }
+    
     public function loadTimeZone($timezone = null)
     {
         $timezone = $timezone ?? config_env('TIMEZONE', 'Asia/Ho_Chi_Minh');

@@ -12,10 +12,7 @@ class Connection{
                 //    cấu hình dsn
                 $dsn = "$host:dbname=".$db_connection['DATABASE_NAME'].";host=".$db_connection['HOST'];
                 //    Cấu hình option, - cấu hình uft8, - cấu hình ngoại lệ khi truy vấn bị lỗi
-                $options = [
-                    \PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8',
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                ];
+                $options = $DB['OPTIONS'];
                 // cấu lệnh kết nối
                 $conn = new \PDO($dsn,$db_connection['USERNAME'],$db_connection['PASSWORD'],$options);
                 self::$conn = $conn;
