@@ -27,7 +27,6 @@ class CreateQueue
     
     //create a function to add new element
     public function enQueue($class) {
-        $is_api = (new Request())->isJson();
         $tag_queue = "queue:{$this->queue}";
         $reflectionClass = new \ReflectionClass($class);
         if (method_exists($class,'handle')) {
