@@ -472,3 +472,13 @@ if (!function_exists('config')) {
         return config()->last($arr_config, $config);
     }
 }
+
+if (!function_exists('createFolder')) {
+    function createFolder($path, $mode = 0777) {
+        if (!file_exists($path)) {
+            if (!mkdir($concurrentDirectory = $path, $mode, true) && !is_dir($concurrentDirectory)) {
+                throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
+            }
+        }
+    }
+}
