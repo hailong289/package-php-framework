@@ -23,6 +23,17 @@ class CacheScript extends \Hola\Core\Command
                     unlink($item);
                 }
                 break;
+            case 'view':
+                $item = __DIR__ROOT.'/storage/render/views';
+                if(is_dir($item)){
+                    $cache = rglob("$item/*");
+                    foreach($cache as $v){
+                        if(file_exists($v)){
+                            unlink($v);
+                        }
+                    }
+                }
+                break;
             default:
                 $cache = rglob(__DIR__ROOT.'/storage/cache/*.cache');
                 if (!empty($cache)) {

@@ -39,6 +39,13 @@ class Response {
             extract($data);
         }
         $folder = __DIR__ROOT . '/storage/render/views';
+        $view = end(explode("/", $file));
+        $file_name = "$folder/$view";
+        createFolder($folder);
+        if (file_exists($file_name)) {
+            require_once $file_name;
+            return $file_name;
+        }
         $content = file_get_contents($file);
         $content = preg_replace('/\$php\s(.?)\s\$endphp/', '<?php $1 ?>', $content);
         $content = preg_replace([
@@ -48,9 +55,6 @@ class Response {
             '<?php foreach($1): ?>',
             '<?php endforeach; ?>'
         ], $content);
-        createFolder($folder);
-        $view = end(explode("/", $file));
-        $file_name = "$folder/$view";
         file_put_contents($file_name, $content);
         require_once $file_name;
         return $file_name;
