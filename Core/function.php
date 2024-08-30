@@ -475,10 +475,17 @@ if (!function_exists('config')) {
 
 if (!function_exists('createFolder')) {
     function createFolder($path, $mode = 0777) {
-        if (!file_exists($path)) {
+        if (!empty($path) && !file_exists($path)) {
             if (!mkdir($concurrentDirectory = $path, $mode, true) && !is_dir($concurrentDirectory)) {
                 throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
             }
         }
+    }
+}
+
+if (!function_exists('getFolder')) {
+    function getFolder($link) {
+        preg_match_all('/\b[^\/]+\/\b/', $link, $matches);
+        return implode('', $matches[0]);
     }
 }

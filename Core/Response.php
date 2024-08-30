@@ -29,35 +29,29 @@ class Response {
             }
             throw new \RuntimeException("File App/Views/$view.view.php does not exist", 500);
         }
-        return self::renderView($file_view, $data);
+        $GLOBALS['share_data_view'] = $data;
+        return self::renderView($file_view);
     }
 
-    private static function renderView($file, $data = [])
+    private static function renderView($file_view)
     {
-        if(count($data)) {
-            $GLOBALS['share_data_view'] = $data;
-            extract($data);
+        if(!empty($GLOBALS['share_data_view'])) {
+            extract($GLOBALS['share_data_view']);
         }
-        $folder = __DIR__ROOT . '/storage/render/views';
-        $view = end(explode("/", $file));
-        $file_name = "$folder/$view";
-        createFolder($folder);
-        if (file_exists($file_name)) {
-            require_once $file_name;
-            return $file_name;
+        $folder = __DIR__ROOT . '/storage/render';
+        $startPos = strpos($file_view, 'Views');
+        $view = substr($file_view, $startPos);
+        $view_render = "$folder/$view";
+        $view_render = str_replace('.view.php', '.php', $view_render);
+        createFolder(getFolder($view_render));
+        if (file_exists($view_render)) {
+            require_once $view_render;
+            return $view_render;
         }
-        $content = file_get_contents($file);
-        $content = preg_replace('/\$php\s(.?)\s\$endphp/', '<?php $1 ?>', $content);
-        $content = preg_replace([
-            '/\$foreach\((.*?)\)/s',
-            '/\$endforeach/'
-        ], [
-            '<?php foreach($1): ?>',
-            '<?php endforeach; ?>'
-        ], $content);
-        file_put_contents($file_name, $content);
-        require_once $file_name;
-        return $file_name;
+        $content = ViewRender::render($file_view);
+        file_put_contents($view_render, $content);
+        require_once $view_render;
+        return $view_render;
     }
 
     private static function setHeaders($headers = [], $status = 200)
