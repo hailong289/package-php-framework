@@ -69,13 +69,7 @@ class QueueScript extends \Hola\Core\Command
                 $this->output()->text("$class running ");
                 try {
                     if (method_exists($class, 'handle')) {
-                        $this->queueRunning = [
-                            'key' => $key,
-                            'queue' => $queue,
-                            'payload' => $payload,
-                            'uid' => $uid,
-                            'class' => $class
-                        ];
+                        $this->queueRunning = ['key' => $key, 'queue' => $queue, 'payload' => $payload, 'uid' => $uid, 'class' => $class];
                         $this->startRunQueue($db, $queue, $key, $class, $payload, $uid);
                     } else {
                         $this->stopQueue($db, $payload, $class, $uid, new \Exception("Function handle in class $class does not exit"));
@@ -90,6 +84,121 @@ class QueueScript extends \Hola\Core\Command
         }
     }
 
+    private function data($data)
+    {
+        return [
+            'key' => $data['key'],
+            'uid' => $data['uid'],
+            'class' => "Queue\\Jobs\\{$data['class']}",
+            'payload' => $data['payload'],
+            'timeout' => $data['timeout'] ?? 0,
+        ];
+    }
+
+    private function switchDB($name)
+    {
+        $connection = null;
+        try {
+            switch ($name) {
+                case 'database':
+                    $connection = new \Hola\Core\Database();
+                    break;
+                case 'redis':
+                    $connection = \Hola\Core\Redis::work();
+                    break;
+                case 'rabbitMQ':
+                    $connection = Connection::instanceRabbitMQ();
+                    break;
+                default:
+                    $connection = new \Hola\Core\Database();
+                    break;
+            }
+        } catch (\Throwable $exception) {
+            $this->output()->error([
+                "message" => $exception->getMessage(),
+                "code" => $exception->getCode(),
+                "line" => $exception->getLine(),
+                "file" => $exception->getFile(),
+                "trace" => $exception->getTraceAsString()
+            ]);
+            return false;
+        }
+        return $connection;
+    }
+
+
+    private function falied($conn, $data)
+    {
+        try {
+            $class = str_replace('Queue\\Jobs\\','', $data['class']);
+            if ($conn instanceof \Hola\Core\Database) {
+                $data = json_encode([
+                    'uid' => $queue['uid'],
+                    'payload' => $queue['payload'],
+                    'class' => $class,
+                    'error' => $exception->getMessage()
+                ]);
+                $conn->table('failed_jobs')->insert([
+                    'data' => $data,
+                    'queue' => 'failed_jobs',
+                    'exception' => $e->getMessage() . ". Trace: " . base64_encode($e->getTraceAsString()),
+                    'created_at' => date('Y-m-d H:i:s')
+                ]);
+            } elseif ($conn instanceof \Hola\Core\Redis) {
+                
+            }
+        } catch (\Throwable $exception) {
+            $this->output()->error([
+                "message" => $exception->getMessage(),
+                "code" => $exception->getCode(),
+                "line" => $exception->getLine(),
+                "file" => $exception->getFile(),
+                "trace" => $exception->getTraceAsString()
+            ]);
+        }
+    }
+
+    private function queueWorkWithDB(\Hola\Core\Database $db)
+    {
+
+        $table = $this->jobs_queue === 'rollback_failed_job' ? 'failed_jobs' : 'jobs';
+        $db = $db::instance()->table($table); // set table
+        $name = $this->jobs_queue === 'rollback_failed_job' ? 'failed_jobs' : $this->jobs_queue;
+        $list_queue = $db->where('queue', $queue)->orderBy('created_at', 'DESC')->get()->toArray();
+        $list_queue = array_map(function ($item){
+            $queue = json_decode($item['data'], true);
+            $queue['key'] = $item['id'];
+            return $queue;
+        }, $list_queue ?? []);
+        $list_queue = $this->data($list_queue);
+        foreach ($list_queue as $queue) {
+            $db->where('queue', $name)
+                ->where('id', $queue['key'])
+                ->delete();
+            $start = new \DateTime();
+            $this->output()->text("{$queue['class']} running");
+            try {
+                if (!method_exists($queue['class'], 'handle')) {
+                    throw new \Exception("function handle does not exits in {$queue['class']}");
+                }
+                $this->queueRunning = $queue;
+                $work_class = new $queue['class'](...array_values($queue['payload']));
+                $work_class->handle();
+                $end = new \DateTime();
+                $time = $end->diff($start)->format('%H:%I:%S');
+                $this->output()->text("{$queue['class']} work success ---- Time: $time");
+            }catch (\Throwable $exception) {
+                $this->output()->text("$class failed ");
+                $this->falied($db, $queue);
+            }
+        }
+    }
+
+    private function workQueueWithRedis()
+    {
+
+    }
+
 
     private function getDB($conn = '')
     {
@@ -99,13 +208,7 @@ class QueueScript extends \Hola\Core\Command
             try {
                 $db = new \Hola\Core\Database();
             }catch (\Throwable $e) {
-                $this->output()->error([
-                    "message" => $e->getMessage(),
-                    "code" => $e->getCode(),
-                    "line" => $e->getLine(),
-                    "file" => $e->getFile(),
-                    "trace" => $e->getTraceAsString()
-                ]);
+
                 return false;
             }
 
@@ -174,7 +277,7 @@ class QueueScript extends \Hola\Core\Command
         return null;
     }
 
-    private function startRunQueue($db, $queue_first, $index, $class, $payload, $uid)
+    private function startRunQueue($db, $class, $payload, $uid)
     {
         $start = new \DateTime();
         try {
