@@ -5,6 +5,7 @@ use Hola\Traits\QueryBuilder;
 class Database {
     use QueryBuilder;
     private static $__conn;
+    private static $__db = null;
     private static $enableLog = false;
     private static $log = [];
     private static $collection;
@@ -72,7 +73,10 @@ class Database {
 
     public static function instance()
     {
-        return new Database();
+        if (is_null(self::$__db)) {
+            self::$__db = new Database();
+        }
+        return self::$__db;
     }
 
     public static function connection($env, $connection = 'mysql'){
