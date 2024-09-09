@@ -13,6 +13,8 @@ class QueueScript extends \Hola\Core\Command
     protected $connection = 'database';
     protected $timeout = 600; // default 10 minutes
     private $queueRunning = null;
+    private $time_error = 0;
+    private $break_job = false;
 
     public function __construct()
     {
@@ -21,24 +23,28 @@ class QueueScript extends \Hola\Core\Command
 
     public function handle()
     {
-        register_shutdown_function([$this, 'stopJobTimeout']);
-        $this->timeout = config_env('QUEUE_TIMEOUT', 600);
         $this->connection = config_env('QUEUE_WORK', 'database');
         $queue_name = $this->getOption('queue');
-        $timeout_options = $this->getOption('timeout');
         $type = $this->getOption('type');
         $connection_arg = $this->getArgument('connection');
         if(!empty($connection_arg)) $this->connection = $connection_arg;
         if(!empty($queue_name)) $this->jobs_queue = $queue_name;
+        sleep(1);
+        $this->switchDB($this->connection);
+        if(!empty($type) && $type === 'live') $this->handle();
+    }
+
+    public function setTimeOutJob($timeout = 0)
+    {
+        register_shutdown_function([$this, 'stopJobTimeout']);
+        $timeout_options = $this->getOption('timeout');
         if(!empty($timeout_options)) {
             $this->timeout = $timeout_options;
             ini_set('max_execution_time', $this->timeout);
         } else {
-            ini_set('max_execution_time', $this->timeout); // timeout all job
+            $timeout = $timeout === 0 ? config('queue.timeout') : $timeout;
+            ini_set('max_execution_time', $timeout); // timeout job
         }
-        sleep(1);
-        $this->switchDB($this->connection);
-        if(!empty($type) && $type === 'live') $this->handle();
     }
 
     private function data($data)
@@ -108,7 +114,7 @@ class QueueScript extends \Hola\Core\Command
                     'exception' => $e->getMessage() . ". Trace: " . base64_encode($e->getTraceAsString()),
                     'created_at' => date('Y-m-d H:i:s')
                 ]);
-            } elseif ($conn instanceof \Hola\Core\Redis) {
+            } elseif ($conn instanceof \Redis) {
                 $data = json_encode($data);
                 $conn->rPush('queue:failed_jobs', $data);
             } else if (
@@ -138,7 +144,6 @@ class QueueScript extends \Hola\Core\Command
 
     private function queueWorkWithDB(\Hola\Core\Database $db)
     {
-
         $queue_name = $this->jobs_queue;
         if ($queue_name === 'rollback_failed_job') {
             $queue_name = 'failed_jobs';
@@ -147,7 +152,6 @@ class QueueScript extends \Hola\Core\Command
         $list_queue = $db
             ->table($queue_name)
             ->where('queue', $queue_name)
-            ->orderBy('created_at', 'DESC')
             ->get()
             ->toArray();
         $list_queue = array_map(function ($item){
@@ -158,6 +162,7 @@ class QueueScript extends \Hola\Core\Command
 
         foreach ($list_queue as $queue) {
             $queue = $this->data($queue);
+            if ($this->break_job) break;
             $db->table($queue_name)
                 ->where('queue', $queue_name)
                 ->where('id', $queue['key'])
@@ -168,6 +173,7 @@ class QueueScript extends \Hola\Core\Command
                 if (!method_exists($queue['class'], 'handle')) {
                     throw new \Exception("function handle does not exits in {$queue['class']}");
                 }
+                $this->setTimeOutJob($queue['timeout']);
                 $this->queueRunning = $queue;
                 $work_class = new $queue['class'](...array_values($queue['payload']));
                 $work_class->handle();
@@ -189,7 +195,8 @@ class QueueScript extends \Hola\Core\Command
         }
         $list_queue = $db->lrange("queue:{$queue_name}", 0, -1);
         foreach ($list_queue as $queue) {
-            $db->rPop("queue:{$queue_name}");
+            if ($this->break_job) break;
+            $db->lPop("queue:{$queue_name}");
             $queue = $this->data(json_decode($queue, true));
             $start = new \DateTime();
             $this->output()->text("{$queue['class']} running");
@@ -197,6 +204,7 @@ class QueueScript extends \Hola\Core\Command
                 if (!method_exists($queue['class'], 'handle')) {
                     throw new \Exception("function handle does not exits in {$queue['class']}");
                 }
+                $this->setTimeOutJob($queue['timeout']);
                 $this->queueRunning = $queue;
                 $work_class = new $queue['class'](...array_values($queue['payload']));
                 $work_class->handle();
@@ -227,7 +235,11 @@ class QueueScript extends \Hola\Core\Command
         $channel = $db->channel();
         $channel->queue_declare($queue, false, true, false, false);
 
-        $callback = function (\PhpAmqpLib\Message\AMQPMessage $msg) use ($db) {
+        $callback = function (\PhpAmqpLib\Message\AMQPMessage $msg) use ($db, $channel) {
+            global $consumer_tag;
+            if ($this->break_job) {
+                $channel->basic_cancel($consumer_tag);
+            }
             $queue = json_decode($msg->body, true);
             $queue = $this->data($queue);
             $this->output()->text("{$queue['class']} running ");
@@ -236,6 +248,7 @@ class QueueScript extends \Hola\Core\Command
                 if (!method_exists($queue['class'], 'handle')) {
                     throw new \Exception("function handle does not exits in {$queue['class']}");
                 }
+                $this->setTimeOutJob($queue['timeout']);
                 $this->queueRunning = $queue;
                 $work_class = new $queue['class'](...array_values($queue['payload']));
                 $work_class->handle();
@@ -249,7 +262,7 @@ class QueueScript extends \Hola\Core\Command
         };
 
         $channel->basic_qos(null, 1, null);
-        $channel->basic_consume($queue, '', false, false, false, false, $callback);
+        $consumer_tag = $channel->basic_consume($queue, '', false, false, false, false, $callback);
 
         while (count($channel->callbacks)) {
             $channel->wait();
@@ -262,15 +275,18 @@ class QueueScript extends \Hola\Core\Command
     private function stopJobTimeout() {
         $error = error_get_last();
         if(!is_null($error)) {
+            $seconds = $this->timeout > 1 ? 'seconds':'second';
             if (
                 $error['type'] === E_ERROR &&
-                strpos($error['message'], "Maximum execution time of") !== false &&
+                strpos($error['message'], "Maximum execution time of {$this->timeout} $seconds exceeded") !== false &&
                !empty($this->queueRunning)
             ){
+                $this->break_job = true;
                 $db = $this->switchDB($this->connection);
                 if ($db) {
                     $this->falied($db, $this->queueRunning, new \Exception("Timeout queue"));
-                    $this->output()->text("$class failed. Error: Timeout queue".PHP_EOL);
+                    $this->output()->text("{$this->queueRunning['class']} failed. Error: Timeout queue".PHP_EOL);
+                    $this->queueRunning = [];
                 }
             }
         }
