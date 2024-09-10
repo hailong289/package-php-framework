@@ -11,11 +11,10 @@ class Database {
     private static $collection;
     private $model;
 
-    public function __construct($environment = null, $connection = null)
+    public function __construct($connection = null)
     {
-        $env = $environment ?? config_env('DB_ENVIRONMENT', 'default');
-        $con = $connection ?? config_env('DB_CONNECTION', 'mysql');
-        self::$__conn = Connection::getInstance($env, $con);
+        $con = $connection ?? config('database.default_connection');
+        self::$__conn = Connection::getInstance($con);
     }
 
     public function setModel($model, $vars)
@@ -79,33 +78,30 @@ class Database {
         return self::$__db;
     }
 
-    public static function connection($env, $connection = 'mysql'){
-        return new Database($env, $connection);
+    public static function connection($connection = 'mysql'){
+        return new Database($connection);
     }
 
     public static function beginTransaction(){
         if(self::$__conn == null) {
-            $env = config_env('DB_ENVIRONMENT', 'default');
-            $con = config_env('DB_CONNECTION', 'mysql');
-            self::$__conn = Connection::getInstance($env, $con);
+            $con = config('database.default_connection');
+            self::$__conn = Connection::getInstance($con);
         }
         return self::$__conn->beginTransaction();
     }
 
     public static function commit(){
         if(self::$__conn == null) {
-            $env = config_env('DB_ENVIRONMENT', 'default');
-            $con = config_env('DB_CONNECTION', 'mysql');
-            self::$__conn = Connection::getInstance($env, $con);
+            $con = config('database.default_connection');
+            self::$__conn = Connection::getInstance($con);
         }
         return self::$__conn->commit();
     }
 
     public static function rollBack(){
         if(self::$__conn == null) {
-            $env = config_env('DB_ENVIRONMENT', 'default');
-            $con = config_env('DB_CONNECTION', 'mysql');
-            self::$__conn = Connection::getInstance($env, $con);
+            $con = config('database.default_connection');
+            self::$__conn = Connection::getInstance($con);
         }
         return self::$__conn->rollBack();
     }

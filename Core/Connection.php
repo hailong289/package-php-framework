@@ -2,22 +2,32 @@
 namespace Hola\Core;
 class Connection{
     private static $instance = null, $conn = null,$instance_redis = null, $redis = null,$instance_rabbitMQ = null, $rabbitMQ = null;
-    private function __construct($environment = "default", $host = "mysql", $type = 1){
-        $DB = cache('config', config('database'));
+    private function __construct($name = "mysql", $type = 1, $use_queue = false){
+        if ($use_queue) {
+            $DB = cache('config_queue', config('queue.connections'));
+        } else {
+            $DB = cache('config', config('database.connections'));
+        }
         $enable_debug = config_env('DEBUG_LOG_CONNECTION', false);
         if($type === 1) {
             // Ket nói database
-            $db_connection = $DB[$host][$environment];
+            $db_connection = $DB[$name];
+            $host = $db_connection['host'];
+            $db_name = $db_connection['db_name'];
+            $username = $db_connection['username'];
+            $password = $db_connection['password'];
+            $options = $db_connection['options'];
             try{
                 //    cấu hình dsn
-                $dsn = "$host:dbname=".$db_connection['DATABASE_NAME'].";host=".$db_connection['HOST'];
+                $name = $name === 'database' ? 'mysql' : $name;
+                $dsn = "$name:dbname=$db_name;host=$host";
                 //    Cấu hình option, - cấu hình uft8, - cấu hình ngoại lệ khi truy vấn bị lỗi
-                $options = $db_connection['OPTIONS'] ?? [
-                    PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8',
-                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+                $options = $options ?? [
+                    \PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8',
+                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
                 ];
                 // cấu lệnh kết nối
-                $conn = new \PDO($dsn,$db_connection['USERNAME'],$db_connection['PASSWORD'],$options);
+                $conn = new \PDO($dsn,$username,$password,$options);
                 self::$conn = $conn;
 
             }catch (\PDOException $e){
@@ -29,7 +39,7 @@ class Connection{
             // connect redis
             try {
                 self::$redis = new \Redis();
-                $connection = $DB[$host][$environment];
+                $connection = $DB[$name];
                 $host = $connection['host'];
                 $port = $connection['port'];
                 $username = $connection['username'];
@@ -48,19 +58,14 @@ class Connection{
             }
         } else if ($type === 3) {
             // connect rabbit mq
-            $host = config_env('RABBITMQ_HOST','localhost');
-            $port = config_env('RABBITMQ_PORT',5672);
-            $user = config_env('RABBITMQ_USER','guest');
-            $pass = config_env('RABBITMQ_PASSWORD','guest');
-            $vhost = config_env('RABBITMQ_VHOST','/');
-            $scheme = config_env('RABBITMQ_SCHEME','');
-            $options = config_env('RABBITMQ_OPTIONS',[
-                'cafile' => null,
-                'local_cert' =>null,
-                'local_key' => null,
-                'verify_peer' => false,
-                'passphrase' => null,
-            ]);
+            $connection = $DB[$name];
+            $host = $connection['host'];
+            $port = $connection['port'];
+            $user = $connection['username'];
+            $pass = $connection['password'];
+            $vhost = $connection['vhost'];
+            $scheme = $connection['scheme'];
+            $options = $connection['options'];
             try {
                 if($scheme === "amqps") {
                     self::$rabbitMQ = new \PhpAmqpLib\Connection\AMQPSSLConnection(
@@ -86,25 +91,25 @@ class Connection{
             }
         }
     }
-    public static function getInstance($environment = 'default', $host = 'mysql'){
+    public static function getInstance($name = 'mysql', $queue = false){
         if(self::$instance == null){
-            $connection = new Connection($environment, $host);
+            $connection = new Connection($name, 1, $queue);
             self::$instance = self::$conn;
         }
         return self::$instance;
     }
 
-    public static function getInstanceRedis($environment = 'default', $host = 'redis'){
+    public static function getInstanceRedis($name = 'redis', $queue = false){
         if(self::$instance_redis == null){
-            $connection_redis = new Connection($environment, $host, 2);
+            $connection_redis = new Connection($name, 2, $queue);
             self::$instance_redis = self::$redis;
         }
         return self::$instance_redis;
     }
 
-    public static function instanceRabbitMQ($environment = 'default', $host ='rabbitMQ'){
+    public static function instanceRabbitMQ($name = 'rabbitmq', $queue = false){
         if(self::$instance_rabbitMQ == null){
-            $connection_rabbitMQ = new Connection($environment, $host, 3);
+            $connection_rabbitMQ = new Connection($name, 3, $queue);
             self::$instance_rabbitMQ = self::$rabbitMQ;
         }
         return self::$instance_rabbitMQ;

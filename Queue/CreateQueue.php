@@ -40,13 +40,14 @@ class CreateQueue
                     'timeout' => $this->timeout
                 ];
                 if($this->connection === 'redis') {
-                    $redis = Redis::work();
+                    $redis = Connection::getInstanceRedis('redis', true);
                     if (!$redis->isConnected()) {
                         throw new \RuntimeException('Redis connection is failed');
                     }
                     Redis::cacheRPush($tag_queue, $data_queue, 0);
                 } elseif ($this->connection === 'database') {
                     $data = json_encode($data_queue, JSON_UNESCAPED_UNICODE);
+                    Connection::getInstance('database', true);
                     Database::instance()->table('jobs')->insert([
                         'data' => $data,
                         'queue' => $this->queue,
@@ -54,7 +55,7 @@ class CreateQueue
                     ]);
                 } else if ($this->connection === 'rabbitMQ') {
                     $data = json_encode($data_queue, JSON_UNESCAPED_UNICODE);
-                    $rabbitMQ = Connection::instanceRabbitMQ();
+                    $rabbitMQ = Connection::instanceRabbitMQ('rabbitmq', true);
                     $channel = $rabbitMQ->channel();
                     $channel->queue_declare($this->queue, false, true, false, false);
                     $attributes = [

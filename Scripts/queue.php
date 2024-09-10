@@ -64,18 +64,20 @@ class QueueScript extends \Hola\Core\Command
         try {
             switch ($name) {
                 case 'database':
+                    Connection::getInstance('database', true);
                     $connection = new \Hola\Core\Database();
                     if (!$only_get) $this->queueWorkWithDB($connection);
                     break;
                 case 'redis':
-                    $connection = \Hola\Core\Redis::work();
+                    $connection = Connection::getInstanceRedis('redis', true);
                     if (!$only_get) $this->workQueueWithRedis($connection);
                     break;
                 case 'rabbitMQ':
-                    $connection = Connection::instanceRabbitMQ();
+                    $connection = Connection::instanceRabbitMQ('rabbitmq', true);
                     if (!$only_get) $this->workQueueRabbit($connection);
                     break;
                 default:
+                    Connection::getInstance('database', true);
                     $connection = new \Hola\Core\Database();
                     if (!$only_get) $this->queueWorkWithDB($connection);
                     break;

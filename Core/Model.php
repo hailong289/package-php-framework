@@ -4,20 +4,20 @@ namespace Hola\Core;
 class Model {
     private static $db;
 
-    private static function init($env = null, $connection = null, $not_set_tb = false)
+    private static function init($connection = null, $not_set_tb = false)
     {
         $call_class = get_called_class();
         $var = get_class_vars($call_class);
         if (self::$db === null) {
-            self::$db = new Database($env, $connection);
+            self::$db = new Database($connection);
         }
         $db = clone self::$db;
         $db->setModel($call_class, $var);
-        // set table
-        $variable = str_replace('App\\Models\\','', $call_class);
-        $tableName = strtolower($variable);
-        $table = $var['tableName'] ?? $tableName;
         if ($not_set_tb === false) {
+            // set table
+            $variable = str_replace('App\\Models\\','', $call_class);
+            $tableName = strtolower($variable);
+            $table = $var['tableName'] ?? $tableName;
             $db->table($table);
         }
         return $db;
@@ -28,10 +28,10 @@ class Model {
         return self::init();
     }
 
-    public static function connection($env = 'default', $connection = 'mysql')
+    public static function connection($connection = 'mysql')
     {
         self::resetDB();
-        $db = self::init($env, $connection);
+        $db = self::init($connection);
         self::resetDB();
         return $db;
     }

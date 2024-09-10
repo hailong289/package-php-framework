@@ -35,6 +35,8 @@ class Application extends Container
             $this->work();
         } catch (\Throwable $e) {
             $this->handleErrorLogs($e);
+            $code = (int)$e->getCode();
+            $code = $code ? $code : 500;
             $errors = $this->errorDefault($e);
             return $this->responseError($errors, $code);
         }
