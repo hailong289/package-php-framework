@@ -16,7 +16,10 @@ class Connection{
             $db_name = $db_connection['db_name'];
             $username = $db_connection['username'];
             $password = $db_connection['password'];
-            $options = $db_connection['options'];
+            $options = $db_connection['options'] ?? [
+                \PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8',
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+            ];
             try{
                 //    cấu hình dsn
                 $name = $name === 'database' ? 'mysql' : $name;

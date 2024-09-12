@@ -53,7 +53,7 @@ class CreateQueue
                         'queue' => $this->queue,
                         'created_at' => date(' Y-m-d H:i:s')
                     ]);
-                } else if ($this->connection === 'rabbitMQ') {
+                } else if ($this->connection === 'rabbitmq') {
                     $data = json_encode($data_queue, JSON_UNESCAPED_UNICODE);
                     $rabbitMQ = Connection::instanceRabbitMQ('rabbitmq', true);
                     $channel = $rabbitMQ->channel();

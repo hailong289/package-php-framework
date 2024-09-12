@@ -40,11 +40,11 @@ class QueueScript extends \Hola\Core\Command
         $timeout_options = $this->getOption('timeout');
         if(!empty($timeout_options)) {
             $this->timeout = $timeout_options;
-            ini_set('max_execution_time', $this->timeout);
         } else {
             $timeout = $timeout === 0 ? config('queue.timeout') : $timeout;
-            ini_set('max_execution_time', $timeout); // timeout job
+            $this->timeout = $timeout;
         }
+        ini_set('max_execution_time', $this->timeout);
     }
 
     private function data($data)
@@ -72,7 +72,7 @@ class QueueScript extends \Hola\Core\Command
                     $connection = Connection::getInstanceRedis('redis', true);
                     if (!$only_get) $this->workQueueWithRedis($connection);
                     break;
-                case 'rabbitMQ':
+                case 'rabbitmq':
                     $connection = Connection::instanceRabbitMQ('rabbitmq', true);
                     if (!$only_get) $this->workQueueRabbit($connection);
                     break;
@@ -244,6 +244,7 @@ class QueueScript extends \Hola\Core\Command
             }
             $queue = json_decode($msg->body, true);
             $queue = $this->data($queue);
+            $start = new \DateTime();
             $this->output()->text("{$queue['class']} running ");
             $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
             try {
@@ -282,7 +283,7 @@ class QueueScript extends \Hola\Core\Command
                 $error['type'] === E_ERROR &&
                 strpos($error['message'], "Maximum execution time of {$this->timeout} $seconds exceeded") !== false &&
                !empty($this->queueRunning)
-            ){
+            ) {
                 $this->break_job = true;
                 $db = $this->switchDB($this->connection);
                 if ($db) {
