@@ -109,36 +109,10 @@ class Router {
             throw new \RuntimeException("Not found", 404);
         }
         $names = $current_router['middleware'];
-        if($names && is_string($names)) {
-            $result = $this->middlewareWork($names);
-            if($result->error_code){
-                echo json_encode($result);
-                exit();
-            } elseif (empty($result)) {
-                exit();
-            }
-        }elseif ($names && is_array($names)){
-            $is_error = false;
-            $errors_return = [];
-            foreach ($names as $name){
-                $result = $this->middlewareWork($name);
-                if($result->error_code){
-                    $errors_return[] = $result;
-                    $is_error = true;
-                } elseif (empty($result)) {
-                    $errors_return[] = $result;
-                    $is_error = true;
-                }
-            }
-            usort($errors_return, function ($item1, $item2) {
-                return isset($item1->middleware_not_exist) ? -1:1;
-            });
-            if($is_error && count($errors_return)){
-                echo json_encode($errors_return[0]);
-                exit();
-            }
-        }
-        return $action;
+        return [
+            "action" => $action,
+            "middleware" => $names ?? []
+        ];
     }
 
     public static function get($name,  $action): Router
@@ -260,31 +234,6 @@ class Router {
             self::$prefix = '';
         }else{
             if(self::$name_middleware) self::$name_middleware = '';
-        }
-    }
-
-    private function middlewareWork($names){
-        $kernel = new Kernel();
-        try {
-            if(!empty($kernel->routerMiddleware[$names])){
-                $class = $kernel->routerMiddleware[$names];
-                $call_middleware = new $class();
-                $handler = $call_middleware->handle(new Request());
-                $return_middleware = is_array($handler) ? (object)$handler:(is_bool($handler) ? $handler:$handler);
-                return $return_middleware;
-            }else{
-                return (object)[
-                    'error_code' => 1,
-                    'message' => "Middleware $names does not exist",
-                    'middleware_not_exist' => 1
-                ];
-            }
-        }catch (\Throwable $e) {
-            return (object)[
-                'error_code' => 1,
-                'message' => $e->getMessage(),
-                'middleware_not_exist' => 1
-            ];
         }
     }
     

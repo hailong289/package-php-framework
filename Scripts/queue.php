@@ -238,10 +238,6 @@ class QueueScript extends \Hola\Core\Command
         $channel->queue_declare($queue, false, true, false, false);
 
         $callback = function (\PhpAmqpLib\Message\AMQPMessage $msg) use ($db, $channel) {
-            global $consumer_tag;
-            if ($this->break_job) {
-                $channel->basic_cancel($consumer_tag);
-            }
             $queue = json_decode($msg->body, true);
             $queue = $this->data($queue);
             $start = new \DateTime();
@@ -251,7 +247,7 @@ class QueueScript extends \Hola\Core\Command
                 if (!method_exists($queue['class'], 'handle')) {
                     throw new \Exception("function handle does not exits in {$queue['class']}");
                 }
-                $this->setTimeOutJob($queue['timeout']);
+//                $this->setTimeOutJob($queue['timeout']);
                 $this->queueRunning = $queue;
                 $work_class = new $queue['class'](...array_values($queue['payload']));
                 $work_class->handle();

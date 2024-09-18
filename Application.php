@@ -3,6 +3,7 @@
 namespace Hola;
 
 use Hola\Container\Container;
+use Hola\Core\Middleware;
 use Hola\Core\Request;
 use Hola\Core\Response;
 use Hola\Core\Router;
@@ -25,6 +26,9 @@ class Application extends Container
         });
         $this->set(Request::class, function () {
             return new Request();
+        });
+        $this->set(Middleware::class, function () {
+            return new Middleware();
         });
     }
 
@@ -82,7 +86,12 @@ class Application extends Container
     {
         try {
             $control = $this->make(Router::class)->url();
-            $control_array = array_values($control);
+            $middleware = $this->make(Middleware::class);
+            $control_array = array_values($control['action']);
+            $result = $middleware->set($control['middleware'])->work();
+            if (!is_null($result)) { // check middelware
+                return $this->responseSuccess($result, 200);
+            }
             if (empty($control_array)) {
                 throw new \RuntimeException("Class controller in router does not exit", 500);
             }

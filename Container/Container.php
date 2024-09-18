@@ -133,7 +133,7 @@ class Container
         try {
             $classReflection = new \ReflectionClass($class);
         } catch (\Exception $e) {
-            throw new \Exception("Target class [$class] does not exist.", 0, $e);
+            throw new \Exception("Target class [$class] does not exist.", 500);
         }
 
         $constructor = $classReflection->getConstructor();
