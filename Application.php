@@ -11,15 +11,15 @@ use Hola\Core\Router;
 class Application extends Container
 {
     private $control;
+    private $middleware;
 
-    public function __construct()
-    {
+    public function __construct(){
         if ($this->isJson()) {
             $this->setHeaderJson();
         }
     }
 
-    public function register()
+    public function registerDependencies()
     {
         $this->set(Router::class, function () {
             return new Router();
@@ -36,6 +36,9 @@ class Application extends Container
     {
         try {
             $this->register();
+            $this->registerDependencies();
+            $this->registerRouter();
+            $this->regiterMiddlware();
             $this->work();
         } catch (\Throwable $e) {
             $this->handleErrorLogs($e);
@@ -85,16 +88,10 @@ class Application extends Container
     private function work()
     {
         try {
-            $control = $this->make(Router::class)->url();
-            $middleware = $this->make(Middleware::class);
-            $control_array = array_values($control['action']);
-            $result = $middleware->set($control['middleware'])->work();
-            if (!is_null($result)) { // check middelware
-                return $this->responseSuccess($result, 200);
-            }
-            if (empty($control_array)) {
+            if (empty($this->control)) {
                 throw new \RuntimeException("Class controller in router does not exit", 500);
             }
+            $control_array = array_values($this->control);
             $result = $this->call($control_array);
             return $this->responseSuccess($result, 200);
         } catch (\Throwable $e) {
@@ -149,7 +146,11 @@ class Application extends Container
 
     private function isJson()
     {
-        return $this->make(Request::class)->isJson();
+        try {
+            return $this->make(Request::class)->isJson();
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     private function handleErrorLogs($e)
@@ -165,4 +166,27 @@ class Application extends Container
         file_put_contents(__DIR__ROOT . '/storage/debug.log', $date . $e . PHP_EOL . PHP_EOL, FILE_APPEND);
     }
 
+    private function registerRouter()
+    {
+        $router = $this->make(Router::class)->url();
+        $this->control = $router['action'];
+        $this->middleware = $router['middleware'];
+    }
+
+    private function regiterMiddlware()
+    {
+        if (empty($this->middleware)) {
+            return false;
+        }
+        $contract = $this->make(Middleware::class);
+        $result = $contract->set($this->middleware)->work();
+        if (!empty($result['pass_middleware'])) {
+            $this->replace(Request::class, function () use ($result) {
+               return $result['request'];
+            });
+            return false;
+        }
+        $this->responseSuccess($result, 200);
+        exit();
+    }
 }

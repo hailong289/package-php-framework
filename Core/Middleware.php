@@ -8,19 +8,13 @@ use Middleware\Kernel;
 class Middleware {
     private $bindings = [];
 
-    public function __construct($names) {
-        $this->bindings = $names;
-    }
-
-    public function set($names)
+    public function set($middleware)
     {
-        $this->bindings = $names;
-        return $this;
-    }
-    
-    public function bind($name)
-    {
-        $this->bindings[] = $name;
+        if (is_array($middleware)) {
+            $this->bindings = array_merge($this->bindings, $middleware);
+        } else {
+            $this->bindings[] = $middleware;
+        }
         return $this;
     }
 

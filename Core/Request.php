@@ -179,20 +179,13 @@ class Request extends \stdClass {
         $accept = $this->headers('Accept') ?? '';
         return strpos($accept,'application/json') !== false;
     }
-    
-    public function next($string = ''){
-        return [
-            "message" => $string,
-            "error_code" => 0
-        ];
-    }
 
-    public function close($string = ''){
-        return [
-            "message" => $string,
-            "error_code" => 1
-        ];
+    public function set($name, $value = null)
+    {
+        $this->{$name} = $value;
+        return $this;
     }
+    
     public function has($key){
         return $this->get($key) ?? false;
     }

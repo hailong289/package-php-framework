@@ -64,4 +64,18 @@ class Response {
             }
         }
     }
+
+    public function next(Request $request, $code = 0){
+        if ($code !== 0) http_response_code($code);
+        $data = [
+            "pass_middleware" => 1, 
+            'request' => $request
+        ];
+        return $data;
+    }
+
+    public function close($string = '', $code = 0){
+        if ($code !== 0) http_response_code($code);
+        return ["message" => $string];
+    }
 }

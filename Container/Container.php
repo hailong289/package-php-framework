@@ -1,6 +1,8 @@
 <?php
 namespace Hola\Container;
 
+use Hola\Core\Request;
+
 class Container
 {
     /**
@@ -13,7 +15,7 @@ class Container
     /**
      * @var array
      */
-    private $bindings = [];
+    protected $bindings = [];
 
     public static function instance()
     {
@@ -39,6 +41,13 @@ class Container
             $factory = $this->getClosure($factory);
         }
         $this->bindings[$abstract] = $factory();
+    }
+
+    public function replace($abstract, $factory): void
+    {
+        if (isset($this->bindings[$abstract])) {
+            $this->bindings[$abstract] = $factory();
+        }
     }
 
     public function make($abstract, $factory = null) {
@@ -75,17 +84,18 @@ class Container
                 $type = $param->getType(); // check type
                 if ($type && $type instanceof \ReflectionNamedType) { /// if parameter is a class
                     $name = $param->getClass()->newInstance(); // create insrance
+                    if (isset($this->bindings[$param->getClass()->getName()])) {
+                        $name = $this->bindings[$param->getClass()->getName()];
+                    }
                     array_push($dependencies, $name); // push  to $dependencies array
                 }
             }
-
             foreach ($this->callbackMethodParams as $value) {
                 array_push($dependencies, $value);
             }
 
             // make class instance
             $initClass = $this->build($this->callbackClass);
-
             // call method with $dependencies/parameters
             return $methodReflection->invoke($initClass, ...$dependencies);
         } catch (\Throwable $exception) {
@@ -107,7 +117,6 @@ class Container
         } else {
             $segments = $callback;
         }
-
         // set class name with namespace
         $this->callbackClass = $segments[0];
         unset($segments[0]);
@@ -132,14 +141,14 @@ class Container
     {
         try {
             $classReflection = new \ReflectionClass($class);
-        } catch (\Exception $e) {
-            throw new \Exception("Target class [$class] does not exist.", 500);
+        } catch (\ReflectionException $e) {
+            throw new \ReflectionException($e->getMessage(), 500);
         }
 
         $constructor = $classReflection->getConstructor();
 
         if (is_null($constructor)) {
-            return new $class;
+            return $classReflection->newInstance();
         }
 
         $dependencies = [];
