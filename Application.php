@@ -18,6 +18,8 @@ class Application extends Container
             $this->setHeaderJson();
         }
     }
+    
+    public function register(){}
 
     public function registerDependencies()
     {

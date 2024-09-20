@@ -81,7 +81,7 @@ class CreateQueue
     }
 
     public function connection($connection) {
-        if($connection === 'redis' || $connection === 'database' || $connection === 'rabbitMQ') {
+        if($connection === 'redis' || $connection === 'database' || $connection === 'rabbitmq') {
             $this->connection = $connection;
         } else {
             throw new \Exception('Connection not supported', 500);
