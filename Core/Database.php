@@ -1,5 +1,6 @@
 <?php
 namespace Hola\Core;
+use Hola\Data\Collection;
 use Hola\Traits\QueryBuilder;
 
 class Database {

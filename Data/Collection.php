@@ -1,12 +1,13 @@
 <?php
-namespace Hola\Core;
+
+namespace Hola\Data;
 
 class Collection
 {
     private $data = [];
     public function __construct($data)
     {
-        $this->data = $data;
+        $this->data = clone $data;
         return json_decode(json_encode($this->data));
     }
 
