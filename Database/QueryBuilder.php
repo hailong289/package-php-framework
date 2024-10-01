@@ -496,7 +496,7 @@ class QueryBuilder {
                 $data[$key] = $this->model->{$method}($value);
             }
         }
-        return $sql;
+        return $this;
     }
 
     private function clearBindings()
