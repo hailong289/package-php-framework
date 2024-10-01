@@ -7,7 +7,7 @@ class Model {
     private static $table;
     private static $columns = ['*'];
 
-    private static function build(){
+    private static function build() {
         self::$builder = new QueryBuilder();
         $nameModel = get_called_class();
         $varModel = get_class_vars($nameModel);

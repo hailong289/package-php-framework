@@ -241,7 +241,7 @@ class QueryBuilder {
         ];
     }
 
-    public function with($name, $useN1Query = false, $closure = null)
+    public function with($name, $useN1Query = false)
     {
         if (is_array($name)) {
             foreach ($name as $key => $relation) {
@@ -249,18 +249,8 @@ class QueryBuilder {
                     $this->with($relation, $useN1Query);
                     continue;
                 } else {
-                    $this->with($key, $useN1Query, $relation);
+                    $this->withClosure($key, $useN1Query, $relation);
                 }
-            }
-            return $this;
-        } elseif ($closure instanceof \Closure) {
-            $builder = clone $this;
-            $query = $closure($builder)->toSql();
-            if (!is_null($this->model) && method_exists($this->model, $name)) {
-                $this->bindings['relations'][] = array_merge($this->model->{$name}(), [
-                    'useN1Query' => $useN1Query,
-                    'query' => $query
-                ]);
             }
             return $this;
         }
@@ -268,7 +258,21 @@ class QueryBuilder {
         if (!is_null($this->model) && method_exists($this->model, $name)) {
             $this->bindings['relations'][] = array_merge($this->model->{$name}(), [
                 'useN1Query' => $useN1Query,
-                'query' => empty($select) ?  null : "SELECT {$select} FROM {$name}"
+                'query' => null,
+                'columns' => $select
+            ]);
+        }
+        return $this;
+    }
+
+    private function withClosure($name, $useN1Query = false, \Closure $closure) {
+        $builder = clone $this;
+        $query = $closure($builder)->toSql();
+        if (!is_null($this->model) && method_exists($this->model, $name)) {
+            $this->bindings['relations'][] = array_merge($this->model->{$name}(), [
+                'useN1Query' => $useN1Query,
+                'query' => $query,
+                'columns' => null
             ]);
         }
         return $this;
@@ -308,10 +312,23 @@ class QueryBuilder {
             ->map(fn ($item) => $this->resloveAttribute($item, 'GET'));
     }
 
+    public function find($id)
+    {
+        return $this->where('id', $id)->first();
+    }
+
     public function first()
     {
         return collection($this->connection->selectOne($this->toSql()))
             ->mapFirst(fn ($item) => $this->resloveAttribute($item, 'GET'));
+    }
+
+    public function create($data)
+    {
+        $this->resloveAttribute($data);
+        $this->bindings['insertOrUpdate'] = $data;
+        $id = $this->connection->insertLastId($this->toSql('INSERT'));
+        return $this->find($id);
     }
 
     public function insert($data)
@@ -344,7 +361,12 @@ class QueryBuilder {
             $this->where('id', $id);
         }
         $this->bindings['delete'] = $data;
-        return $this->connection->insert($this->toSql('DELETE'));
+        return $this->connection->delete($this->toSql('DELETE'));
+    }
+
+    public function query($sql)
+    {
+        return $this->connection->query($sql);
     }
 
     private function resloveSelect()

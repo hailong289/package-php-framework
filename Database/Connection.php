@@ -14,43 +14,50 @@ class Connection {
 
     public function select($sql)
     {
-        return $this->resloveQuery($sql, function ($statement, $status) {
+        return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $statement->fetchAll();
         })();
     }
 
     public function selectOne($sql)
     {
-        return $this->resloveQuery($sql, function ($statement, $status) {
+        return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $statement->fetch();
         })();
     }
 
     public function insert($sql)
     {
-        return $this->resloveQuery($sql, function ($statement, $status) {
+        return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $status;
         })();
     }
 
     public function insertLastId($sql)
     {
-        return $this->resloveQuery($sql, function ($statement, $status) {
+        return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $this->pdo->lastInsertId();
         })();
     }
 
     public function update($sql)
     {
-        return $this->resloveQuery($sql, function ($statement, $status) {
+        return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $status;
         })();
     }
 
     public function delete($sql)
     {
-        return $this->resloveQuery($sql, function ($statement, $status) {
+        return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $status;
+        })();
+    }
+
+    public function query($sql)
+    {
+        return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
+            return $statement;
         })();
     }
 
@@ -80,13 +87,14 @@ class Connection {
         $this->pdo->rollBack();
     }
 
-    public function resloveQuery($sql, callable $callback)
+    public function resloveQuery($sql, callable $callback, $binnding = [])
     {
         $statement = $this->pdo->prepare($sql);
         if ($this->enableQueryLog) {
             $startTime = microtime(true); // Start time
         }
-        $status = $this->pdo->execute();
+
+        $status = $statement->execute();
         if ($this->enableQueryLog) {
             $endTime = microtime(true); // End time
             $queryTime = $endTime - $startTime; // Query time
