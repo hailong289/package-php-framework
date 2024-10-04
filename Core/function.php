@@ -323,7 +323,7 @@ if(!function_exists('res')){
 if(!function_exists('collection')) {
     function collection($data)
     {
-        return new \Hola\Core\Collection($data);
+        return new \Hola\Data\Collection($data);
     }
 }
 

@@ -7,6 +7,7 @@ class Connection {
     private null|\PDO $pdo = null;
     private $enableQueryLog = false;
     private $queryLog = [];
+    private $swithConnect = false;
 
     public function __construct($conn = null) {
         $this->connect($conn);
@@ -15,50 +16,50 @@ class Connection {
     public function select($sql)
     {
         return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
-            return $statement->fetchAll();
-        })();
+            return $statement->fetchAll(\PDO::FETCH_OBJ);
+        });
     }
 
     public function selectOne($sql)
     {
         return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
-            return $statement->fetch();
-        })();
+            return $statement->fetch(\PDO::FETCH_OBJ);
+        });
     }
 
     public function insert($sql)
     {
         return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $status;
-        })();
-    }
-
-    public function insertLastId($sql)
-    {
-        return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
-            return $this->pdo->lastInsertId();
-        })();
+        });
     }
 
     public function update($sql)
     {
         return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $status;
-        })();
+        });
+    }
+
+    public function insertLastId($sql)
+    {
+        return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
+            return $this->pdo->lastInsertId();
+        });
     }
 
     public function delete($sql)
     {
         return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $status;
-        })();
+        });
     }
 
     public function query($sql)
     {
         return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $statement;
-        })();
+        });
     }
 
     public function enableQueryLog()
@@ -93,7 +94,6 @@ class Connection {
         if ($this->enableQueryLog) {
             $startTime = microtime(true); // Start time
         }
-
         $status = $statement->execute();
         if ($this->enableQueryLog) {
             $endTime = microtime(true); // End time
@@ -103,14 +103,29 @@ class Connection {
                 'time' => "Query took $queryTime seconds to execute."
             ];
         }
+        if ($this->swithConnect) {
+            $this->pdo = null;
+            $this->swithConnect = false;
+        }
         return $callback($statement, $status);
     }
 
     public function connect($connection = null) {
-        $con = $connection ?? config('database.default_connection');
+        if (!is_null($connection)) {
+            $this->switchConnect($connection);
+            return $this->pdo;
+        }
         if (!is_null($this->pdo)) {
             return $this->pdo;
         }
+        $con = config('database.default_connection');
+        $this->pdo = \Hola\Core\Connection::getInstance($con);
+        return $this->pdo;
+    }
+
+    public function switchConnect($con)
+    {
+        $this->swithConnect = true;
         $this->pdo = \Hola\Core\Connection::getInstance($con);
     }
 

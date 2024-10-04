@@ -4,11 +4,10 @@ namespace Hola\Data;
 
 class Collection
 {
-    private $data = [];
+    public $data = [];
     public function __construct($data)
     {
-        $this->data = clone $data;
-        return json_decode(json_encode($this->data));
+        $this->data = json_decode(json_encode($data));
     }
 
     public function toArray() {

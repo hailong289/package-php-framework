@@ -1,12 +1,25 @@
 <?php
 namespace Hola\Database;
+use Hola\Data\Collection;
+
 class QueryBuilder {
 
-    private Connection $connection;
+    public static Connection|null $connection = null;
     private $model = null;
 
-    public function __construct() {
-        $this->connection = new Connection();
+    public function __construct() {}
+
+    private static function connect()
+    {
+        if (is_null(self::$connection)) {
+            self::$connection = new Connection();
+        }
+        return self::$connection;
+    }
+    
+    public static function conn() {
+        self::connect();
+        return new self();
     }
 
     /** @var array[]  */
@@ -23,36 +36,45 @@ class QueryBuilder {
         'offset' => [],
         'insertOrUpdate' => [],
         'delete' => [],
-        'relations' => []
+        'relations' => [],
+        'variables' => []
     ];
 
-    public function setModel($nameModel)
+    public function setModel($nameModel, $varModel = [])
     {
         $this->model = new $nameModel();
+        $this->bindings['variables'] = $varModel;
     }
 
     public function connection($conn = null)
     {
-        $this->connection = new Connection($conn);
+        self::$connection = new Connection($conn);
         return $this;
+    }
+
+    public function enableQueryLog()
+    {
+        return self::connect()->enableQueryLog();
+    }
+
+    public function getQueryLog()
+    {
+        return self::connect()->getQueryLog();
     }
 
     public function beginTransaction()
     {
-        $this->connection->beginTransaction();
-        return $this;
+        return self::connect()->beginTransaction();
     }
 
     public function commit()
     {
-        $this->connection->commit();
-        return $this;
+        return self::connect()->commit();;
     }
 
     public function rollBack()
     {
-        $this->connection->rollBack();
-        return $this;
+        return self::connect()->rollBack();
     }
 
     public function select($columns = ['*'])
@@ -90,36 +112,40 @@ class QueryBuilder {
 
     public function where($column, $operator = null, $value = null)
     {
+        $boolean = !empty($this->bindings['where']) ? ' AND ' : '';
         if ($column instanceof \Closure) {
             $builder = clone $this;
+            $builder->clearBindings(true);
             $this->bindings['where'][] = [
                 'type' => 'nested',
+                'boolean' => $boolean,
                 'query' => $column($builder)->bindings['where']
             ];
             return $this;
         }
-        if (func_num_args() === 2) {
+        if (is_null($value)) {
             list($value, $operator) = [$operator, '='];
         }
-        $boolean = !empty($this->bindings['where']) ? ' AND ' : '';
         $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean');
         return $this;
     }
 
     public function orWhere($column, $operator = null, $value = null)
     {
+        $boolean = !empty($this->bindings['where']) ? ' OR ' : '';
         if ($column instanceof \Closure) {
             $builder = clone $this;
+            $builder->clearBindings(true);
             $this->bindings['where'][] = [
                 'type' => 'nested',
+                'boolean' => $boolean,
                 'query' => $column($builder)->bindings['where']
             ];
             return $this;
         }
-        if (func_num_args() === 2) {
+        if (is_null($value)) {
             list($value, $operator) = [$operator, '='];
         }
-        $boolean = !empty($this->bindings['where']) ? ' OR ' : '';
         $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean');
         return $this;
     }
@@ -190,6 +216,14 @@ class QueryBuilder {
         return $this;
     }
 
+    public function when($value, $callback)
+    {
+        if ($value) {
+            $callback($this);
+        }
+        return $this;
+    }
+
     public function groupBy($columns)
     {
         $this->bindings['groupBy'] = is_array($columns) ? $columns : func_get_args();
@@ -226,17 +260,29 @@ class QueryBuilder {
         return $this;
     }
 
-    public function relations($model, $model_many = null, $name, $foreign_key, $foreign_key2 = null, $primary_key, $relation)
+    public function relations($related, $table_3rd = null, $name, $foreign_key, $foreign_key2 = null, $current_key, $relation)
     {
         $log_debug = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1];
         return [
-            'model' => $model,
-            'model_many' => $model_many,
+            'related' => $related,
+            'table_3rd' => $table_3rd,
             'name' => $name,
-            'foreign_key' => $foreign_key,
-            'foreign_key2' => $foreign_key2,
-            'primary_key' => $primary_key,
+            'current_key' => [
+                'name' => $current_key,
+                'value' => null
+            ],
+            'foreign_key' => [
+                'name' => $foreign_key,
+                'value' => null
+            ],
+            'foreign_key2' => [
+                'name' => $foreign_key2,
+                'value' => null
+            ],
             'relation' => $relation,
+            'useN1Query' => false,
+            'query' => null,
+            'columns' => null,
             'log' => $log_debug
         ];
     }
@@ -266,12 +312,10 @@ class QueryBuilder {
     }
 
     private function withClosure($name, $useN1Query = false, \Closure $closure) {
-        $builder = clone $this;
-        $query = $closure($builder)->toSql();
         if (!is_null($this->model) && method_exists($this->model, $name)) {
             $this->bindings['relations'][] = array_merge($this->model->{$name}(), [
                 'useN1Query' => $useN1Query,
-                'query' => $query,
+                'query' => $closure,
                 'columns' => null
             ]);
         }
@@ -306,71 +350,136 @@ class QueryBuilder {
         return $sql;
     }
 
-    public function get()
-    {
-        return collection($this->connection->select($this->toSql()))
-            ->map(fn ($item) => $this->resloveAttribute($item, 'GET'));
+    public function clone() {
+        $clone = clone $this;
+        return $clone->toSql();
     }
 
-    public function find($id)
+    public function dump() {
+        logs()->dump($this->toSql());
+        return $this;
+    }
+
+    public function get(): Collection
+    {
+        return $this->resloveData($this->toSql(), 'select', function ($selectData) {
+            $this->clearBindings(true);
+            return $selectData;
+        });
+    }
+
+    public function find($id): Collection
     {
         return $this->where('id', $id)->first();
     }
 
-    public function first()
+    public function first(): Collection
     {
-        return collection($this->connection->selectOne($this->toSql()))
-            ->mapFirst(fn ($item) => $this->resloveAttribute($item, 'GET'));
+        return $this->resloveData($this->toSql(), 'selectOne', function ($selectData) {
+            $this->clearBindings(true);
+            return $selectData;
+        });
     }
 
-    public function create($data)
+    public function create($data): Collection
     {
-        $this->resloveAttribute($data);
-        $this->bindings['insertOrUpdate'] = $data;
-        $id = $this->connection->insertLastId($this->toSql('INSERT'));
-        return $this->find($id);
+        return $this->resloveData($this->toSql('INSERT'), 'insertLastId', function ($id) {
+            $selectData = $this->find($id);
+            $this->clearBindings(true);
+            return $selectData;
+        });
     }
 
     public function insert($data)
     {
-        $this->resloveAttribute($data);
-        $this->bindings['insertOrUpdate'] = $data;
-        return $this->connection->insert($this->toSql('INSERT'));
+        return $this->resloveData($this->toSql('INSERT'), 'insert', function ($selectData, $status) {
+            $this->clearBindings(true);
+            return $status;
+        });
     }
 
     public function insertLastId($data)
     {
-        $this->resloveAttribute($data);
-        $this->bindings['insertOrUpdate'] = $data;
-        return $this->connection->insertLastId($this->toSql('INSERT'));
+        return $this->resloveData($this->toSql('INSERT'), 'insertLastId', function ($id) {
+            $this->clearBindings(true);
+            return $id;
+        });
     }
 
     public function update($data, $id = null)
     {
-        if ($id) {
-            $this->where('id', $id);
-        }
-        $this->resloveAttribute($data);
-        $this->bindings['insertOrUpdate'] = $data;
-        return $this->connection->insert($this->toSql('UPDATE'));
+        return $this->resloveData($this->toSql('UPDATE'), 'update', function ($selectData, $status) {
+            $this->clearBindings(true);
+            return $status;
+        }, array_merge($data, ['id' => $id]));
     }
 
     public function delete($data, $id = null)
     {
-        if ($id) {
-            $this->where('id', $id);
-        }
-        $this->bindings['delete'] = $data;
-        return $this->connection->delete($this->toSql('DELETE'));
+        return $this->resloveData($this->toSql('DELETE'), 'delete', function ($selectData, $status) {
+            $this->clearBindings(true);
+            return $status;
+        }, array_merge($data, ['id' => $id]));
     }
 
     public function query($sql)
     {
-        return $this->connection->query($sql);
+        return self::$connection->query($sql);
+    }
+
+    private function resloveData($sql, $select = 'select', $callback, $bindings = [])
+    {
+        $status = false;
+        $selectData = [];
+        $id = $bindings['id'] ?? null;
+        if (isset($bindings['id'])) {
+            unset($bindings['id']);
+        }
+        switch ($select) {
+            case 'select':
+                $select = collection(self::$connection->select($sql));
+                $selectData = $this->resloveRelations($select);
+                $selectData = $selectData->map(fn ($item) => $this->resloveAttribute($item, 'GET'));
+                break;
+            case 'selectOne':
+                $select = collection(self::$connection->selectOne($sql));
+                $selectData = $this->resloveRelations($select, 'FIRST');
+                $selectData = $selectData->mapFirst(fn ($item) => $this->resloveAttribute($item, 'GET'));
+                break;
+            case 'insert':
+                $this->resloveAttribute($bindings);
+                $this->bindings['insertOrUpdate'] = $bindings;
+                $status = self::$connection->insert($sql);
+                break;
+            case 'insertLastId':
+                $this->resloveAttribute($bindings);
+                $this->bindings['insertOrUpdate'] = $bindings;
+                $selectData = self::$connection->insertLastId($sql);
+                break;
+            case 'update':
+                if ($id) {
+                    $this->where('id', $id);
+                }
+                $this->resloveAttribute($bindings);
+                $this->bindings['insertOrUpdate'] = $bindings;
+                $status = self::$connection->update($sql);
+                break;
+            case 'delete':
+                if ($id) {
+                    $this->where('id', $id);
+                }
+                $this->bindings['delete'] = $bindings;
+                $status = self::$connection->delete($sql);
+                break;
+        }
+        return $callback($selectData, $status);
     }
 
     private function resloveSelect()
     {
+        if (empty($this->bindings['select'])) {
+            return 'SELECT *';
+        }
         return 'SELECT ' . implode(', ', $this->bindings['select']);
     }
 
@@ -393,7 +502,7 @@ class QueryBuilder {
         if (empty($this->bindings['from'])) {
             return '';
         }
-        $sql = ' FROM ' . $this->bindings['from']['table'] . ($this->bindings['from']['as'] ? ' AS ' . $this->bindings['from']['as'] : '');
+        $sql .= ' FROM ' . $this->bindings['from']['table'] . ($this->bindings['from']['as'] ? ' AS ' . $this->bindings['from']['as'] : '');
         return $sql;
     }
 
@@ -408,16 +517,20 @@ class QueryBuilder {
         return $sql;
     }
 
-    private function resloveWhere(&$sql, $bindings = [])
+    private function resloveWhere(&$sql, $bindings = [], $isNested = false)
     {
         $bindings = empty($bindings) ? $this->bindings['where'] : $bindings;
         if (empty($this->bindings['where'])) {
             return '';
         }
-        $sql .= ' WHERE ';
-        foreach ($this->bindings['where'] as $where) {
+        if(!$isNested) {
+            $sql .= ' WHERE ';
+        }
+        foreach ($bindings as $idx => $where) {
             if ($where['type'] === 'nested') {
-                $sql .= '(' . $this->resloveWhere($sql, $where['query']) . ')';
+                $sql_nested = '';
+                $subWhere = $this->resloveWhere($sql_nested, $where['query'], true);
+                $sql .= $where['boolean'] . '(' . $subWhere . ')';
             } elseif ($where['type'] === 'raw') {
                 $sql .= "{$where['boolean']}{$where['sql']}";
             } else {
@@ -433,7 +546,7 @@ class QueryBuilder {
             return '';
         }
         foreach ($this->bindings['union'] as $union) {
-            $sql .= " UNION " . ($union['all'] ? 'ALL ' : '') . $union['query']->toSql();
+            $sql .= " UNION " . ($union['all'] ? 'ALL ' : '') . $union['query'];
         }
         return $sql;
     }
@@ -443,7 +556,7 @@ class QueryBuilder {
         if (empty($this->bindings['groupBy'])) {
             return '';
         }
-        $sql = ' GROUP BY ' . implode(', ', $this->bindings['groupBy']);
+        $sql .= ' GROUP BY ' . implode(', ', $this->bindings['groupBy']);
         return $sql;
     }
 
@@ -487,22 +600,273 @@ class QueryBuilder {
         return $sql;
     }
 
-    private function resloveAttribute(&$data, $type = 'SET')
+    private function resloveRelations(Collection $data, $type = 'GET')
     {
-        $attribute = $type === 'SET' ? 'setAttributes' : 'getAttributes';
-        foreach ($data as $key => $value) {
-            $method = $attribute.ucfirst($key);
-            if (!is_null($this->model) && method_exists($this->model, $method)) {
-                $data[$key] = $this->model->{$method}($value);
-            }
+        if (empty($this->bindings['relations'])) {
+            return $data;
         }
-        return $this;
+        $original_data = clone $data;
+        $map = $type === 'GET' ? 'map' : 'mapFirst';
+        if($type === 'GET') $this->resloveRelationsNotUseQueryN1($original_data);
+        $data = $data->{$map}(function ($item) {
+            $keys = get_object_vars($item);
+            $relationData = array_filter($this->bindings['relations'], function($item) use ($keys) {
+                return isset($keys[$item['current_key']['name']]);
+            });
+            foreach ($relationData as $idx => $relation) {
+                $name = $relation['name'];
+                $current_key = $relation['current_key']['name'];
+                $foreign_key = $relation['foreign_key']['name'];
+                if (!empty($relation[$name])) {
+                    $values = $relation[$name];
+                    $keyValue = in_array($relation['relation'], [
+                        'BELONG_TO',
+                        'HAS_ONE'
+                    ]) ? 'value':'values';
+                    $item->{$name} = collection($values)->filter(function ($value) use ($item, $foreign_key, $current_key) {
+                        if (is_array($value->{$foreign_key})) {
+                            return in_array($item->{$current_key}, $value->{$foreign_key});
+                        } else {
+                            return $item->{$current_key} === $value->{$foreign_key};
+                        }
+                    })->{$keyValue}();
+                } else {
+                    $current_key_val = $item->{$current_key};
+                    $item->{$name} = $this->resloveRelationsQuery(
+                        $relation['related'],
+                        $relation['table_3rd'],
+                        $current_key,
+                        $current_key_val,
+                        $relation['foreign_key']['name'],
+                        $relation['foreign_key2']['name'],
+                        $relation['query'],
+                        $relation['columns'],
+                        $relation['relation']
+                    );
+                }
+            }
+            return $item;
+        });
+        return $data;
     }
 
-    private function clearBindings()
+    private function resloveRelationsNotUseQueryN1($original_data)
+    {
+        $relationNotUseQueryN1 = array_filter($this->bindings['relations'], function($item) {
+            return !$item['useN1Query'];
+        });
+        foreach ($relationNotUseQueryN1 as $idx => $relation) {
+            $current_key = $relation['current_key']['name'];
+            $current_key_val = $original_data->map(function ($item) use ($current_key) {
+                $keys = get_object_vars($item);
+                if (isset($keys[$current_key])) {
+                    return $item->{$current_key};
+                }
+                return 0;
+            })->filter(fn ($item) => $item > 0)->toArray();
+            if (!empty($current_key_val)) {
+                $this->bindings['relations'][$idx][$relation['name']] = $this->resloveRelationsQuery(
+                    $relation['related'],
+                    $relation['table_3rd'],
+                    $current_key,
+                    $current_key_val,
+                    $relation['foreign_key']['name'],
+                    $relation['foreign_key2']['name'],
+                    $relation['query'],
+                    $relation['columns'],
+                    $relation['relation']
+                );
+            }
+        }
+    }
+
+    private function getTableRelation($related)
+    {
+        if (class_exists($related)) {
+            return new $related();
+        }
+        $model = new QueryBuilder();
+        return $model->from($related);
+    }
+
+    private function resloveRelationsQuery(
+        $related,
+        $table_3rd,
+        $current_key_name,
+        $current_key_val,
+        $foreign_key,
+        $foreign_key2 = null,
+        $queryBuilder = null,
+        $columns = null,
+        $reletion = 'HAS_ONE'
+    ) {
+        $related = $this->getTableRelation($related);
+        if (empty($current_key_val)) {
+            return [];
+        }
+        $whereName = 'where';
+        $valueName = 'value';
+        if (is_array($current_key_val)) {
+            $whereName = 'whereIn';
+            $valueName = 'values';
+        }
+        if (
+            $reletion === 'HAS_ONE' ||
+            $reletion === 'BELONG_TO' ||
+            $reletion === 'HAS_MANY'
+        ) {
+            if ($reletion === 'HAS_MANY') {
+                $valueName = 'values';
+            }
+            $query = $related->{$whereName}($foreign_key, $current_key_val);
+            $query = $query->when(!is_null($columns), function ($builder) use ($columns) {
+                if (is_string($columns)) {
+                    $columns = explode(', ', $columns);
+                }
+                if (in_array($foreign_key, $columns)) {
+                    $columns[] = $foreign_key;
+                }
+                $builder->select($columns);
+            })->when($queryBuilder instanceof \Closure, fn ($builder) => $queryBuilder($builder));
+            return $query->get()->{$valueName}();
+        } elseif ($reletion === 'MANY_TO_MANY') {
+            return $this->resloveRelationsMany(
+                $table_3rd,
+                $whereName,
+                $current_key_name,
+                $current_key_val,
+                $foreign_key,
+                $foreign_key2,
+                $related,
+                $columns,
+                $queryBuilder
+            );
+        } elseif ($reletion === 'BELONGS_TO_MANY') {
+            return $this->resloveRelationsMany(
+                $table_3rd,
+                $whereName,
+                $current_key_name,
+                $current_key_val,
+                $foreign_key,
+                $foreign_key2,
+                $related,
+                $columns,
+                $queryBuilder
+            );
+        }
+    }
+
+    private function resloveRelationsMany($table_3rd, $whereName, $current_key_name, $current_key_val, $foreign_key, $foreign_key2, $related, $columns, $queryBuilder)
+    {
+        $table_3rd =$this->getTableRelation($table_3rd);
+        $data_table_3rd = $table_3rd->{$whereName}($foreign_key, $current_key_val)
+            ->get()
+            ->toArray();
+        $id_joins = collection($data_table_3rd)->dataColumn($foreign_key2)->toArray();
+        if (empty($id_joins)) {
+            return [];
+        }
+        $query = $related->whereIn($current_key_name, $id_joins);
+        $query = $query->when(!is_null($columns), function ($builder) use ($columns) {
+            if (is_string($columns)) {
+                $columns = explode(', ', $columns);
+            }
+            if (in_array($current_key_name, $columns)) {
+                $columns[] = $current_key_name;
+            }
+            $builder->select($columns);
+        })->when($queryBuilder instanceof \Closure, fn ($builder) => $queryBuilder($builder));
+        if (is_array($current_key_val)) {
+            return $query->get()->map(function ($item) use (
+                $data_table_3rd,
+                $current_key_name,
+                $foreign_key,
+                $foreign_key2
+            ) {
+                $item->{$foreign_key} = collection($data_table_3rd)->filter(function ($value) use ($item, $current_key_name, $foreign_key2) {
+                    return $item->{$current_key_name} == $value->{$foreign_key2};
+                })->dataColumn($foreign_key)->toArray();
+                return $item;
+            })->values();
+        }
+        return $query->values();
+    }
+
+    private function resloveAttribute(&$item, $type = 'SET')
+    {
+        if (is_null($this->model)) {
+            return $item;
+        }
+        $is_array = is_array($item);
+        $keys = $is_array ? $item : get_object_vars($item);
+        $attribute = $type === 'SET' || $type === 'UPDATE' ? 'setAttributes' : 'getAttributes';
+        foreach ($keys as $key) {
+            if (is_numeric($key) || is_object($key) || is_array($key)) {
+                continue;
+            }
+            $method = $attribute.ucfirst($key);
+            if (method_exists($this->model, $method)) {
+                if ($is_array) {
+                    $item[$key] = $this->model->{$method}($item[$key]);
+                } else {
+                    $item->{$key} = $this->model->{$method}($item->{$key});
+                }
+            }
+        }
+
+        if ($type === 'GET') {
+            if (!empty($this->bindings['variables']['hidden'])) {
+                foreach ($this->bindings['variables']['hidden'] as $key_hidden) {
+                    if (array_key_exists($key_hidden,(array)$item)) {
+                        if ($is_array) {
+                            unset($item[$key_hidden]);
+                        } else {
+                            unset($item->{$key_hidden});
+                        }
+                    }
+                }
+            }
+        } else if ($type === 'SET') {
+            if (
+                !empty($this->bindings['variables']['time_auto']) &&
+                !empty($this->bindings['variables']['date_updated'])
+            ) {
+                $date_created = $this->bindings['variables']['date_created'];
+                if ($is_array) {
+                    $item[$date_created] = date('Y-m-d H:i:s');
+                } else {
+                    $item->{$date_created} = date('Y-m-d H:i:s');
+                }
+            }
+        } else if ($type === 'UPDATE') {
+            if (
+                !empty($this->bindings['variables']['time_auto']) &&
+                !empty($this->bindings['variables']['date_updated'])
+            ) {
+                $date_updated = $this->bindings['variables']['date_updated'];
+                if ($is_array) {
+                    $item[$date_updated] = date('Y-m-d H:i:s');
+                } else {
+                    $item->{$date_updated} = date('Y-m-d H:i:s');
+                }
+            }
+        }
+        return $item;
+    }
+
+    private function clearBindings($clearAll = false)
     {
         foreach ($this->bindings as $key => $value) {
-           if(!empty($this->bindings[$key]))  $this->bindings[$key] = [];
+           if(!empty($this->bindings[$key])) {
+               if ($clearAll) {
+                   $this->bindings[$key] = [];
+               } else if (
+                   $key !== 'variables' &&
+                   $key !== 'relations'
+               ) {
+                   $this->bindings[$key] = [];
+               }
+           }
         }
     }
 

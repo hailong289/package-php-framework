@@ -4,16 +4,47 @@ namespace Hola\Database;
 
 class Model {
     private static QueryBuilder $builder;
-    private static $table;
-    private static $columns = ['*'];
 
     private static function build() {
-        self::$builder = new QueryBuilder();
+        self::$builder = QueryBuilder::conn();
         $nameModel = get_called_class();
         $varModel = get_class_vars($nameModel);
-        self::$builder->setModel($nameModel);
-        self::$builder->from($varModel['table']);
+        self::$builder->setModel($nameModel, $varModel);
+        self::$builder->from(self::table($varModel, $nameModel));
         return self::$builder;
+    }
+
+    private static function table($varModel, $nameModel) {
+        $variable = str_replace('App\\Models\\','', $nameModel);
+        $tableName = strtolower($variable);
+        return $varModel['table'] ?? $tableName;
+    }
+    
+    public function init() {
+        return self::build();
+    }
+
+    public static function enableQueryLog() {
+        return self::build()->enableQueryLog();
+    }
+
+    public static function getQueryLog() {
+        return self::build()->getQueryLog();
+    }
+
+    public static function beginTransaction()
+    {
+        return self::build()->beginTransaction();
+    }
+
+    public static function commit()
+    {
+        return self::build()->commit();
+    }
+
+    public static function rollBack()
+    {
+        return self::build()->rollBack();
     }
 
     public static function connection($conn = null)
@@ -126,6 +157,11 @@ class Model {
         return self::build()->union($query, $all);
     }
 
+    public static function with($name, $useN1Query = false)
+    {
+        return self::build()->with($name, $useN1Query);
+    }
+
     public static function toSql($type = 'SELECT')
     {
         return self::build()->toSql($type);
@@ -160,29 +196,29 @@ class Model {
     {
         return self::build()->delete($data, $id);
     }
-
-    public function hasMany($model, $foreign_key, $key = 'id') {
+    
+    public function hasOne($related, $foreign_key, $key = 'id') {
         $parent_function = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'];
-        return self::build()->relations($model, null, $parent_function, $foreign_key, null, $key, 'HAS_MANY');
+        return self::build()->relations($related, null, $parent_function, $foreign_key, null, $key, 'HAS_ONE');
     }
 
-    public function hasOne($model, $foreign_key, $key = 'id') {
+    public function hasMany($related, $foreign_key, $key = 'id') {
         $parent_function = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'];
-        return self::build()->relations($model, null, $parent_function, $foreign_key, null, $key, 'HAS_ONE');
+        return self::build()->relations($related, null, $parent_function, $foreign_key, null, $key, 'HAS_MANY');
     }
 
-    public function belongsToMany($model, $model_many_to_many, $foreign_key, $foreign_key2, $key = 'id') {
+    public function belongsTo($related, $foreign_key, $key = 'id') {
         $parent_function = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'];
-        return self::build()->relations($model, $model_many_to_many, $parent_function, $foreign_key, $foreign_key2, $key, 'BELONG_TO_MANY');
+        return self::build()->relations($related, null, $parent_function, $foreign_key, null, $key, 'BELONG_TO');
     }
 
-    public function belongsTo($model, $foreign_key, $key = 'id') {
+    public function belongsToMany($related, $table_3rd, $foreign_key, $foreign_key2, $key = 'id') {
         $parent_function = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'];
-        return $this->relations($model, null, $parent_function, $foreign_key, null, $key, 'BELONG_TO');
+        return self::build()->relations($related, $table_3rd, $parent_function, $foreign_key, $foreign_key2, $key, 'BELONGS_TO_MANY');
     }
 
-    public function manyToMany($model, $model_many_to_many, $foreign_key, $foreign_key2, $key = 'id') {
+    public function manyToMany($related, $table_3rd, $foreign_key, $foreign_key2, $key = 'id') {
         $parent_function = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'];
-        return self::build()->relations($model, $model_many_to_many, $parent_function, $foreign_key, $foreign_key2, $key, 'MANY_TO_MANY');
+        return self::build()->relations($related, $table_3rd, $parent_function, $foreign_key, $foreign_key2, $key, 'MANY_TO_MANY');
     }
 }
