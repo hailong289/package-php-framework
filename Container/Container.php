@@ -67,40 +67,35 @@ class Container
      */
     public function call($callable)
     {
-        // set class name with namespace and method name
-        try {
-            $this->resolveCallback($callable);
+        $this->resolveCallback($callable);
 
-            if (empty($this->callbackClass)) {
-                throw new \TypeError(self::class.'::call(): Class must not be empty');
-            }
-
-            $methodReflection = new \ReflectionMethod($this->callbackClass, $this->callbackMethod);
-            $methodParams = $methodReflection->getParameters();
-            $dependencies = [];
-
-            // loop with dependencies/parameters
-            foreach ($methodParams as $param) {
-                $type = $param->getType(); // check type
-                if ($type && $type instanceof \ReflectionNamedType) { /// if parameter is a class
-                    $name = $param->getClass()->newInstance(); // create insrance
-                    if (isset($this->bindings[$param->getClass()->getName()])) {
-                        $name = $this->bindings[$param->getClass()->getName()];
-                    }
-                    array_push($dependencies, $name); // push  to $dependencies array
-                }
-            }
-            foreach ($this->callbackMethodParams as $value) {
-                array_push($dependencies, $value);
-            }
-
-            // make class instance
-            $initClass = $this->build($this->callbackClass);
-            // call method with $dependencies/parameters
-            return $methodReflection->invoke($initClass, ...$dependencies);
-        } catch (\Throwable $exception) {
-            throw new \BadMethodCallException($exception->getMessage());
+        if (empty($this->callbackClass)) {
+            throw new \TypeError(self::class . '::call(): Class must not be empty');
         }
+
+        $methodReflection = new \ReflectionMethod($this->callbackClass, $this->callbackMethod);
+        $methodParams = $methodReflection->getParameters();
+        $dependencies = [];
+
+        // loop with dependencies/parameters
+        foreach ($methodParams as $param) {
+            $type = $param->getType(); // check type
+            if ($type && $type instanceof \ReflectionNamedType) { /// if parameter is a class
+                $name = $param->getClass()->newInstance(); // create insrance
+                if (isset($this->bindings[$param->getClass()->getName()])) {
+                    $name = $this->bindings[$param->getClass()->getName()];
+                }
+                array_push($dependencies, $name); // push  to $dependencies array
+            }
+        }
+        foreach ($this->callbackMethodParams as $value) {
+            array_push($dependencies, $value);
+        }
+
+        // make class instance
+        $initClass = $this->build($this->callbackClass);
+        // call method with $dependencies/parameters
+        return $methodReflection->invoke($initClass, ...$dependencies);
     }
 
 

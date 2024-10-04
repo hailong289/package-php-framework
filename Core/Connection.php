@@ -18,13 +18,13 @@ class Connection {
         try {
             switch ($type) {
                 case 1:
-                    $this->connectDatabase($DB);
+                    $this->connectDatabase($DB, $name);
                     break;
                 case 2:
-                    $this->connectRedis($DB);
+                    $this->connectRedis($DB, $name);
                     break;
                 case 3:
-                    $this->connectRabbitMQ($DB);
+                    $this->connectRabbitMQ($DB, $name);
                     break;
                 default:
                     break;
@@ -62,7 +62,7 @@ class Connection {
 
 
     // connection db
-    public function connectDatabase($config) {
+    public function connectDatabase($config, $name) {
         $db_connection = $config[$name];
         $host = $db_connection['host'];
         $db_name = $db_connection['db_name'];
@@ -87,12 +87,12 @@ class Connection {
 
         }catch (\PDOException $e){
             $mess = $e->getMessage();
-            throw new \RuntimeException($mess, 503);
+            throw new \PDOException("Connection database failed: $mess", 503);
         }
     }
 
     // connection redis
-    public function connectRedis($config) {
+    public function connectRedis($config, $name) {
         // connect redis
         try {
             self::$redis = new \Redis();
@@ -115,7 +115,7 @@ class Connection {
     }
 
     // connection rabbitMQ
-    public function connectRabbitMQ($config) {
+    public function connectRabbitMQ($config, $name) {
         // connect rabbit mq
         $connection = $config[$name];
         $host = $connection['host'];
