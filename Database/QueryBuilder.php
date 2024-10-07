@@ -16,11 +16,6 @@ class QueryBuilder {
         }
         return self::$connection;
     }
-    
-    public static function conn() {
-        self::connect();
-        return new self();
-    }
 
     /** @var array[]  */
     public $bindings = [
@@ -49,6 +44,12 @@ class QueryBuilder {
     public function connection($conn = null)
     {
         self::$connection = new Connection($conn);
+        return $this;
+    }
+
+    public function reconnectDefault()
+    {
+        self::$connection = new Connection();
         return $this;
     }
 
