@@ -20,6 +20,14 @@ class QueryBuilder {
     /** @var array[]  */
     public $bindings = [
         'select' => [],
+        'function' => [
+            'count' => [],
+            'sum' => [],
+            'avg' => [],
+            'min' => [],
+            'max' => [],
+            'distinct' => []
+        ],
         'from' => [],
         'join' => [],
         'where' => [],
@@ -428,6 +436,22 @@ class QueryBuilder {
         return self::$connection->query($sql);
     }
 
+    public function count($name = null, $alias = null){
+        $this->bindings['function']['sum'] = [
+            'name' => $name ?? '*',
+            'alias' => $alias ?? 'count'
+        ];
+        return $this->first();
+    }
+
+    public function sum($name, $alias){
+        $this->bindings['function']['sum'] = [
+            'name' => $name,
+            'alias' => $alias
+        ];
+        return $this->first();
+    }
+
     private function resloveData($sql, $select = 'select', $callback, $bindings = [])
     {
         $status = false;
@@ -478,10 +502,21 @@ class QueryBuilder {
 
     private function resloveSelect()
     {
+        if (!empty($this->bindings['function']['count'])) {
+            return 'SELECT '.$this->resloveFunction('count');
+        }
+        if (!empty($this->bindings['function']['sum'])) {
+            return 'SELECT '.$this->resloveFunction('sum');
+        }
         if (empty($this->bindings['select'])) {
             return 'SELECT *';
         }
         return 'SELECT ' . implode(', ', $this->bindings['select']);
+    }
+
+    private function resloveFunction($name)
+    {
+        return $this->bindings['function'][$name]['name'] . ' AS ' . $this->bindings['function'][$name]['alias'];
     }
 
     private function resloveInsert()
