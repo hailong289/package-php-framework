@@ -129,4 +129,26 @@ class Connection {
         $this->pdo = \Hola\Core\Connection::getInstance($con);
     }
 
+    public function getPDOParamType($var) {
+        if (is_int($var)) {
+            return \PDO::PARAM_INT;
+        } elseif (is_float($var)) {
+            return \PDO::PARAM_STR;
+        } elseif (is_bool($var)) {
+            return \PDO::PARAM_BOOL;
+        } elseif (is_null($var)) {
+            return \PDO::PARAM_NULL;
+        } elseif (is_string($var)) {
+            return \PDO::PARAM_STR;
+        } elseif (is_resource($var)) {
+            return \PDO::PARAM_LOB;
+        } elseif (is_array($var)) {
+            return \PDO::PARAM_STR;
+        } elseif (is_object($var)) {
+            return \PDO::PARAM_STR;
+        } else {
+            return \PDO::PARAM_STR;
+        }
+    }
+
 }

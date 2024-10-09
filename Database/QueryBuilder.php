@@ -17,6 +17,12 @@ class QueryBuilder {
         return self::$connection;
     }
 
+    public static function conn()
+    {
+        self::connect();
+        return new self();
+    }
+
     /** @var array[]  */
     public $bindings = [
         'select' => [],
@@ -131,10 +137,16 @@ class QueryBuilder {
                 'query' => $column($builder)->bindings['where']
             ];
             return $this;
+        } elseif (is_array($column)) {
+            foreach ($column as $key => $value) {
+                $this->where($key, '=', $value);
+            }
+            return $this;
         }
         if (is_null($value)) {
             list($value, $operator) = [$operator, '='];
         }
+        $value = is_numeric($value) ? $value : "'$value'";
         $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean');
         return $this;
     }
@@ -151,10 +163,16 @@ class QueryBuilder {
                 'query' => $column($builder)->bindings['where']
             ];
             return $this;
+        } elseif (is_array($column)) {
+            foreach ($column as $key => $value) {
+                $this->where($key, '=', $value);
+            }
+            return $this;
         }
         if (is_null($value)) {
             list($value, $operator) = [$operator, '='];
         }
+        $value = is_numeric($value) ? $value : "'$value'";
         $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean');
         return $this;
     }
@@ -163,6 +181,7 @@ class QueryBuilder {
     {
         $boolean = !empty($this->bindings['where']) ? ' AND ' : '';
         $operator = " LIKE ";
+        $value = is_numeric($value) ? $value : "'$value'";
         $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean');
         return $this;
     }
@@ -171,6 +190,7 @@ class QueryBuilder {
     {
         $boolean = !empty($this->bindings['where']) ? ' OR ' : '';
         $operator = " LIKE ";
+        $value = is_numeric($value) ? $value : "'$value'";
         $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean');
         return $this;
     }
@@ -180,7 +200,7 @@ class QueryBuilder {
         list($value1, $value2) = $value;
         $boolean = !empty($this->bindings['where']) ? ' AND ' : '';
         $operator = " BETWEEN ";
-        $value = "$value1 AND $value2";
+        $value = "'$value1' AND '$value2'";
         $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean');
         return $this;
     }
@@ -581,8 +601,9 @@ class QueryBuilder {
         if (empty($this->bindings['union'])) {
             return '';
         }
+        $sql = "($sql)";
         foreach ($this->bindings['union'] as $union) {
-            $sql .= " UNION " . ($union['all'] ? 'ALL ' : '') . $union['query'];
+            $sql .= " UNION " . ($union['all'] ? 'ALL ' : '') . "({$union['query']})";
         }
         return $sql;
     }
@@ -659,9 +680,10 @@ class QueryBuilder {
                         'BELONG_TO',
                         'HAS_ONE'
                     ]) ? 'value':'values';
-                    $item->{$name} = collection($values)->filter(function ($value) use ($item, $foreign_key, $current_key) {
+                    $item->{$name} = collection()->set($values)->filter(function ($value) use ($item, $foreign_key, $current_key) {
                         if (is_array($value->{$foreign_key})) {
-                            return in_array($item->{$current_key}, $value->{$foreign_key});
+                            $ids = $value->{$foreign_key};
+                            return in_array($item->{$current_key}, $ids);
                         } else {
                             return $item->{$current_key} === $value->{$foreign_key};
                         }
@@ -794,7 +816,7 @@ class QueryBuilder {
 
     private function resloveRelationsMany($table_3rd, $whereName, $current_key_name, $current_key_val, $foreign_key, $foreign_key2, $related, $columns, $queryBuilder)
     {
-        $table_3rd =$this->getTableRelation($table_3rd);
+        $table_3rd = $this->getTableRelation($table_3rd);
         $data_table_3rd = $table_3rd->{$whereName}($foreign_key, $current_key_val)
             ->get()
             ->toArray();
@@ -813,7 +835,7 @@ class QueryBuilder {
             $builder->select($columns);
         })->when($queryBuilder instanceof \Closure, fn ($builder) => $queryBuilder($builder));
         if (is_array($current_key_val)) {
-            return $query->get()->map(function ($item) use (
+            $data = $query->get()->map(function ($item) use (
                 $data_table_3rd,
                 $current_key_name,
                 $foreign_key,
@@ -824,6 +846,7 @@ class QueryBuilder {
                 })->dataColumn($foreign_key)->toArray();
                 return $item;
             })->values();
+            return $data;
         }
         return $query->values();
     }

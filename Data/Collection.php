@@ -9,6 +9,11 @@ class Collection
     {
         $this->data = json_decode(json_encode($data));
     }
+    
+    public function set($data) {
+        $this->data = $data;
+        return $this;
+    }
 
     public function toArray() {
         $this->data = json_decode(json_encode($this->data), true);
