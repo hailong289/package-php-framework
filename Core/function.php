@@ -489,3 +489,17 @@ if (!function_exists('getFolder')) {
         return implode('', $matches[0]);
     }
 }
+
+if(!function_exists('isTwoDimensionalArray')) {
+    function isTwoDimensionalArray($array) {
+        if (!is_array($array)) {
+            return false;
+        }
+        foreach ($array as $element) {
+            if (is_array($element)) {
+                return true;
+            }
+        }
+        return false;
+    }
+}

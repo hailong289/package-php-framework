@@ -13,46 +13,46 @@ class Connection {
         $this->connect($conn);
     }
 
-    public function select($sql)
+    public function select($sql, $binnding = [])
     {
         return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $statement->fetchAll(\PDO::FETCH_OBJ);
-        });
+        }, $binnding);
     }
 
-    public function selectOne($sql)
+    public function selectOne($sql, $binnding = [])
     {
         return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $statement->fetch(\PDO::FETCH_OBJ);
-        });
+        }, $binnding);
     }
 
-    public function insert($sql)
+    public function insert($sql, $binnding = [])
     {
         return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $status;
-        });
+        }, $binnding);
     }
 
-    public function update($sql)
+    public function update($sql, $binnding = [])
     {
         return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $status;
-        });
+        }, $binnding);
     }
 
-    public function insertLastId($sql)
+    public function insertLastId($sql, $binnding = [])
     {
         return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $this->pdo->lastInsertId();
-        });
+        }, $binnding);
     }
 
-    public function delete($sql)
+    public function delete($sql, $binnding = [])
     {
         return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $status;
-        });
+        }, $binnding);
     }
 
     public function query($sql)
@@ -88,18 +88,19 @@ class Connection {
         $this->pdo->rollBack();
     }
 
-    public function resloveQuery($sql, callable $callback, $binnding = [])
+    public function resloveQuery($sql, callable $callback, $bindings = [])
     {
         $statement = $this->pdo->prepare($sql);
         if ($this->enableQueryLog) {
             $startTime = microtime(true); // Start time
         }
-        $status = $statement->execute();
+        $status = $statement->execute($this->resloveBindings($bindings));
         if ($this->enableQueryLog) {
             $endTime = microtime(true); // End time
             $queryTime = $endTime - $startTime; // Query time
             $this->queryLog[] = [
                 'query' => $sql,
+                'params' => $bindings,
                 'time' => "Query took $queryTime seconds to execute."
             ];
         }
@@ -108,6 +109,18 @@ class Connection {
             $this->swithConnect = false;
         }
         return $callback($statement, $status);
+    }
+
+    public function resloveBindings($bindings = []){
+        foreach ($bindings as $key => $value) {
+            if (is_array($value)) {
+                foreach ($value as $k => $v) {
+                    $bindings[] = $v;
+                }
+                unset($bindings[$key]);
+            }
+        }
+        return array_values($bindings);
     }
 
     public function connect($connection = null) {
@@ -127,28 +140,6 @@ class Connection {
     {
         $this->swithConnect = true;
         $this->pdo = \Hola\Core\Connection::getInstance($con);
-    }
-
-    public function getPDOParamType($var) {
-        if (is_int($var)) {
-            return \PDO::PARAM_INT;
-        } elseif (is_float($var)) {
-            return \PDO::PARAM_STR;
-        } elseif (is_bool($var)) {
-            return \PDO::PARAM_BOOL;
-        } elseif (is_null($var)) {
-            return \PDO::PARAM_NULL;
-        } elseif (is_string($var)) {
-            return \PDO::PARAM_STR;
-        } elseif (is_resource($var)) {
-            return \PDO::PARAM_LOB;
-        } elseif (is_array($var)) {
-            return \PDO::PARAM_STR;
-        } elseif (is_object($var)) {
-            return \PDO::PARAM_STR;
-        } else {
-            return \PDO::PARAM_STR;
-        }
     }
 
 }

@@ -177,6 +177,11 @@ class Model {
         return self::build()->first();
     }
 
+    public static function create($data)
+    {
+        return self::build()->create($data);
+    }
+
     public static function insert($data)
     {
         return self::build()->insert($data);
@@ -192,9 +197,14 @@ class Model {
         return self::build()->update($data, $id);
     }
 
-    public static function delete($data, $id = null)
+    public static function delete($id = null)
     {
-        return self::build()->delete($data, $id);
+        return self::build()->delete($id);
+    }
+
+    public static function softDelete($id = null)
+    {
+        return self::build()->softDelete($id);
     }
     
     public function hasOne($related, $foreign_key, $key = 'id') {

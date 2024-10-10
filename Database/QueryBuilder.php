@@ -44,9 +44,9 @@ class QueryBuilder {
         'limit' => [],
         'offset' => [],
         'insertOrUpdate' => [],
-        'delete' => [],
         'relations' => [],
-        'variables' => []
+        'variables' => [],
+        'params' => []
     ];
 
     public function setModel($nameModel, $varModel = [])
@@ -146,7 +146,6 @@ class QueryBuilder {
         if (is_null($value)) {
             list($value, $operator) = [$operator, '='];
         }
-        $value = is_numeric($value) ? $value : "'$value'";
         $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean');
         return $this;
     }
@@ -172,7 +171,6 @@ class QueryBuilder {
         if (is_null($value)) {
             list($value, $operator) = [$operator, '='];
         }
-        $value = is_numeric($value) ? $value : "'$value'";
         $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean');
         return $this;
     }
@@ -181,7 +179,6 @@ class QueryBuilder {
     {
         $boolean = !empty($this->bindings['where']) ? ' AND ' : '';
         $operator = " LIKE ";
-        $value = is_numeric($value) ? $value : "'$value'";
         $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean');
         return $this;
     }
@@ -190,7 +187,6 @@ class QueryBuilder {
     {
         $boolean = !empty($this->bindings['where']) ? ' OR ' : '';
         $operator = " LIKE ";
-        $value = is_numeric($value) ? $value : "'$value'";
         $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean');
         return $this;
     }
@@ -200,7 +196,6 @@ class QueryBuilder {
         list($value1, $value2) = $value;
         $boolean = !empty($this->bindings['where']) ? ' AND ' : '';
         $operator = " BETWEEN ";
-        $value = "'$value1' AND '$value2'";
         $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean');
         return $this;
     }
@@ -209,8 +204,8 @@ class QueryBuilder {
     {
         $boolean = !empty($this->bindings['where']) ? ' AND ' : '';
         $operator = " IN ";
-        $value = "(".implode(', ', $value).")";
-        $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean');
+        $type = 'array';
+        $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean', 'type');
         return $this;
     }
 
@@ -218,8 +213,8 @@ class QueryBuilder {
     {
         $boolean = !empty($this->bindings['where']) ? ' AND ' : '';
         $operator = " NOT IN ";
-        $value = "(".implode(', ', $value).")";
-        $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean');
+        $type = 'array';
+        $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean', 'type');
         return $this;
     }
 
@@ -267,6 +262,12 @@ class QueryBuilder {
 
     public function orderBy($column, $direction = 'asc')
     {
+        if (is_array($column)) {
+            foreach ($column as $key => $value) {
+                $this->orderBy($key, $value);
+            }
+            return $this;
+        }
         $this->bindings['order'][] = compact('column', 'direction');
         return $this;
     }
@@ -289,7 +290,7 @@ class QueryBuilder {
         return $this;
     }
 
-    public function relations($related, $table_3rd = null, $name, $foreign_key, $foreign_key2 = null, $current_key, $relation)
+    public function relations($related, $table_3rd, $name, $foreign_key, $foreign_key2, $current_key, $relation)
     {
         $log_debug = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1];
         return [
@@ -340,7 +341,7 @@ class QueryBuilder {
         return $this;
     }
 
-    private function withClosure($name, $useN1Query = false, \Closure $closure) {
+    private function withClosure($name, $useN1Query, \Closure $closure) {
         if (!is_null($this->model) && method_exists($this->model, $name)) {
             $this->bindings['relations'][] = array_merge($this->model->{$name}(), [
                 'useN1Query' => $useN1Query,
@@ -351,16 +352,20 @@ class QueryBuilder {
         return $this;
     }
 
-    public function toSql($type = 'SELECT') {
+    public function toSql($type = 'SELECT', $bindings = []) {
         switch ($type) {
             case 'SELECT':
                 $sql = $this->resloveSelect();
                 $this->resloveTable($sql);
                 break;
             case 'INSERT':
-                $sql = $this->resloveInsert();
+                $sql = $this->resloveInsert($bindings);
+                break;
             case 'UPDATE':
-                $sql = $this->resloveUpdate();
+                $sql = $this->resloveUpdate($bindings);
+                break;
+            case 'DELETE':
+                $sql = $this->resloveDelete();
                 break;
             default:
                 $sql = $this->resloveSelect();
@@ -385,70 +390,93 @@ class QueryBuilder {
     }
 
     public function dump() {
-        logs()->dump($this->toSql());
+        $sql = $this->toSql();
+        foreach ($this->bindings['params'] as $key => $value) {
+            if (is_array($value)) {
+               foreach ($value as $val) {
+                   $sql = preg_replace('/\?/', $val, $sql);
+               }
+            } else {
+                $sql = preg_replace('/\?/', $value, $sql);
+            }
+        }
+        logs()->dump($sql);
         return $this;
     }
 
-    public function get(): Collection
+    public function get(): Collection|null
     {
         return $this->resloveData($this->toSql(), 'select', function ($selectData) {
             $this->clearBindings(true);
             return $selectData;
-        });
+        }, $this->bindings['params']);
     }
 
-    public function find($id): Collection
+    public function find($id): Collection|null
     {
         return $this->where('id', $id)->first();
     }
 
-    public function first(): Collection
+    public function first(): Collection|null
     {
         return $this->resloveData($this->toSql(), 'selectOne', function ($selectData) {
             $this->clearBindings(true);
             return $selectData;
-        });
+        }, $this->bindings['params']);
     }
 
-    public function create($data): Collection
+    public function create($data): Collection|null
     {
-        return $this->resloveData($this->toSql('INSERT'), 'insertLastId', function ($id) {
-            $selectData = $this->find($id);
+        $table = $this->bindings['from']['table'];
+        return $this->resloveData($this->toSql('INSERT', $data), 'insertLastId', function ($id) use ($table) {
             $this->clearBindings(true);
+            $selectData = $this->from($table)->find($id);
             return $selectData;
-        });
+        }, $this->bindings['params']);
     }
 
     public function insert($data)
     {
-        return $this->resloveData($this->toSql('INSERT'), 'insert', function ($selectData, $status) {
+        return $this->resloveData($this->toSql('INSERT', $data), 'insert', function ($selectData, $status) {
             $this->clearBindings(true);
             return $status;
-        });
+        }, $this->bindings['params']);
     }
 
     public function insertLastId($data)
     {
-        return $this->resloveData($this->toSql('INSERT'), 'insertLastId', function ($id) {
+        return $this->resloveData($this->toSql('INSERT', $data), 'insertLastId', function ($id) {
             $this->clearBindings(true);
             return $id;
-        });
+        }, $this->bindings['params']);
     }
 
     public function update($data, $id = null)
     {
-        return $this->resloveData($this->toSql('UPDATE'), 'update', function ($selectData, $status) {
+        if (!is_null($id)) {
+            $this->where('id', $id);
+        }
+        return $this->resloveData($this->toSql('UPDATE', $data), 'update', function ($selectData, $status) {
             $this->clearBindings(true);
             return $status;
-        }, array_merge($data, ['id' => $id]));
+        },$this->bindings['params']);
     }
 
-    public function delete($data, $id = null)
+    public function delete($id = null)
     {
+        if (!is_null($id)) {
+            $this->where('id', $id);
+        }
         return $this->resloveData($this->toSql('DELETE'), 'delete', function ($selectData, $status) {
             $this->clearBindings(true);
             return $status;
-        }, array_merge($data, ['id' => $id]));
+        }, $this->bindings['params']);
+    }
+
+    public function softDelete($id = null)
+    {
+        $data = $this->resloveSoftDelete();
+        return $this->update($data, $id);
     }
 
     public function query($sql)
@@ -472,49 +500,41 @@ class QueryBuilder {
         return $this->first();
     }
 
-    private function resloveData($sql, $select = 'select', $callback, $bindings = [])
+    private function resloveData($sql, $select, $callback, $bindings = [])
     {
         $status = false;
         $selectData = [];
-        $id = $bindings['id'] ?? null;
-        if (isset($bindings['id'])) {
-            unset($bindings['id']);
-        }
         switch ($select) {
             case 'select':
-                $select = collection(self::$connection->select($sql));
+                $select = collection(self::$connection->select($sql, $bindings));
+                if ($select->isEmpty()) {
+                    return $callback(null, $status);
+                }
                 $selectData = $this->resloveRelations($select);
                 $selectData = $selectData->map(fn ($item) => $this->resloveAttribute($item, 'GET'));
                 break;
             case 'selectOne':
-                $select = collection(self::$connection->selectOne($sql));
+                $select = collection(self::$connection->selectOne($sql, $bindings));
+                if ($select->isEmpty()) {
+                    return $callback(null, $status);
+                }
                 $selectData = $this->resloveRelations($select, 'FIRST');
                 $selectData = $selectData->mapFirst(fn ($item) => $this->resloveAttribute($item, 'GET'));
                 break;
             case 'insert':
                 $this->resloveAttribute($bindings);
-                $this->bindings['insertOrUpdate'] = $bindings;
-                $status = self::$connection->insert($sql);
+                $status = self::$connection->insert($sql, $bindings);
                 break;
             case 'insertLastId':
                 $this->resloveAttribute($bindings);
-                $this->bindings['insertOrUpdate'] = $bindings;
-                $selectData = self::$connection->insertLastId($sql);
+                $selectData = self::$connection->insertLastId($sql, $bindings);
                 break;
             case 'update':
-                if ($id) {
-                    $this->where('id', $id);
-                }
                 $this->resloveAttribute($bindings);
-                $this->bindings['insertOrUpdate'] = $bindings;
-                $status = self::$connection->update($sql);
+                $status = self::$connection->update($sql, $bindings);
                 break;
             case 'delete':
-                if ($id) {
-                    $this->where('id', $id);
-                }
-                $this->bindings['delete'] = $bindings;
-                $status = self::$connection->delete($sql);
+                $status = self::$connection->delete($sql, $bindings);
                 break;
         }
         return $callback($selectData, $status);
@@ -539,18 +559,30 @@ class QueryBuilder {
         return $this->bindings['function'][$name]['name'] . ' AS ' . $this->bindings['function'][$name]['alias'];
     }
 
-    private function resloveInsert()
+    private function resloveInsert($bindings = [])
     {
-        foreach ($this->bindings['insertOrUpdate'] as $key => $value) {
+        $sql_placeholder = '';
+        foreach ($bindings as $key => $value) {
             $columns[] = $key;
-            $values[] = $value;
+            $sql_placeholder .= $sql_placeholder ? ', ?' : '?';
+            $this->bindings['params'][] = $value;
         }
-        return 'INSERT INTO ' . $this->bindings['from']['table'] . ' (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $values) . ')';
+        return 'INSERT INTO ' . $this->bindings['from']['table'] . ' (' . implode(', ', $columns) . ') VALUES (' . $sql_placeholder . ')';
     }
 
-    private function resloveUpdate()
+    private function resloveUpdate($bindings = [])
     {
-        return 'UPDATE ' . $this->bindings['from']['table'] . ' SET ' . implode(', ', $this->bindings['insertOrUpdate']);
+        $sql_placeholder = '';
+        foreach ($bindings as $key => $value) {
+            $sql_placeholder .= $sql_placeholder ? ", $key = ?" : "$key = ?";
+            $this->bindings['params'][] = $value;
+        }
+        return 'UPDATE ' . $this->bindings['from']['table'] . ' SET ' . $sql_placeholder;
+    }
+
+    private function resloveDelete()
+    {
+        return 'DELETE FROM ' . $this->bindings['from']['table'];
     }
 
     private function resloveTable(&$sql)
@@ -582,6 +614,7 @@ class QueryBuilder {
         if(!$isNested) {
             $sql .= ' WHERE ';
         }
+
         foreach ($bindings as $idx => $where) {
             if ($where['type'] === 'nested') {
                 $sql_nested = '';
@@ -589,8 +622,16 @@ class QueryBuilder {
                 $sql .= $where['boolean'] . '(' . $subWhere . ')';
             } elseif ($where['type'] === 'raw') {
                 $sql .= "{$where['boolean']}{$where['sql']}";
+            } elseif ($where['type'] === 'array') {
+                $sql_placeholder = '';
+                foreach ($where['value'] as $key => $value) {
+                    $sql_placeholder .= $sql_placeholder ? ', ?' : '?';
+                }
+                $sql .= "{$where['boolean']}{$where['column']} {$where['operator']} ($sql_placeholder)";
+                $this->bindings['params'][] = $where['value'];
             } else {
-                $sql .= "{$where['boolean']}{$where['column']} {$where['operator']} {$where['value']}";
+                $sql .= "{$where['boolean']}{$where['column']} {$where['operator']} ?";
+                $this->bindings['params'][] = $where['value'];
             }
         }
         return $sql;
@@ -659,7 +700,7 @@ class QueryBuilder {
 
     private function resloveRelations(Collection $data, $type = 'GET')
     {
-        if (empty($this->bindings['relations'])) {
+        if (empty($this->bindings['relations']) || $data->isEmpty()) {
             return $data;
         }
         $original_data = clone $data;
@@ -848,7 +889,7 @@ class QueryBuilder {
             })->values();
             return $data;
         }
-        return $query->values();
+        return $query->get()->values();
     }
 
     private function resloveAttribute(&$item, $type = 'SET')
@@ -860,7 +901,7 @@ class QueryBuilder {
         $keys = $is_array ? $item : get_object_vars($item);
         $attribute = $type === 'SET' || $type === 'UPDATE' ? 'setAttributes' : 'getAttributes';
         foreach ($keys as $key) {
-            if (is_numeric($key) || is_object($key) || is_array($key)) {
+            if (is_numeric($key) || is_object($key) || is_array($key) || is_null($key)) {
                 continue;
             }
             $method = $attribute.ucfirst($key);
@@ -913,6 +954,25 @@ class QueryBuilder {
         return $item;
     }
 
+    public function resloveSoftDelete()
+    {
+        $bindings = [];
+        if (is_null($this->model)) {
+            return $this;
+        }
+        if (method_exists($this->model, 'softDeleteField')) {
+            $data = $this->model->softDeleteField();
+            if (isTwoDimensionalArray($data)) {
+                foreach ($data as $key => $value) {
+                    $bindings[$value['field']] = $data['value'];
+                }
+            } else {
+                $bindings[$data['field']] = $data['value'];
+            }
+        }
+        return $bindings;
+    }
+
     private function clearBindings($clearAll = false)
     {
         foreach ($this->bindings as $key => $value) {
@@ -921,7 +981,8 @@ class QueryBuilder {
                    $this->bindings[$key] = [];
                } else if (
                    $key !== 'variables' &&
-                   $key !== 'relations'
+                   $key !== 'relations' &&
+                   $key !== 'params'
                ) {
                    $this->bindings[$key] = [];
                }
