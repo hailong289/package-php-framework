@@ -81,9 +81,10 @@ class Container
         foreach ($methodParams as $param) {
             $type = $param->getType(); // check type
             if ($type && $type instanceof \ReflectionNamedType) { /// if parameter is a class
-                $name = $param->getClass()->newInstance(); // create insrance
-                if (isset($this->bindings[$param->getClass()->getName()])) {
-                    $name = $this->bindings[$param->getClass()->getName()];
+                $className = $type->getName();
+                $name = new $className();
+                if (isset($this->bindings[$className])) {
+                    $name = $this->bindings[$className];
                 }
                 array_push($dependencies, $name); // push  to $dependencies array
             }

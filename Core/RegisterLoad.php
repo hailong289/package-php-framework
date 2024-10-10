@@ -45,7 +45,8 @@ class RegisterLoad
                 if ($item === __DIR__ROOT ."/config/constant.php") {
                     require_once $item;
                 } else {
-                    $end = end(explode("/", $item));
+                    $items = explode("/", $item);
+                    $end = end($items);
                     $end = str_replace('.php', '', $end);
                     $GLOBALS['config'][$end] = require($item);
                 }

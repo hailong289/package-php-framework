@@ -7,7 +7,7 @@ class Collection
     public $data = [];
     public function __construct($data)
     {
-        $this->data = json_decode(json_encode($data));
+        $this->data = is_object($data) ? $data : json_decode(json_encode($data));
     }
     
     public function set($data) {
@@ -16,12 +16,12 @@ class Collection
     }
 
     public function toArray() {
-        $this->data = json_decode(json_encode($this->data), true);
+        $this->data = is_array($this->data) ? $this->data : json_decode(json_encode($this->data), true);
         return $this->data;
     }
 
     public function toObject() {
-        $this->data = json_decode(json_encode($this->data));
+        $this->data = is_object($this->data) ? $this->data : json_decode(json_encode($this->data));
         return $this->data;
     }
 
