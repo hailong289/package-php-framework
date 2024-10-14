@@ -178,7 +178,7 @@ class QueryBuilder {
     public function whereLike($column, $value)
     {
         $boolean = !empty($this->bindings['where']) ? ' AND ' : '';
-        $operator = " LIKE ";
+        $operator = " LIKE";
         $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean');
         return $this;
     }
@@ -186,7 +186,7 @@ class QueryBuilder {
     public function orWhereLike($column, $value)
     {
         $boolean = !empty($this->bindings['where']) ? ' OR ' : '';
-        $operator = " LIKE ";
+        $operator = " LIKE";
         $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean');
         return $this;
     }
@@ -195,15 +195,16 @@ class QueryBuilder {
     {
         list($value1, $value2) = $value;
         $boolean = !empty($this->bindings['where']) ? ' AND ' : '';
-        $operator = " BETWEEN ";
-        $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean');
+        $operator = " BETWEEN";
+        $type = 'between';
+        $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean', 'type');
         return $this;
     }
 
     public function whereIn($column, array $value)
     {
         $boolean = !empty($this->bindings['where']) ? ' AND ' : '';
-        $operator = " IN ";
+        $operator = " IN";
         $type = 'array';
         $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean', 'type');
         return $this;
@@ -212,7 +213,7 @@ class QueryBuilder {
     public function whereNotIn($column, array $value)
     {
         $boolean = !empty($this->bindings['where']) ? ' AND ' : '';
-        $operator = " NOT IN ";
+        $operator = " NOT IN";
         $type = 'array';
         $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean', 'type');
         return $this;
@@ -614,7 +615,6 @@ class QueryBuilder {
         if(!$isNested) {
             $sql .= ' WHERE ';
         }
-
         foreach ($bindings as $idx => $where) {
             if ($where['type'] === 'nested') {
                 $sql_nested = '';
@@ -629,6 +629,11 @@ class QueryBuilder {
                 }
                 $sql .= "{$where['boolean']}{$where['column']} {$where['operator']} ($sql_placeholder)";
                 $this->bindings['params'][] = $where['value'];
+            }  elseif ($where['type'] === 'between') {
+                $sql .= "{$where['boolean']}{$where['column']} {$where['operator']} ? AND ?";
+                list($value1, $value2) = array_pad($where['value'], 2, null);
+                $this->bindings['params'][] = $value1;
+                $this->bindings['params'][] = $value2;
             } else {
                 $sql .= "{$where['boolean']}{$where['column']} {$where['operator']} ?";
                 $this->bindings['params'][] = $where['value'];
