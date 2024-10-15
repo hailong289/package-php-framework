@@ -1,7 +1,10 @@
 <?php
 namespace Hola\Scripts;
 
-use Hola\Core\Connection;
+use Hola\Connection\RabbitMQ;
+use Hola\Connection\Redis;
+use Hola\Core\RedisCR;
+use Hola\Database\DBO;
 
 class QueueScript extends \Hola\Core\Command
 {
@@ -64,21 +67,19 @@ class QueueScript extends \Hola\Core\Command
         try {
             switch ($name) {
                 case 'database':
-                    Connection::getInstance('database', true);
-                    $connection = new \Hola\Core\Database();
+                    $connection = DBO::connection($name, 'queue');
                     if (!$only_get) $this->queueWorkWithDB($connection);
                     break;
                 case 'redis':
-                    $connection = Connection::getInstanceRedis('redis', true);
+                    $connection = Redis::queueConnect($name);
                     if (!$only_get) $this->workQueueWithRedis($connection);
                     break;
                 case 'rabbitmq':
-                    $connection = Connection::instanceRabbitMQ('rabbitmq', true);
+                    $connection = RabbitMQ::queueConnect($name);
                     if (!$only_get) $this->workQueueRabbit($connection);
                     break;
                 default:
-                    Connection::getInstance('database', true);
-                    $connection = new \Hola\Core\Database();
+                    $connection = DBO::connection('database', 'queue');
                     if (!$only_get) $this->queueWorkWithDB($connection);
                     break;
             }
@@ -107,10 +108,10 @@ class QueueScript extends \Hola\Core\Command
                 'error' => $e->getMessage(),
                 'failed' => $e->getTraceAsString()
             ];
-            if ($conn instanceof \Hola\Core\Database) {
+            if ($conn instanceof \Hola\Database\DBO) {
                 unset($data['failed']);
                 $data = json_encode($data);
-                $conn->table('failed_jobs')->insert([
+                $conn->from('failed_jobs')->insert([
                     'data' => $data,
                     'queue' => 'failed_jobs',
                     'exception' => $e->getMessage() . ". Trace: " . base64_encode($e->getTraceAsString()),
@@ -125,8 +126,8 @@ class QueueScript extends \Hola\Core\Command
             ) {
                 unset($data['failed']);
                 $data = json_encode($data);
-                $connection = new \Hola\Core\Database();
-                $connection->table('failed_jobs')->insert([
+                $connection = DBO::connection('database', 'queue');
+                $connection->from('failed_jobs')->insert([
                     'data' => $data,
                     'queue' => 'failed_jobs',
                     'exception' => $e->getMessage() . ". Trace: " . base64_encode($e->getTraceAsString()),
@@ -144,15 +145,14 @@ class QueueScript extends \Hola\Core\Command
         }
     }
 
-    private function queueWorkWithDB(\Hola\Core\Database $db)
+    private function queueWorkWithDB(\Hola\Database\DBO $db)
     {
         $queue_name = $this->jobs_queue;
         if ($queue_name === 'rollback_failed_job') {
             $queue_name = 'failed_jobs';
         }
-        $db = $db::instance(); // set table
         $list_queue = $db
-            ->table($queue_name)
+            ->from($queue_name)
             ->where('queue', $queue_name)
             ->get()
             ->toArray();
@@ -165,7 +165,7 @@ class QueueScript extends \Hola\Core\Command
         foreach ($list_queue as $queue) {
             $queue = $this->data($queue);
             if ($this->break_job) break;
-            $db->table($queue_name)
+            $db->from($queue_name)
                 ->where('queue', $queue_name)
                 ->where('id', $queue['key'])
                 ->delete();
@@ -177,8 +177,7 @@ class QueueScript extends \Hola\Core\Command
                 }
                 $this->setTimeOutJob($queue['timeout']);
                 $this->queueRunning = $queue;
-                $work_class = new $queue['class'](...array_values($queue['payload']));
-                $work_class->handle();
+                app()->call(array_merge([$queue['class'], 'handle'], $queue['payload']));
                 $end = new \DateTime();
                 $time = $end->diff($start)->format('%H:%I:%S');
                 $this->output()->text("{$queue['class']} work success ---- Time: $time");
@@ -208,8 +207,7 @@ class QueueScript extends \Hola\Core\Command
                 }
                 $this->setTimeOutJob($queue['timeout']);
                 $this->queueRunning = $queue;
-                $work_class = new $queue['class'](...array_values($queue['payload']));
-                $work_class->handle();
+                app()->call(array_merge([$queue['class'], 'handle'], $queue['payload']));
                 $time = $this->endTimeJob($start);
                 $this->output()->text("{$queue['class']} work success ---- Time: $time");
             } catch (\Throwable $exception) {
@@ -249,8 +247,7 @@ class QueueScript extends \Hola\Core\Command
                 }
 //                $this->setTimeOutJob($queue['timeout']);
                 $this->queueRunning = $queue;
-                $work_class = new $queue['class'](...array_values($queue['payload']));
-                $work_class->handle();
+                app()->call(array_merge([$queue['class'], 'handle'], $queue['payload']));
                 $time = $this->endTimeJob($start);
                 $this->output()->text("{$queue['class']} work success ---- Time: $time");
             } catch (\Throwable $e) {

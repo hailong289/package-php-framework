@@ -1,15 +1,19 @@
 <?php
 namespace Hola\Core;
-class Redis {
+use Hola\Connection\Redis;
+
+class RedisCR {
     private static $redis;
 
     public function __construct()
     {
-        self::$redis = Connection::getInstanceRedis(config_env('DB_ENVIRONMENT','default'), config_env('REDIS_CONNECTION','redis'));
+        $name = config_env('REDIS_CONNECTION','redis');
+        self::$redis = Redis::instance($name);
     }
 
     public static function work() {
-        self::$redis = Connection::getInstanceRedis(config_env('DB_ENVIRONMENT','default'), config_env('REDIS_CONNECTION','redis'));
+        $name = config_env('REDIS_CONNECTION','redis');
+        self::$redis = Redis::instance($name);
         return self::$redis;
     }
 

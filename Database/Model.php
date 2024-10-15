@@ -47,9 +47,9 @@ class Model {
         return self::build()->rollBack();
     }
 
-    public static function connection($conn = null)
+    public static function connection($conn = null, $type = null)
     {
-        return self::build()->connection($conn);
+        return self::build()->connection($conn, $type);
     }
 
     public static function select($columns = ['*'])
@@ -175,6 +175,16 @@ class Model {
     public static function first()
     {
         return self::build()->first();
+    }
+
+    public static function pagination($limit, $page)
+    {
+        return self::build()->pagination($limit, $page);
+    }
+
+    public static function paginationWithCount($limit, $page)
+    {
+        return self::build()->paginationWithCount($limit, $page);
     }
 
     public static function create($data)

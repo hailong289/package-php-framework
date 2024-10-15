@@ -55,9 +55,9 @@ class QueryBuilder {
         $this->bindings['variables'] = $varModel;
     }
 
-    public function connection($conn = null)
+    public function connection($conn = null, $type = null)
     {
-        self::$connection = new Connection($conn);
+        self::$connection = new Connection($conn, $type = null);
         return $this;
     }
 
@@ -279,7 +279,7 @@ class QueryBuilder {
         return $this;
     }
 
-    public function offset()
+    public function offset($value)
     {
         $this->bindings['offset'] = $value;
         return $this;
@@ -486,7 +486,7 @@ class QueryBuilder {
     }
 
     public function count($name = null, $alias = null){
-        $this->bindings['function']['sum'] = [
+        $this->bindings['function']['count'] = [
             'name' => $name ?? '*',
             'alias' => $alias ?? 'count'
         ];
@@ -499,6 +499,32 @@ class QueryBuilder {
             'alias' => $alias
         ];
         return $this->first();
+    }
+
+    public function pagination($limit, $page = 1){
+        $page = $page === 0 ? 1 : $page;
+        $offset = ($page - 1) * $limit;
+        $this->offset($offset)->limit($limit);
+        return $this->get();
+    }
+
+    public function paginationWithCount($limit = 10, $page = 1)
+    {
+        $builder = clone $this;
+        $page = $page === 0 ? 1 : $page;
+        $offset = ($page - 1) * $limit;
+        $total = $builder->count('*','total')->value('total');
+        $data =  $this->offset($offset)->limit($limit)->get();
+        $last_page = ceil($total / $limit);
+        return collection([
+            'items' => $data?->values(),
+            'total' => $total,
+            'limit' => $limit,
+            'page' => $page,
+            'last_page' => $last_page,
+            'next_page' => $page < $last_page ? $page + 1 : null,
+            'prev_page' => $page > 1 ? $page - 1 : null
+        ])->values();
     }
 
     private function resloveData($sql, $select, $callback, $bindings = [])
@@ -555,9 +581,11 @@ class QueryBuilder {
         return 'SELECT ' . implode(', ', $this->bindings['select']);
     }
 
-    private function resloveFunction($name)
+    private function resloveFunction($function)
     {
-        return $this->bindings['function'][$name]['name'] . ' AS ' . $this->bindings['function'][$name]['alias'];
+        $name = $this->bindings['function'][$function]['name'];
+        $alias = $this->bindings['function'][$function]['alias'];
+        return "$function($name) AS $alias";
     }
 
     private function resloveInsert($bindings = [])

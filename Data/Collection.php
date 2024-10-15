@@ -29,8 +29,18 @@ class Collection
         return $this->data;
     }
 
-    public function value() {
-        return $this->count() ? $this->data[0]:$this->data;
+    public function value($key = null) {
+        $data = $this->count() ? $this->data[0] : $this->data;
+        if (is_null($key)) {
+            return $data;
+        }
+        if (is_array($data)) {
+            return isset($data[$key]) ? $data[$key] : null;
+        } elseif (is_object($data)) {
+            return isset($data->{$key}) ? $data->{$key} : null;
+        } else {
+            return null;
+        }
     }
 
     public function count(): int

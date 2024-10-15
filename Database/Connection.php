@@ -1,6 +1,7 @@
 <?php
 
 namespace Hola\Database;
+use Hola\Connection\PdoSql;
 
 class Connection {
 
@@ -8,9 +9,10 @@ class Connection {
     private $enableQueryLog = false;
     private $queryLog = [];
     private $swithConnect = false;
+    private static $instance_queue = null;
 
-    public function __construct($conn = null) {
-        $this->connect($conn);
+    public function __construct($conn = null, $type = null) {
+        $this->connect($conn, $type);
     }
 
     public function select($sql, $binnding = [])
@@ -104,10 +106,7 @@ class Connection {
                 'time' => "Query took $queryTime seconds to execute."
             ];
         }
-        if ($this->swithConnect) {
-            $this->pdo = null;
-            $this->swithConnect = false;
-        }
+        $this->clear();
         return $callback($statement, $status);
     }
 
@@ -123,23 +122,30 @@ class Connection {
         return array_values($bindings);
     }
 
-    public function connect($connection = null) {
+    public function connect($connection = null, $type = null) {
+        if (!is_null(self::$instance_queue)) {
+            $this->pdo = self::$instance_queue;
+            return $this->pdo;
+        }
         if (!is_null($connection)) {
-            $this->switchConnect($connection);
+            $this->switchConnect($connection, $type);
             return $this->pdo;
         }
         if (!is_null($this->pdo)) {
             return $this->pdo;
         }
         $con = config('database.default_connection');
-        $this->pdo = \Hola\Core\Connection::getInstance($con);
+        $this->pdo = PdoSql::instance($con);
         return $this->pdo;
     }
 
-    public function switchConnect($con)
+    public function switchConnect($con, $type = null)
     {
         $this->swithConnect = true;
-        $this->pdo = \Hola\Core\Connection::getInstance($con);
+        if ($type === 'queue') {
+            $this->pdo = PdoSql::queueConnect($con);
+        } else {
+            $this->pdo = PdoSql::instance($con);
+        }
     }
-
 }

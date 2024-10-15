@@ -1,7 +1,6 @@
 <?php
 
 namespace Hola\Core;
-use Hola\Interfaces\FormRequestInterface\DataInterface;
 
 class FormRequest extends Request {
     private $data_errors = null;
@@ -61,20 +60,6 @@ class FormRequest extends Request {
     public function data()
     {
         $data = $this->data;
-        return new class($data) implements DataInterface {
-            private $items;
-            function __construct($data) {
-                $this->items = $data;
-            }
-            function value() {
-                return $this->items;
-            }
-            function toArray() {
-                return convert_to_array($this->items);
-            }
-            function toJson() {
-                return convert_to_object($this->items);
-            }
-        };
+        return collection()->set($data);
     }
 }
