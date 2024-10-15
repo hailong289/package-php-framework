@@ -51,7 +51,7 @@ class Container
     }
 
     public function make($abstract, $factory = null) {
-        return $this->build($abstract, $factory = null);
+        return $this->build($abstract);
     }
 
     private function getClosure($factory)
@@ -59,6 +59,10 @@ class Container
         return function () use ($factory) {
             return $this->build($factory);
         };
+    }
+
+    public function callWithParams($abstract, $params = []) {
+        return $this->build($abstract, $params);
     }
 
     /**
@@ -92,7 +96,6 @@ class Container
         foreach ($this->callbackMethodParams as $value) {
             array_push($dependencies, $value);
         }
-
         // make class instance
         $initClass = $this->build($this->callbackClass);
         // call method with $dependencies/parameters
@@ -133,7 +136,7 @@ class Container
     }
 
 
-    private function build($class)
+    private function build($class, $params = [])
     {
         try {
             $classReflection = new \ReflectionClass($class);
@@ -145,6 +148,10 @@ class Container
 
         if (is_null($constructor)) {
             return $classReflection->newInstance();
+        }
+        
+        if (!empty($params)) {
+            return $classReflection->newInstanceArgs($params);
         }
 
         $dependencies = [];

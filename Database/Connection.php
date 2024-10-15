@@ -106,7 +106,6 @@ class Connection {
                 'time' => "Query took $queryTime seconds to execute."
             ];
         }
-        $this->clear();
         return $callback($statement, $status);
     }
 

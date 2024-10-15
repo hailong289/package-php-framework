@@ -177,7 +177,7 @@ class QueueScript extends \Hola\Core\Command
                 }
                 $this->setTimeOutJob($queue['timeout']);
                 $this->queueRunning = $queue;
-                app()->call(array_merge([$queue['class'], 'handle'], $queue['payload']));
+                app()->callWithParams($queue['class'], $queue['payload'])->handle();
                 $end = new \DateTime();
                 $time = $end->diff($start)->format('%H:%I:%S');
                 $this->output()->text("{$queue['class']} work success ---- Time: $time");
@@ -194,7 +194,7 @@ class QueueScript extends \Hola\Core\Command
         if ($queue_name === 'rollback_failed_job') {
             $queue_name = 'failed_jobs';
         }
-        $list_queue = $db->lrange("queue:{$queue_name}", 0, -1);
+        $list_queue = $db->lrange("queue:{$queue_name}", 0, 5);
         foreach ($list_queue as $queue) {
             if ($this->break_job) break;
             $db->lPop("queue:{$queue_name}");
@@ -207,7 +207,7 @@ class QueueScript extends \Hola\Core\Command
                 }
                 $this->setTimeOutJob($queue['timeout']);
                 $this->queueRunning = $queue;
-                app()->call(array_merge([$queue['class'], 'handle'], $queue['payload']));
+                app()->callWithParams($queue['class'], $queue['payload'])->handle();
                 $time = $this->endTimeJob($start);
                 $this->output()->text("{$queue['class']} work success ---- Time: $time");
             } catch (\Throwable $exception) {
@@ -215,6 +215,11 @@ class QueueScript extends \Hola\Core\Command
                 $this->output()->text("{$queue['class']} failed ---- Time: $time");
                 $this->falied($db, $queue, $exception);
             }
+        }
+
+        $firstTask = $db->lindex("queue:{$queue_name}", 0);
+        if (!empty($firstTask) && $this->break_job === false) {
+            $this->workQueueWithRedis($db);
         }
     }
 
@@ -247,7 +252,7 @@ class QueueScript extends \Hola\Core\Command
                 }
 //                $this->setTimeOutJob($queue['timeout']);
                 $this->queueRunning = $queue;
-                app()->call(array_merge([$queue['class'], 'handle'], $queue['payload']));
+                app()->callWithParams($queue['class'], $queue['payload'])->handle();
                 $time = $this->endTimeJob($start);
                 $this->output()->text("{$queue['class']} work success ---- Time: $time");
             } catch (\Throwable $e) {

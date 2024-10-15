@@ -45,7 +45,7 @@ class CreateQueue
                 'timeout' => $this->timeout
             ];
             if($this->connection === 'redis') {
-                $redis = Redis::queueConnect($this->connection);
+                $redis = RedisCR::workQueue($this->connection);
                 RedisCR::cacheRPush($tag_queue, $data_queue, 0);
             } elseif ($this->connection === 'database') {
                 $data = json_encode($data_queue, JSON_UNESCAPED_UNICODE);

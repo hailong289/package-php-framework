@@ -5,14 +5,14 @@ class Redis {
     private static $instance = null;
     private static $instance_queue = null;
 
-    public function __construct($name){
-        $config = cache('config', config('database.connections'));
+    public function __construct($config, $name){
         $this->connect($config, $name);
     }
 
     public static function instance($name = 'redis'){
         if(self::$instance == null){
-            $connection = new Redis($name);
+            $config = cache('config', config('database.connections'));
+            $connection = new Redis($config, $name);
             self::$instance = self::$conn;
         }
         return self::$instance;
@@ -22,7 +22,7 @@ class Redis {
     {
         if(self::$instance_queue == null){
             $config = cache('config_queue', config('queue.connections'));;
-            $connection = self::connect($config, $name);
+            $connection = new Redis($config, $name);
             self::$instance_queue = self::$conn;
         }
         return self::$instance_queue;

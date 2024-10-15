@@ -17,6 +17,13 @@ class RedisCR {
         return self::$redis;
     }
 
+    public static function workQueue($name = null) {
+        $name = $name ?? config_env('REDIS_CONNECTION','redis');
+        self::$redis = Redis::queueConnect($name);
+        return self::$redis;
+    }
+
+
     public static function isConnect() {
         if(!self::$redis) echo 'Redis connect failed';
         echo 'Redis connect successfully';
