@@ -385,6 +385,15 @@ class QueryBuilder {
         return $sql;
     }
 
+    public function subQuery($query, $as)
+    {
+        $this->bindings['from'] = [
+            'table' => "($query)",
+            'as' => $as
+        ];
+        return $this;
+    }
+
     public function clone() {
         $clone = clone $this;
         return $clone->toSql();

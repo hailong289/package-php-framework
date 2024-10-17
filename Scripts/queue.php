@@ -151,40 +151,50 @@ class QueueScript extends \Hola\Core\Command
         if ($queue_name === 'rollback_failed_job') {
             $queue_name = 'failed_jobs';
         }
-        $list_queue = $db
+        
+        $queue = $db
             ->from($queue_name)
             ->where('queue', $queue_name)
-            ->get()
+            ->limit(1)
+            ->first()
             ->toArray();
-        $list_queue = array_map(function ($item){
-            $queue = json_decode($item['data'], true);
-            $queue['key'] = $item['id'];
-            return $queue;
-        }, $list_queue ?? []);
 
-        foreach ($list_queue as $queue) {
-            $queue = $this->data($queue);
-            if ($this->break_job) break;
-            $db->from($queue_name)
-                ->where('queue', $queue_name)
-                ->where('id', $queue['key'])
-                ->delete();
-            $start = new \DateTime();
-            $this->output()->text("{$queue['class']} running");
-            try {
-                if (!method_exists($queue['class'], 'handle')) {
-                    throw new \Exception("function handle does not exits in {$queue['class']}");
-                }
-                $this->setTimeOutJob($queue['timeout']);
-                $this->queueRunning = $queue;
-                app()->callWithParams($queue['class'], $queue['payload'])->handle();
-                $end = new \DateTime();
-                $time = $end->diff($start)->format('%H:%I:%S');
-                $this->output()->text("{$queue['class']} work success ---- Time: $time");
-            }catch (\Throwable $exception) {
-                $this->output()->text("$class failed ");
-                $this->falied($db, $queue, $exception);
+        if ($this->break_job || empty($queue)) {
+            return;
+        }
+
+        $queue = json_decode($queue['data'], true);
+        $queue['key'] = $queue['id'];
+        $queue = $this->data($queue);
+        $db->from($queue_name)
+            ->where('queue', $queue_name)
+            ->where('id', $queue['key'])
+            ->delete();
+        $start = new \DateTime();
+        $this->output()->text("{$queue['class']} running");
+        try {
+            if (!method_exists($queue['class'], 'handle')) {
+                throw new \Exception("function handle does not exits in {$queue['class']}");
             }
+            $this->setTimeOutJob($queue['timeout']);
+            $this->queueRunning = $queue;
+            app()->callWithParams($queue['class'], $queue['payload'])->handle();
+            $end = new \DateTime();
+            $time = $end->diff($start)->format('%H:%I:%S');
+            $this->output()->text("{$queue['class']} work success ---- Time: $time");
+        }catch (\Throwable $exception) {
+            $this->output()->text("$class failed ");
+            $this->falied($db, $queue, $exception);
+        }
+
+        $numberTask = $db
+            ->from($queue_name)
+            ->where('queue', $queue_name)
+            ->limit(1)
+            ->first();
+
+        if (!empty($numberTask)) {
+            $this->queueWorkWithDB($db);
         }
     }
 
@@ -194,27 +204,27 @@ class QueueScript extends \Hola\Core\Command
         if ($queue_name === 'rollback_failed_job') {
             $queue_name = 'failed_jobs';
         }
-        $list_queue = $db->lrange("queue:{$queue_name}", 0, 5);
-        foreach ($list_queue as $queue) {
-            if ($this->break_job) break;
-            $db->lPop("queue:{$queue_name}");
-            $queue = $this->data(json_decode($queue, true));
-            $start = new \DateTime();
-            $this->output()->text("{$queue['class']} running");
-            try {
-                if (!method_exists($queue['class'], 'handle')) {
-                    throw new \Exception("function handle does not exits in {$queue['class']}");
-                }
-                $this->setTimeOutJob($queue['timeout']);
-                $this->queueRunning = $queue;
-                app()->callWithParams($queue['class'], $queue['payload'])->handle();
-                $time = $this->endTimeJob($start);
-                $this->output()->text("{$queue['class']} work success ---- Time: $time");
-            } catch (\Throwable $exception) {
-                $time = $this->endTimeJob($start);
-                $this->output()->text("{$queue['class']} failed ---- Time: $time");
-                $this->falied($db, $queue, $exception);
+        $queue = $db->lindex("queue:{$queue_name}", 0);
+        if ($this->break_job || empty($queue)) {
+            return;
+        }
+        $db->lPop("queue:{$queue_name}");
+        $queue = $this->data(json_decode($queue, true));
+        $start = new \DateTime();
+        $this->output()->text("{$queue['class']} running");
+        try {
+            if (!method_exists($queue['class'], 'handle')) {
+                throw new \Exception("function handle does not exits in {$queue['class']}");
             }
+            $this->setTimeOutJob($queue['timeout']);
+            $this->queueRunning = $queue;
+            app()->callWithParams($queue['class'], $queue['payload'])->handle();
+            $time = $this->endTimeJob($start);
+            $this->output()->text("{$queue['class']} work success ---- Time: $time");
+        } catch (\Throwable $exception) {
+            $time = $this->endTimeJob($start);
+            $this->output()->text("{$queue['class']} failed ---- Time: $time");
+            $this->falied($db, $queue, $exception);
         }
 
         $firstTask = $db->lindex("queue:{$queue_name}", 0);

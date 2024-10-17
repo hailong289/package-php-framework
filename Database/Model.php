@@ -216,6 +216,11 @@ class Model {
     {
         return self::build()->softDelete($id);
     }
+
+    public static function subQuery($query, $as)
+    {
+        return self::build()->subQuery($query, $as);
+    }
     
     public function hasOne($related, $foreign_key, $key = 'id') {
         $parent_function = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'];
