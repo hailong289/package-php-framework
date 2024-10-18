@@ -33,14 +33,13 @@ class Response {
             }
             throw new \RuntimeException("File App/Views/$view.view.php does not exist", 500);
         }
-        $GLOBALS['share_data_view'] = $data;
-        return self::renderView($file_view);
+        return self::renderView($file_view, $data);
     }
 
-    private static function renderView($file_view)
+    private static function renderView($file_view, $data)
     {
-        if(!empty($GLOBALS['share_data_view'])) {
-            extract($GLOBALS['share_data_view']);
+        if(!empty($data)) {
+            extract($data);
         }
         $folder = __DIR__ROOT . '/storage/render';
         $startPos = strpos($file_view, 'Views');

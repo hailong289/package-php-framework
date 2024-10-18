@@ -154,7 +154,6 @@ if(!function_exists('get_view')){
         if(!file_exists(__DIR__ROOT . '/App/Views/'.$view.'.view.php')){
             throw new \RuntimeException("File App/Views/$view.view.php does not exist", 500);
         }
-        if(isset($GLOBALS['share_data_view']) && count($GLOBALS['share_data_view'])) $data = array_merge($data, $GLOBALS['share_data_view']);
         extract($data);
         $file = __DIR__ROOT . '/App/Views/'.$view.'.view.php';
         require_once $file;
@@ -296,18 +295,12 @@ if(!function_exists('res')){
                     throw new \RuntimeException("File App/Views/$view.view.php does not exist", 500);
                 }
                 http_response_code($status);
-                if(count($data)) $GLOBALS['share_data_view'] = $data;
                 extract($data);
                 $file = __DIR__ROOT . '/App/Views/'.$view.'.view.php';
                 require_once $file;
                 return $file;
             }
             function data($data = []) {
-                if(count($GLOBALS['share_data_view'])) {
-                    $GLOBALS['share_data_view'] = array_merge($data, $GLOBALS['share_data_view']);
-                } else {
-                    $GLOBALS['share_data_view'] = $data;
-                }
                 return $this;
             }
             function json($data, $status = 200){
