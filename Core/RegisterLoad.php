@@ -18,16 +18,6 @@ class RegisterLoad
         return $this;
     }
 
-    public function languageLoad($name = null)
-    {
-        $lang = $name ?? LANGUAGE;
-        $pathName = __DIR__ROOT . "/language/$lang.php";
-        if (file_exists($pathName)) {
-            $GLOBALS['data_lang'] = require($pathName);
-        }
-        return $this;
-    }
-
     public function routerWorkLoad()
     {
         $pathName = __DIR__ROOT . "/router/index.php";

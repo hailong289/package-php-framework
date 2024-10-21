@@ -164,11 +164,8 @@ if(!function_exists('get_view')){
 if(!function_exists('__')){
     function __($key, $data_key = [], $lang = '')
     {
-        if(!empty($lang)) {
-            $data = require(path_root("language/$lang.php"));
-        } else {
-            $data = $GLOBALS['data_lang'];
-        }
+        $language = $lang ?? config_env('LANGUAGE', 'vi');
+        $data = require(path_root("language/$language.php"));
         $convert = $data[$key] ?? $key;
         foreach ($data_key as $k=>$value) {
             $convert = str_replace("{{".$k."}}", $value, $convert);
@@ -180,11 +177,8 @@ if(!function_exists('__')){
 if(!function_exists('translate')){
     function translate($key, $data_key = [], $lang = '')
     {
-        if(!empty($lang)) {
-            $data = require(path_root("language/$lang.php"));
-        } else {
-            $data = $GLOBALS['data_lang'];
-        }
+        $language = $lang ?? config_env('LANGUAGE', 'vi');
+        $data = require(path_root("language/$language.php"));
         $convert = $data[$key] ?? $key;
         foreach ($data_key as $k=>$value) {
             $convert = str_replace("{{".$k."}}", $value, $convert);
@@ -196,7 +190,8 @@ if(!function_exists('translate')){
 if(!function_exists('lang_has')){
     function lang_has($key)
     {
-        $data = $GLOBALS['data_lang'];
+        $language = config_env('LANGUAGE', 'vi');
+        $data = require(path_root("language/$language.php"));
         return isset($data[$key]);
     }
 }
@@ -494,5 +489,17 @@ if(!function_exists('isTwoDimensionalArray')) {
             }
         }
         return false;
+    }
+}
+
+if(!function_exists('generateKey')) {
+    function generateKey($length = 16) {
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $charactersLength = strlen($characters);
+        $randomString = '';
+        for ($i = 0; $i < $length; $i++) {
+            $randomString .= $characters[rand(0, $charactersLength - 1)];
+        }
+        return $randomString;
     }
 }
