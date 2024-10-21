@@ -229,12 +229,12 @@ class Model {
 
     public static function count($name = null, $alias = null)
     {
-        return self::build()->count($name, $as);
+        return self::build()->count($name, $alias);
     }
 
     public static function sum($name = null, $alias = null)
     {
-        return self::build()->sum($name, $as);
+        return self::build()->sum($name, $alias);
     }
     
     public function hasOne($related, $foreign_key, $key = 'id') {

@@ -35,9 +35,10 @@ class PdoSql {
         $username = $db_connection['username'];
         $password = $db_connection['password'];
         $dsn_config = $db_connection['dsn'] ?? null;
+        $driver = $db_connection['driver'] ?? 'mysql';
         try{
             // dsn configuration
-            $dsn = "$name:dbname=$db_name;host=$host";
+            $dsn = "$driver:dbname=$db_name;host=$host";
             if (!is_null($dsn_config)) {
                 $dsn = $dsn_config;
             }

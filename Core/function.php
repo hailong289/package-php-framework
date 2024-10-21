@@ -162,7 +162,7 @@ if(!function_exists('get_view')){
 }
 
 if(!function_exists('__')){
-    function __($key, $data_key = [], $lang = '')
+    function __($key, $data_key = [], $lang = null)
     {
         $language = $lang ?? config_env('LANGUAGE', 'vi');
         $data = require(path_root("language/$language.php"));
@@ -175,7 +175,7 @@ if(!function_exists('__')){
 }
 
 if(!function_exists('translate')){
-    function translate($key, $data_key = [], $lang = '')
+    function translate($key, $data_key = [], $lang = null)
     {
         $language = $lang ?? config_env('LANGUAGE', 'vi');
         $data = require(path_root("language/$language.php"));

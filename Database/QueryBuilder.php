@@ -752,7 +752,12 @@ class QueryBuilder {
 
     private function resloveRelations(Collection $data, $type = 'GET')
     {
-        if (empty($this->bindings['relations']) || $data->isEmpty()) {
+        if (
+            empty($this->bindings['relations']) ||
+            $data->isEmpty() ||
+            !is_array($data) ||
+            !is_object($data)
+        ) {
             return $data;
         }
         $original_data = clone $data;
