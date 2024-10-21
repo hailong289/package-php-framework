@@ -192,6 +192,11 @@ class Model {
         return self::build()->create($data);
     }
 
+    public static function updateOrInsert($data, $id = null)
+    {
+        return self::build()->updateOrInsert($data, $id);
+    }
+
     public static function insert($data)
     {
         return self::build()->insert($data);
@@ -220,6 +225,16 @@ class Model {
     public static function subQuery($query, $as)
     {
         return self::build()->subQuery($query, $as);
+    }
+
+    public static function count($name = null, $alias = null)
+    {
+        return self::build()->count($name, $as);
+    }
+
+    public static function sum($name = null, $alias = null)
+    {
+        return self::build()->sum($name, $as);
     }
     
     public function hasOne($related, $foreign_key, $key = 'id') {

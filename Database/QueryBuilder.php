@@ -444,7 +444,17 @@ class QueryBuilder {
             return $selectData;
         }, $this->bindings['params']);
     }
-
+    
+    public function updateOrInsert($data, $id = null)
+    {
+        $table = $this->bindings['from']['table'];
+        $selectData = $this->from($table)->find($id);
+        if ($selectData->isEmpty()) {
+            return $this->create($data);
+        }
+        return $this->update($data, $id);
+    }
+    
     public function insert($data)
     {
         return $this->resloveData($this->toSql('INSERT', $data), 'insert', function ($selectData, $status) {
