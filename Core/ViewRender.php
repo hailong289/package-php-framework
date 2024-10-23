@@ -75,19 +75,16 @@ class ViewRender {
             ['regex' => '/@selected\((.*?)\)/', 'render' => 'selected="$1"'],
             ['regex' => '/@disabled\((.*?)\)/', 'render' => 'disabled="$1"'],
             ['regex' => '/@readonly\((.*?)\)/', 'render' => 'readonly="$1"'],
-            ['regex' => '/@include\((.*?)\)/', 'render' => '<?php include($1) ?>'],
         ], self::$directive);
         return $directive;
     }
 
-    public static function render($fileView)
-    {
-       $directive = self::defaultDirective();
-       $content = file_get_contents($fileView);
-       foreach ($directive as $directive) {
-           $content = preg_replace($directive['regex'], $directive['render'], $content);
-       }
-       return $content;
+    public static function render($view, $data = []) {
+        $view = self::resloveFileView($view);
+        $output = self::resloveViewContent($view);
+        $output = self::resloveIncludes($output);
+        $output = self::resloveDirective($output);
+        return self::resloveRenderHtml($view, $output, $data);
     }
 
     public static function directive($directive, $fun)
@@ -112,6 +109,66 @@ class ViewRender {
             'render' => $render,
         ];
         return self::instance();
+    }
+
+    private static function resloveFileView($view)
+    {
+        $file_view = view_root($view);
+        if(!file_exists($file_view)){
+            if ($view === 'error.index') {
+                $path = dirname(__DIR__, 1);
+                $file_view = "$path/view/error.view.php";
+                return $file_view;
+            }
+            throw new \RuntimeException("File App/Views/$view.view.php does not exist", 500);
+        }
+        return $file_view;
+    }
+
+    private static function resloveDirective($output)
+    {
+        $list_directive = self::defaultDirective();
+        foreach ($list_directive as $directive) {
+            $output = preg_replace($directive['regex'], $directive['render'], $output);
+        }
+        return $output;
+    }
+
+    private static function resloveViewContent($view)
+    {
+        ob_start();
+        require_once $view;
+        $output = ob_get_clean();
+        return $output;
+    }
+
+    private static function resloveIncludes($output)
+    {
+        while (preg_match('/@include\(\s*[\'"](.+?)[\'"]\s*\)/', $output, $matches)) {
+            $includedView = view_root($matches[1]);
+            $includedContent = self::resloveViewContent($includedView);
+            $includedContent = self::resloveIncludes($includedContent);
+            $output = str_replace($matches[0], $includedContent, $output);
+        }
+        return $output;
+    }
+
+    private static function resloveRenderHtml($viewCurrent, $output, $data)
+    {
+        extract($data);
+        $folder = __DIR__ROOT . '/storage/render';
+        $startPos = strpos($viewCurrent, 'Views');
+        $view = substr($viewCurrent, $startPos);
+        $view_render = "$folder/$view";
+        $view_render = str_replace('.view.php', '.php', $view_render);
+        if (file_exists($view_render)) {
+            require_once $view_render;
+            return $view_render;
+        }
+        createFolder(getFolder($view_render));
+        file_put_contents($view_render, $output);
+        require_once $view_render;
+        return $view_render;
     }
 
 }

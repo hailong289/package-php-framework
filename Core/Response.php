@@ -19,42 +19,9 @@ class Response {
 
     public static function view($view, $data = [], $headers = [], $status = 200){
         self::resloveDataCollect($data);
-        $folder_view = __DIR__ROOT . '/App/Views/';
         $headers['Content-Type'] = 'text/html; charset=utf-8';
         self::setHeaders($headers, $status);
-        $views = preg_replace('/([.]+)/', '/' , $view);
-        $file_view = "{$folder_view}{$views}.view.php";
-        if(!file_exists($file_view)){
-            if ($view === 'error.index') {
-                $path = dirname(__DIR__, 1);
-                $file_view = "$path/view/error.view.php";
-                require_once $file_view;
-                return $file_view;
-            }
-            throw new \RuntimeException("File App/Views/$view.view.php does not exist", 500);
-        }
-        return self::renderView($file_view, $data);
-    }
-
-    private static function renderView($file_view, $data)
-    {
-        if(!empty($data)) {
-            extract($data);
-        }
-        $folder = __DIR__ROOT . '/storage/render';
-        $startPos = strpos($file_view, 'Views');
-        $view = substr($file_view, $startPos);
-        $view_render = "$folder/$view";
-        $view_render = str_replace('.view.php', '.php', $view_render);
-        if (file_exists($view_render)) {
-            require_once $view_render;
-            return $view_render;
-        }
-        createFolder(getFolder($view_render));
-        $content = ViewRender::render($file_view);
-        file_put_contents($view_render, $content);
-        require_once $view_render;
-        return $view_render;
+        return ViewRender::render($view, $data);
     }
 
     private static function setHeaders($headers = [], $status = 200)

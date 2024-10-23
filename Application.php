@@ -95,7 +95,7 @@ class Application extends Container
             }
             $control_array = array_values($this->control);
             $result = $this->call($control_array);
-            return $this->responseSuccess($result, 200);
+            return $this->responseSuccess($result);
         } catch (\Throwable $e) {
             $this->handleErrorLogs($e);
             $code = (int)$e->getCode();
@@ -106,7 +106,7 @@ class Application extends Container
     }
 
 
-    private function responseSuccess($return, $code)
+    private function responseSuccess($return)
     {
         if (is_array($return) || is_object($return)) {
             echo json_encode($return);
@@ -117,7 +117,6 @@ class Application extends Container
             }
             echo file_get_contents($return);
         } else {
-            http_response_code($code);
             echo $return;
         };
         return $this;
@@ -188,7 +187,7 @@ class Application extends Container
             });
             return false;
         }
-        $this->responseSuccess($result, 200);
+        $this->responseSuccess($result);
         exit();
     }
 }
