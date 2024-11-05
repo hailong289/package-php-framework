@@ -543,7 +543,7 @@ class QueryBuilder {
             'last_page' => $last_page,
             'next_page' => $page < $last_page ? $page + 1 : null,
             'prev_page' => $page > 1 ? $page - 1 : null
-        ])->values();
+        ])->toArray();
     }
 
     private function resloveData($sql, $select, $callback, $bindings = [])

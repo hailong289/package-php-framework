@@ -95,6 +95,8 @@ class Application extends Container
             }
             $control_array = array_values($this->control);
             $result = $this->call($control_array);
+            // check middlware in controller
+            $this->registerMiddlware();
             return $this->responseSuccess($result);
         } catch (\Throwable $e) {
             $this->handleErrorLogs($e);

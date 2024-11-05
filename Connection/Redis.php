@@ -11,7 +11,7 @@ class Redis {
 
     public static function instance($name = 'redis'){
         if(self::$instance == null){
-            $config = cache('config', config('database.connections'));
+            $config = config('database.connections');
             $connection = new Redis($config, $name);
             self::$instance = self::$conn;
         }
@@ -21,7 +21,7 @@ class Redis {
     public static function queueConnect($name = 'redis')
     {
         if(self::$instance_queue == null){
-            $config = cache('config_queue', config('queue.connections'));;
+            $config = config('queue.connections');
             $connection = new Redis($config, $name);
             self::$instance_queue = self::$conn;
         }

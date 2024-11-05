@@ -6,7 +6,7 @@ class PdoSql {
     private static $instance_queue = null;
 
     public function __construct($name){
-        $config = cache('config', config('database.connections'));
+        $config = config('database.connections');
         $this->connect($config, $name);
     }
 
@@ -21,7 +21,7 @@ class PdoSql {
     public static function queueConnect($name = 'database')
     {
         if(self::$instance_queue == null){
-            $config = cache('config_queue', config('queue.connections'));;
+            $config = config('queue.connections');
             $connection = self::connect($config, $name);
             self::$instance_queue = self::$conn;
         }

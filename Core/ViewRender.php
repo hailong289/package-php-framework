@@ -84,7 +84,7 @@ class ViewRender {
         $output = self::resloveViewContent($fileView, $data);
         $output = self::resloveIncludes($output, $data);
         $output = self::resloveDirective($output);
-        return self::resloveRenderHtml($fileView, $output, $data);
+        return self::resloveRenderHtml($fileView, $view, $output, $data);
     }
 
     public static function directive($directive, $fun)
@@ -157,7 +157,7 @@ class ViewRender {
         return $output;
     }
 
-    private static function resloveRenderHtml($viewCurrent, $output, $data = [])
+    private static function resloveRenderHtml($viewCurrent, $name, $output, $data = [])
     {
         if (!empty($data)) {
             extract($data);
@@ -170,6 +170,10 @@ class ViewRender {
         if (file_exists($view_render)) {
             require_once $view_render;
             return $view_render;
+        }
+        if ($name === 'error.index') {
+            require($viewCurrent);
+            return $viewCurrent;
         }
         createFolder(getFolder($view_render));
         file_put_contents($view_render, $output);
