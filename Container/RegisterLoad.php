@@ -1,5 +1,5 @@
 <?php
-namespace Hola\Core;
+namespace Hola\Container;
 class RegisterLoad
 {
 
