@@ -16,12 +16,14 @@ class CacheScript extends \Hola\Core\Command
                 if(file_exists($item)){ 
                     unlink($item);
                 }
+                $this->output()->text("Clear cache router successfully");
                 break;
             case 'config':
                 $item = __DIR__ROOT.'/storage/cache/config.cache';
                 if(file_exists($item)){
                     unlink($item);
                 }
+                $this->output()->text("Clear cache config successfully");
                 break;
             case 'view':
                 $item = __DIR__ROOT.'/storage/render/views';
@@ -33,6 +35,7 @@ class CacheScript extends \Hola\Core\Command
                         }
                     }
                 }
+                $this->output()->text("Clear cache view successfully");
                 break;
             default:
                 $cache = rglob(__DIR__ROOT.'/storage/cache/*.cache');
@@ -43,8 +46,8 @@ class CacheScript extends \Hola\Core\Command
                         }
                     }
                 }
+                $this->output()->text("Clear cache successfully");
                 break;
         }
-        $this->output()->text("Clear cache successfully");
     }
 }

@@ -400,11 +400,11 @@ if(!function_exists('rglob')) {
 }
 
 if (!function_exists('app')) {
-    function app($abstract = null) {
+    function app($abstract = null): \Hola\Container\Container {
         if (is_null($abstract)) {
             return \Hola\Container\Container::instance();
         }
-        return \Hola\Container\Container::instance()->make($abstract);
+        return \Hola\Container\Container::instance()->set($abstract);
     }
 }
 

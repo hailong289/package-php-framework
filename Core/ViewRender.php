@@ -80,11 +80,11 @@ class ViewRender {
     }
 
     public static function render($view, $data = []) {
-        $view = self::resloveFileView($view);
-        $output = self::resloveViewContent($view);
-        $output = self::resloveIncludes($output);
+        $fileView = self::resloveFileView($view);
+        $output = self::resloveViewContent($fileView, $data);
+        $output = self::resloveIncludes($output, $data);
         $output = self::resloveDirective($output);
-        return self::resloveRenderHtml($view, $output, $data);
+        return self::resloveRenderHtml($fileView, $output, $data);
     }
 
     public static function directive($directive, $fun)
@@ -134,28 +134,34 @@ class ViewRender {
         return $output;
     }
 
-    private static function resloveViewContent($view)
+    private static function resloveViewContent($view, $data = [])
     {
+        if (!empty($data)) {
+            extract($data);
+        }
         ob_start();
         require_once $view;
         $output = ob_get_clean();
         return $output;
     }
 
-    private static function resloveIncludes($output)
+    private static function resloveIncludes($output, $data)
     {
+        $output = preg_replace('/<!--(.*?)-->/', '', $output);
         while (preg_match('/@include\(\s*[\'"](.+?)[\'"]\s*\)/', $output, $matches)) {
             $includedView = view_root($matches[1]);
-            $includedContent = self::resloveViewContent($includedView);
-            $includedContent = self::resloveIncludes($includedContent);
+            $includedContent = self::resloveViewContent($includedContent, $data);
+            $includedContent = self::resloveIncludes($includedContent, $data);
             $output = str_replace($matches[0], $includedContent, $output);
         }
         return $output;
     }
 
-    private static function resloveRenderHtml($viewCurrent, $output, $data)
+    private static function resloveRenderHtml($viewCurrent, $output, $data = [])
     {
-        extract($data);
+        if (!empty($data)) {
+            extract($data);
+        }
         $folder = __DIR__ROOT . '/storage/render';
         $startPos = strpos($viewCurrent, 'Views');
         $view = substr($viewCurrent, $startPos);

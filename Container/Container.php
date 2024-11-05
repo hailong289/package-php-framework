@@ -29,7 +29,7 @@ class Container
         return isset($this->bindings[$abstract]) ? $this->bindings[$abstract]:$abstract;
     }
 
-    public function set($abstract, $factory = null): void
+    public function set($abstract, $factory = null)
     {
         if (is_null($factory)) {
             $factory = $abstract;
@@ -41,6 +41,7 @@ class Container
             $factory = $this->getClosure($factory);
         }
         $this->bindings[$abstract] = $factory();
+        return $this;
     }
 
     public function replace($abstract, $factory): void

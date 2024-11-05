@@ -97,7 +97,7 @@ class Request extends \stdClass {
         return $this->file;
     }
 
-    public function tmp_name(){
+    public function tmpName(){
         if(empty($this->file)) {
             throw new \Exception('File not set');
         }

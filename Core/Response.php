@@ -18,9 +18,9 @@ class Response {
     }
 
     public static function view($view, $data = [], $headers = [], $status = 200){
-        self::resloveDataCollect($data);
         $headers['Content-Type'] = 'text/html; charset=utf-8';
         self::setHeaders($headers, $status);
+        self::resloveDataCollect($data);
         return ViewRender::render($view, $data);
     }
 

@@ -21,17 +21,16 @@ class Middleware {
     public function work() {
         if (class_exists(\Middleware\Kernel::class)) {
             $kernel = new \Middleware\Kernel();
-            $container = new Container();
             try {
                 $result = null;
                 foreach ($this->bindings as $name) {
                     if(!empty($kernel->routerMiddleware[$name])){
                         $class = $kernel->routerMiddleware[$name];
-                        $result = $container->call([$class, 'handle']);
+                        $result = app()->call([$class, 'handle']);
                         break;
                     } else {
                         if (class_exists("\\Middleware\\$name")) {
-                            $result = $container->call(["\\Middleware\\$name", 'handle']);
+                            $result = app()->call(["\\Middleware\\$name", 'handle']);
                             break;
                         } else {
                             throw new \RuntimeException("Middleware $name does not exist");

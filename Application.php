@@ -40,7 +40,7 @@ class Application extends Container
             $this->register();
             $this->registerDependencies();
             $this->registerRouter();
-            $this->regiterMiddlware();
+            $this->registerMiddlware();
             $this->work();
         } catch (\Throwable $e) {
             $this->handleErrorLogs($e);
@@ -174,7 +174,7 @@ class Application extends Container
         $this->middleware = $router['middleware'];
     }
 
-    private function regiterMiddlware()
+    private function registerMiddlware()
     {
         if (empty($this->middleware)) {
             return false;
