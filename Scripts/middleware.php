@@ -1,5 +1,6 @@
 <?php
 namespace Hola\Scripts;
+
 class MiddlewareScript extends \Hola\Core\Command
 {
     protected $command = 'create:middleware';
@@ -25,12 +26,13 @@ class MiddlewareScript extends \Hola\Core\Command
                 mkdir(__DIR__ROOT . "/middleware");
             }
             file_put_contents($concurrentDirectory, '<?php
-namespace Hola\Middleware;
+namespace Middleware;
 use Hola\Core\Request;
+use Hola\Core\Response;
 
 class ' . $name_middleware . ' {
-     public function handle(Request $request){
-         return $request->next();
+     public function handle(Request $request, Response $response){
+         return $response->next($request);
      }
 }
 ', FILE_APPEND);

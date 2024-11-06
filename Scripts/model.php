@@ -26,7 +26,7 @@ class ModelScript extends \Hola\Core\Command
             }
             file_put_contents($concurrentDirectory, '<?php
 namespace App\Models;
-use Hola\Core\Model;
+use Hola\Database\Model;
 
 class ' . $name_model . ' extends Model {
     protected static $tableName = "' . $name_table . '";

@@ -47,7 +47,7 @@ class QueueScript extends \Hola\Core\Command
             $timeout = $timeout === 0 ? config('queue.timeout') : $timeout;
             $this->timeout = $timeout;
         }
-        ini_set('max_execution_time', $this->timeout);
+        set_time_limit($this->timeout);
     }
 
     private function data($data)
