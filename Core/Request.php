@@ -118,7 +118,7 @@ class Request extends \stdClass {
         return $this->file['type'];
     }
 
-    public function error(){
+    public function errorFile(){
         if(empty($this->file)) {
             throw new \Exception('File not set');
         }

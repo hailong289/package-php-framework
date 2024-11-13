@@ -38,7 +38,7 @@ class RegisterLoad
                     $items = explode("/", $item);
                     $end = end($items);
                     $end = str_replace('.php', '', $end);
-                    $GLOBALS['config'][$end] = require($item);
+                    $GLOBALS['config_'.PROJECT_KEY][$end] = require($item);
                 }
             } else {
                 throw new \Exception("File $item does not exist");

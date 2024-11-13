@@ -20,7 +20,7 @@ class Model {
         return $varModel['table'] ?? $tableName;
     }
     
-    public function init() {
+    public static function init() {
         return self::build();
     }
 

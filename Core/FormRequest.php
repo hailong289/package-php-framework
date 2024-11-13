@@ -32,8 +32,9 @@ class FormRequest extends Request {
                     echo json_encode($data);
                     exit();
                 }
-                Response::view($name_view, $data);
-                exit();
+                Response::withExit('view', function() use ($name_view, $data) {
+                    return [$name_view, $data];
+                });
             }
         }
 
@@ -44,12 +45,12 @@ class FormRequest extends Request {
         $validate = Validation::create($request->all(), $this->rules());
         if(!empty($validate->errors())) {
             $this->data_errors = $validate->errors();
-            $GLOBALS['share_data_errors'] = [
+            $GLOBALS['share_data_errors_'.PROJECT_KEY] = [
                 'errors' => $this->data_errors
             ];
         }
         $this->data = $validate->data();
-        return;
+        return $this->data;
     }
 
     public function errors()

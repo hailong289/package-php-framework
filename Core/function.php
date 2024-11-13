@@ -255,18 +255,18 @@ if(!function_exists('errors')){
      */
     function errors($key = ''): object {
         if(!empty($key)) {
-            return $GLOBALS['share_data_errors'][$key];
+            return $GLOBALS['share_data_errors_'.PROJECT_KEY][$key];
         }
         return new class() implements \Hola\Interfaces\FunctionInterface\InterfaceErrors {
             function get($key = '') {
-                return $GLOBALS['share_data_errors'][$key];
+                return $GLOBALS['share_data_errors_'.PROJECT_KEY][$key];
             }
             function set($key = '', $value = '') {
-                $GLOBALS['share_data_errors'][$key] = $value;
+                $GLOBALS['share_data_errors_'.PROJECT_KEY][$key] = $value;
                 return;
             }
             function all(){
-                return $GLOBALS['share_data_errors'];
+                return $GLOBALS['share_data_errors_'.PROJECT_KEY];
             }
         };
     }
@@ -274,7 +274,7 @@ if(!function_exists('errors')){
 
 if(!function_exists('val')){
     function val($key = '', $default = null) {
-        return $GLOBALS['share_data_view'][$key] ?? $default;
+        return $GLOBALS['share_data_view_'.PROJECT_KEY][$key] ?? $default;
     }
 }
 
@@ -416,15 +416,15 @@ if (!function_exists('config')) {
                     $arr_config = explode('.', $name);
                     $name_config = $arr_config[0];
                     unset($arr_config[0]);
-                    $config = $GLOBALS['config'][$name_config] ?? [];
+                    $config = $GLOBALS['config_'.PROJECT_KEY][$name_config] ?? [];
                     $this->editByKey($config, $arr_config, $value);
-                    $GLOBALS['config'][$name_config] = $config;
+                    $GLOBALS['config_'.PROJECT_KEY][$name_config] = $config;
                 }
                 function get($name) {
                     $arr_config = explode('.', $name);
                     $name_config = $arr_config[0];
                     unset($arr_config[0]);
-                    $config = $GLOBALS['config'][$name_config] ?? [];
+                    $config = $GLOBALS['config_'.PROJECT_KEY][$name_config] ?? [];
                     return $this->last($arr_config, $config);
                 }
                 function last($keys, $items) {
@@ -456,7 +456,7 @@ if (!function_exists('config')) {
         $arr_config = explode('.', $name);
         $name_config = $arr_config[0];
         unset($arr_config[0]);
-        $config = $GLOBALS['config'][$name_config] ?? [];
+        $config = $GLOBALS['config_'.PROJECT_KEY][$name_config] ?? [];
         return config()->last($arr_config, $config);
     }
 }

@@ -5,23 +5,36 @@ namespace Hola\Core;
 use Hola\Data\Collection;
 
 class Response {
+
     public static function redirectTo($path, $status = 302, $headers = []){
         header('Location: ' . $path, true, $status);
         exit();
     }
     
-    public static function json($data = [], $status = 200, $headers = [], $options = 0){
+    public static function json($data = [], $status = 200, $headers = []){
         $headers['Content-Type'] = 'application/json; charset=utf-8';
         self::setHeaders($headers, $status);
         self::resloveDataCollect($data);
         return $data;
     }
 
-    public static function view($view, $data = [], $headers = [], $status = 200){
+    public static function view($view, $data = [], $headers = [], $status = 200, $callback = null){
         $headers['Content-Type'] = 'text/html; charset=utf-8';
         self::setHeaders($headers, $status);
         self::resloveDataCollect($data);
         return ViewRender::render($view, $data);
+    }
+
+    public static function withExit($type, \Closure $callback){
+        $data = $callback();
+        if ($type === 'json') {
+            echo self::json(...$data);
+        } else if ($type === 'view') {
+            self::view(...$data);
+        } else {
+            echo $data;
+        }
+        exit();
     }
 
     private static function setHeaders($headers = [], $status = 200)
