@@ -1,5 +1,8 @@
 <?php
-
+/**
+ * @param $key
+ * @return bool
+ */
 if(!function_exists('startsWith')){
     function startsWith( $haystack, $needle ) {
         $length = strlen( $needle );
@@ -7,7 +10,11 @@ if(!function_exists('startsWith')){
     }
 }
 
-
+/**
+ * @param $haystack
+ * @param $needle
+ * @return bool
+ */
 if(!function_exists('endsWith')){
     function endsWith( $haystack, $needle ) {
         $length = strlen( $needle );
@@ -18,6 +25,11 @@ if(!function_exists('endsWith')){
     }
 }
 
+/**
+ * @param $str
+ * @param string $delimiter
+ * @return string
+ */
 if(!function_exists('str_slug')){
     function str_slug($str, $delimiter = '-')
     {
@@ -63,6 +75,10 @@ if(!function_exists('str_slug')){
     }
 }
 
+/**
+ * @param $url
+ * @return string
+ */
 if(!function_exists('path_root')){
     function path_root($url)
     {
@@ -70,6 +86,10 @@ if(!function_exists('path_root')){
     }
 }
 
+/**
+ * @param $path
+ * @return string
+ */
 if(!function_exists('url')){
     function url($path = '')
     {
@@ -77,6 +97,10 @@ if(!function_exists('url')){
     }
 }
 
+/**
+ * @param $view
+ * @return string
+ */
 if(!function_exists('view_root')){
     function view_root($view)
     {
@@ -88,6 +112,10 @@ if(!function_exists('view_root')){
     }
 }
 
+/**
+ * @param $data
+ * @return string
+ */
 if(!function_exists('log_debug')){
     function log_debug(...$args) {
         http_response_code(500);
@@ -98,10 +126,10 @@ if(!function_exists('log_debug')){
     }
 }
 
+/**
+ * @return InterfaceLogs|__anonymous@2793
+ */
 if(!function_exists('logs')){
-    /**
-     * @return InterfaceLogs|__anonymous@2793
-     */
     function logs(): object {
         return new class implements \Hola\Interfaces\InterfaceLogs\Log {
             public function dump(...$args) {
@@ -137,6 +165,10 @@ if(!function_exists('logs')){
     }
 }
 
+/**
+ * @param $e
+ * @param string $name
+ */
 if(!function_exists('log_write')){
     function log_write($e, $name = 'debug') {
         $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
@@ -147,6 +179,11 @@ if(!function_exists('log_write')){
     }
 }
 
+/**
+ * @param $name
+ * @param array $data
+ * @return mixed
+ */
 if(!function_exists('get_view')){
     function get_view($name, $data = [])
     {
@@ -161,6 +198,10 @@ if(!function_exists('get_view')){
     }
 }
 
+/**
+ * @param $key
+ * @return bool
+ */
 if(!function_exists('__')){
     function __($key, $data_key = [], $lang = null)
     {
@@ -174,11 +215,15 @@ if(!function_exists('__')){
     }
 }
 
+/**
+ * @param $key
+ * @return bool
+ */
 if(!function_exists('translate')){
     function translate($key, $data_key = [], $lang = null)
     {
         $language = $lang ?? config_env('LANGUAGE', 'vi');
-        $data = require(path_root("language/$language.php"));
+        $data = config()->get($language) ?? [];
         $convert = $data[$key] ?? $key;
         foreach ($data_key as $k=>$value) {
             $convert = str_replace("{{".$k."}}", $value, $convert);
@@ -187,14 +232,23 @@ if(!function_exists('translate')){
     }
 }
 
+/**
+ * @param $key
+ * @return bool
+ */
 if(!function_exists('lang_has')){
     function lang_has($key)
     {
         $language = config_env('LANGUAGE', 'vi');
-        $data = require(path_root("language/$language.php"));
+        $data = config()->get($language) ?? [];
         return isset($data[$key]);
     }
 }
+
+/**
+ * @param $value
+ * @return bool
+ */
 if(!function_exists('isDate')){
     function isDate($value)
     {
@@ -209,6 +263,11 @@ if(!function_exists('isDate')){
         }
     }
 }
+
+/**
+ * @param $value
+ * @return array
+ */
 if(!function_exists('convert_to_array')){
     function convert_to_array($value)
     {
@@ -217,6 +276,10 @@ if(!function_exists('convert_to_array')){
     }
 }
 
+/**
+ * @param $value
+ * @return object
+ */
 if(!function_exists('convert_to_object')){
     function convert_to_object($value)
     {
@@ -225,6 +288,12 @@ if(!function_exists('convert_to_object')){
     }
 }
 
+
+/**
+ * @param $value
+ * @param string $default
+ * @return mixed|string
+ */
 if(!function_exists('config_env')){
     function config_env($value, $default = '')
     {
@@ -232,6 +301,10 @@ if(!function_exists('config_env')){
     }
 }
 
+/**
+ * @param $data
+ * @return string
+ */
 if(!function_exists('uid')){
     function uid($data = null) {
         // Generate 16 bytes (128 bits) of random data or use the data passed into the function.
@@ -248,40 +321,31 @@ if(!function_exists('uid')){
     }
 }
 
+/**
+ * @param $key
+ * @return object|InterfaceErrors|mixed|__anonymous@7689
+ */
 if(!function_exists('errors')){
-    /**
-     * @param $key
-     * @return object|InterfaceErrors|mixed|__anonymous@7689
-     */
     function errors($key = ''): object {
-        if(!empty($key)) {
-            return $GLOBALS['share_data_errors_'.PROJECT_KEY][$key];
-        }
-        return new class() implements \Hola\Interfaces\FunctionInterface\InterfaceErrors {
-            function get($key = '') {
-                return $GLOBALS['share_data_errors_'.PROJECT_KEY][$key];
-            }
-            function set($key = '', $value = '') {
-                $GLOBALS['share_data_errors_'.PROJECT_KEY][$key] = $value;
-                return;
-            }
-            function all(){
-                return $GLOBALS['share_data_errors_'.PROJECT_KEY];
-            }
-        };
+        return \Hola\Data\ShareData::init()->getErrorByKey($key);
     }
 }
 
+/**
+ * @param $key
+ * @param $value
+ * @return mixed
+ */
 if(!function_exists('val')){
     function val($key = '', $default = null) {
-        return $GLOBALS['share_data_view_'.PROJECT_KEY][$key] ?? $default;
+        return \Hola\Data\ShareData::init()->get($key, $default);
     }
 }
 
+/**
+ * @return object|InterfaceRes|__anonymous@7689
+ */
 if(!function_exists('res')){
-    /**
-     * @return InterfaceRes|__anonymous@8576
-     */
     function res() {
         return new class() implements \Hola\Interfaces\FunctionInterface\InterfaceRes {
             function view($name, $data = [], $status = 200) {
@@ -307,7 +371,10 @@ if(!function_exists('res')){
     }
 }
 
-
+/**
+ * @param $data
+ * @return \Hola\Data\Collection
+ */
 if(!function_exists('collection')) {
     function collection($data = [])
     {
@@ -315,15 +382,15 @@ if(!function_exists('collection')) {
     }
 }
 
+/**
+ * @param $job
+ * @param $queue_name
+ * @param $connection
+ * @param $timeout
+ * @return void
+ * @throws Throwable
+ */
 if (!function_exists('sendJobs')) {
-    /**
-     * @param $job
-     * @param $queue_name
-     * @param $connection
-     * @param $timeout
-     * @return void
-     * @throws Throwable
-     */
     function sendJobs($job, $queue_name = null, $connection = null, $timeout = null) {
         $queue = \Hola\Queue\CreateQueue::instance();
         if (!is_null($queue_name)) {
@@ -339,53 +406,24 @@ if (!function_exists('sendJobs')) {
     }
 }
 
+/**
+ * @param $name
+ * @param array $data
+ * @return mixed
+ */
 if(!function_exists('cache')) {
-    function cache($name = null, $data = []) {
-        if (!file_exists(__DIR__ROOT .'/storage/cache')) {
-            mkdir(__DIR__ROOT .'/storage/cache', 0777, true);
-        }
-
-        if (is_null($name)) {
-            return new class implements \Hola\Interfaces\FunctionInterface\InterfaceCacheFile {
-                public function set($name, $data = []){
-                    $folder = explode('/', $name);
-                    if (count($folder) > 1) {
-                        unset($folder[count($folder) - 1]);
-                        $folder = implode('/', $folder);
-                        $path_cache = __DIR__ROOT .'/storage/cache/'.$folder;
-                        if (!file_exists($path_cache)) {
-                            if (!mkdir($path_cache, 0777, true) && !is_dir($path_cache)) {
-                                throw new \Exception(sprintf('Directory "%s" was not created', $path_cache));
-                            }
-                        }
-                    }
-                    file_put_contents(__DIR__ROOT ."/storage/cache/$name.cache", serialize($data));
-                    return $this;
-                }
-                public function get($name){
-                    $data_cache = file_get_contents(__DIR__ROOT ."/storage/cache/$name.cache");
-                    return unserialize($data_cache ?? '');
-                }
-                public function clear($name){
-                    $file = __DIR__ROOT ."/storage/cache/$name.cache";
-                    if(file_exists($file)){
-                        unlink($file);
-                    }
-                    return $this;
-                }
-            };
-        }
-
-        $data_cache = file_get_contents(__DIR__ROOT ."/storage/cache/$name.cache");
-        if (empty($data_cache)) {
-            file_put_contents(__DIR__ROOT ."/storage/cache/$name.cache", serialize($data));
-            return $data;
-        } else {
-            return unserialize($data_cache);
-        }
+    function cache() {
+        $cache = \Hola\Data\Cache::init();
+        return $cache;
     }
 }
 
+/**
+ * Recursive glob
+ * @param $pattern
+ * @param int $flags
+ * @return array
+ */
 if(!function_exists('rglob')) {
     function rglob($pattern, $flags = 0) {
         $files = glob($pattern, $flags);
@@ -399,6 +437,11 @@ if(!function_exists('rglob')) {
     }
 }
 
+/**
+ * Get app instance
+ * @param null $abstract
+ * @return \Hola\Container\Container
+ */
 if (!function_exists('app')) {
     function app($abstract = null): \Hola\Container\Container {
         if (is_null($abstract)) {
@@ -408,59 +451,27 @@ if (!function_exists('app')) {
     }
 }
 
+/**
+ * Get config
+ * @param string|null $name
+ * @return mixed
+ */
 if (!function_exists('config')) {
     function config($name = null) {
+        $config = \Hola\Core\ConfigApp::init();
         if (is_null($name)) {
-            return new class implements \Hola\Interfaces\FunctionInterface\InterfaceConfig {
-                function set($name, $value) {
-                    $arr_config = explode('.', $name);
-                    $name_config = $arr_config[0];
-                    unset($arr_config[0]);
-                    $config = $GLOBALS['config_'.PROJECT_KEY][$name_config] ?? [];
-                    $this->editByKey($config, $arr_config, $value);
-                    $GLOBALS['config_'.PROJECT_KEY][$name_config] = $config;
-                }
-                function get($name) {
-                    $arr_config = explode('.', $name);
-                    $name_config = $arr_config[0];
-                    unset($arr_config[0]);
-                    $config = $GLOBALS['config_'.PROJECT_KEY][$name_config] ?? [];
-                    return $this->last($arr_config, $config);
-                }
-                function last($keys, $items) {
-                    foreach ($keys as $key) {
-                        if (isset($items[$key])) {
-                            $items = $items[$key];
-                        } else {
-                            return null; // Key does not exist
-                        }
-                    }
-                    return $items;
-                }
-                function editByKey(&$array, $keys, $value) {
-                    if (is_array($array) && !empty($keys)) {
-                        $key = array_shift($keys);
-                        if (empty($keys)) {
-                            if (isset($array[$key])) {
-                                $array[$key] = $value;
-                            }
-                        } else {
-                            if (isset($array[$key]) && is_array($array[$key])) {
-                                $this->editByKey($array[$key], $keys, $value);
-                            }
-                        }
-                    }
-                }
-            };
+            return $config;
         }
-        $arr_config = explode('.', $name);
-        $name_config = $arr_config[0];
-        unset($arr_config[0]);
-        $config = $GLOBALS['config_'.PROJECT_KEY][$name_config] ?? [];
-        return config()->last($arr_config, $config);
+        return config()->get($name);
     }
 }
 
+/**
+ * Create folder
+ * @param string $path
+ * @param int $mode
+ * @throws \RuntimeException
+ */
 if (!function_exists('createFolder')) {
     function createFolder($path, $mode = 0777) {
         if (!empty($path) && !file_exists($path)) {
@@ -471,6 +482,11 @@ if (!function_exists('createFolder')) {
     }
 }
 
+/**
+ * Get folder from link
+ * @param string $link
+ * @return string
+ */
 if (!function_exists('getFolder')) {
     function getFolder($link) {
         preg_match_all('/\b[^\/]+\/\b/', $link, $matches);
@@ -478,6 +494,11 @@ if (!function_exists('getFolder')) {
     }
 }
 
+/**
+ * Check if the array is two-dimensional
+ * @param array $array
+ * @return bool
+ */
 if(!function_exists('isTwoDimensionalArray')) {
     function isTwoDimensionalArray($array) {
         if (!is_array($array)) {
@@ -492,6 +513,11 @@ if(!function_exists('isTwoDimensionalArray')) {
     }
 }
 
+/**
+ * Generate random key
+ * @param int $length
+ * @return string
+ */
 if(!function_exists('generateKey')) {
     function generateKey($length = 16) {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -501,5 +527,47 @@ if(!function_exists('generateKey')) {
             $randomString .= $characters[rand(0, $charactersLength - 1)];
         }
         return $randomString;
+    }
+}
+
+/**
+ * Find data by keys
+ * @param array $keys
+ * @param array $items
+ * @return mixed|null
+ */
+if (!function_exists('findDataByKeys')) {
+    function findDataByKeys($keys, $items) {
+        foreach ($keys as $key) {
+            if (isset($items[$key])) {
+                $items = $items[$key];
+            } else {
+                return null; // Key does not exist
+            }
+        }
+        return $items;
+    }
+}
+
+/**
+ * Update data by keys
+ * @param array $array
+ * @param array $keys
+ * @param $value
+ */
+if (!function_exists('updateDataByKeys')) {
+    function updateDataByKeys(&$array, $keys, $value) {
+        if (is_array($array) && !empty($keys)) {
+            $key = array_shift($keys);
+            if (empty($keys)) {
+                if (isset($array[$key])) {
+                    $array[$key] = $value;
+                }
+            } else {
+                if (isset($array[$key]) && is_array($array[$key])) {
+                    updateDataByKeys($array[$key], $keys, $value);
+                }
+            }
+        }
     }
 }

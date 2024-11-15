@@ -3,6 +3,7 @@
 namespace Hola\Core;
 
 use Hola\Data\Collection;
+use Hola\Data\ShareData;
 
 class Response {
 
@@ -15,6 +16,7 @@ class Response {
         $headers['Content-Type'] = 'application/json; charset=utf-8';
         self::setHeaders($headers, $status);
         self::resloveDataCollect($data);
+        ShareData::init()->create('data', $data);
         return $data;
     }
 
@@ -22,6 +24,7 @@ class Response {
         $headers['Content-Type'] = 'text/html; charset=utf-8';
         self::setHeaders($headers, $status);
         self::resloveDataCollect($data);
+        ShareData::init()->create('data', $data);
         return ViewRender::render($view, $data);
     }
 

@@ -1,8 +1,9 @@
 <?php
 namespace Hola\Container;
+use Hola\Core\ConfigApp;
+
 class RegisterLoad
 {
-
     public function registerFile($name)
     {
         $pathName = __DIR__ROOT . "/$name.php";
@@ -38,10 +39,21 @@ class RegisterLoad
                     $items = explode("/", $item);
                     $end = end($items);
                     $end = str_replace('.php', '', $end);
-                    $GLOBALS['config_'.PROJECT_KEY][$end] = require($item);
+                    ConfigApp::init()->create($end, require($item));
                 }
-            } else {
-                throw new \Exception("File $item does not exist");
+            }
+        }
+    }
+
+    public function loadLanguage()
+    {
+        $language = rglob(__DIR__ROOT ."/language/*.php") ?? [];
+        foreach ($language as $item) {
+            if (file_exists($item)) {
+                $items = explode("/", $item);
+                $end = end($items);
+                $end = str_replace('.php', '', $end);
+                ConfigApp::init()->create($end, require($item));
             }
         }
     }

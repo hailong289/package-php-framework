@@ -33,7 +33,7 @@ class Router {
         $url = preg_replace('/((&|\?)([a-z_]+)=(.*)|(&|\?)([a-z_]+)=)/i','', $url);
         $method = $_REQUEST['_method'] ?? $method;
         $number_router = 0;
-        $routers = cache('router', self::$routers);
+        $routers = cache()->file()->getOrStore('router', self::$routers);
         foreach ($routers as $key=>$router){
             $path_router = $router['path_load_file'] && endsWith($router['path'], '/') ? substr($router['path'], 0, -1):$router['path'];
             $method_router = $router['method'];
