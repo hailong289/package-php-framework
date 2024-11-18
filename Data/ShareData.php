@@ -7,7 +7,7 @@ class ShareData {
     
     public static function init() {
         if (empty(constant('PROJECT_KEY'))) {
-            throw new \Exception('PROJECT_KEY is not defined');
+            die('PROJECT_KEY is not defined');
         }
         if (self::$instance == null) {
             self::$instance = new ShareData();
@@ -15,8 +15,8 @@ class ShareData {
         return self::$instance;
     }
     
-    public function create($key, $value, $name = 'data') {
-        self::$bindings[PROJECT_KEY][$name][$key] = $value;
+    public function create($key = 'data', $value) {
+        self::$bindings[PROJECT_KEY][$key] = $value;
     }
 
     public function all() {

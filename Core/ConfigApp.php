@@ -16,7 +16,7 @@ class ConfigApp {
 
     public function create($key, $value) {
         if (empty(constant('PROJECT_KEY'))) {
-            throw new \Exception('PROJECT_KEY is not defined');
+           die('PROJECT_KEY is not defined');
         }
         self::$bindings[PROJECT_KEY][$key] = $value;
     }

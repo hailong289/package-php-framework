@@ -81,6 +81,11 @@ class ViewRender {
 
     public static function render($view, $data = []) {
         $fileView = self::resloveFileView($view);
+        if (config_env('NOT_USE_RENDER_VIEW', false)) {
+            extract($data);
+            require_once $fileView;
+            return $view;
+        }
         $output = self::resloveViewContent($fileView, $data);
         $output = self::resloveIncludes($output, $data);
         $output = self::resloveDirective($output);
@@ -150,7 +155,7 @@ class ViewRender {
         $output = preg_replace('/<!--(.*?)-->/', '', $output);
         while (preg_match('/@include\(\s*[\'"](.+?)[\'"]\s*\)/', $output, $matches)) {
             $includedView = view_root($matches[1]);
-            $includedContent = self::resloveViewContent($includedContent, $data);
+            $includedContent = self::resloveViewContent($includedView, $data);
             $includedContent = self::resloveIncludes($includedContent, $data);
             $output = str_replace($matches[0], $includedContent, $output);
         }

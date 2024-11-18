@@ -25,11 +25,14 @@ class Cache {
         return $this->getDataRedis($name);
     }
 
-    public function redis($default_connect = 'redis') {
+    public function redis($default_connect = 'redis', $is_return = false) {
         $name = $default_connect ?? config_env('REDIS_CONNECTION','redis');
         $redis = Redis::instance($name);
         $this->bindings['redis'] = $redis;
         $this->bindings['file'] = false;
+        if ($is_return) {
+            return $redis;
+        }
         return $this;
     }
 
@@ -95,6 +98,28 @@ class Cache {
         if ($is_get) {
             return $data;
         }
+    }
+
+    public function clear($key)
+    {
+        if ($this->bindings['file']) {
+            $this->clearFile($key);
+        } else {
+            $this->clearRedis($key);
+        }
+    }
+
+    private function clearFile($key)
+    {
+        $cacheFile = $this->getLinkFile($key);
+        if (file_exists($cacheFile)) {
+            unlink($cacheFile);
+        }
+    }
+
+    private function clearRedis($key)
+    {
+        $this->bindings['redis']->del($key);
     }
 
     private function getLinkFile($name) {
