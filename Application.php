@@ -119,6 +119,8 @@ class Application extends Container
                 return $this;
             }
             echo file_get_contents($return);
+        } else if ($return instanceof \SimpleXMLElement) {
+            echo $return->asXML();
         } else {
             echo $return;
         };

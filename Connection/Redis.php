@@ -44,8 +44,11 @@ class Redis {
             if($username && $password) {
                 self::$conn->rawCommand('auth', $username, $password);
             }
-        }catch (\RedisException $e) {
-            throw new \RedisException("Connect redis failed. Error: ".$e->getMessage(), 503);
+        } catch (\RedisException $e) {
+            throw new \RedisException("Connect redis failed. Error: ".$e->getMessage(), 500);
+        } catch (\Throwable $e) {
+            $mess = $e->getMessage();
+            throw new \Exception("Connect redis failed. Error: $mess", 500);
         }
     }
 

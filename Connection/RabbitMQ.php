@@ -57,7 +57,7 @@ class RabbitMQ {
                 );
             }
         } catch (\Throwable $e) {
-            throw new \RuntimeException("Connect rabbitMQ failed. Error: ".$e->getMessage(), 503);
+            throw new \RuntimeException("Connect rabbitMQ failed. Error: ".$e->getMessage(), 500);
         }
     }
 

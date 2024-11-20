@@ -82,14 +82,26 @@ class ViewRender {
     public static function render($view, $data = []) {
         $fileView = self::resloveFileView($view);
         if (config_env('NOT_USE_RENDER_VIEW', false)) {
-            extract($data);
+            extract($data, EXTR_SKIP);
             require_once $fileView;
             return $view;
         }
-        $output = self::resloveViewContent($fileView, $data);
+        if (file_exists(self::getViewRender($fileView))) {
+            $view_render = self::getViewRender($fileView);
+            require_once $view_render;
+            return $view_render;
+        }
+        $output = self::resloveViewContent($fileView);
         $output = self::resloveIncludes($output, $data);
         $output = self::resloveDirective($output);
         return self::resloveRenderHtml($fileView, $view, $output, $data);
+    }
+
+    public static function renderXml($data = [])
+    {
+        $xml = new \SimpleXMLElement('<root/>');
+        self::resloveArrayToXml($data, $xml);
+        return $xml;
     }
 
     public static function directive($directive, $fun)
@@ -141,9 +153,7 @@ class ViewRender {
 
     private static function resloveViewContent($view, $data = [])
     {
-        if (!empty($data)) {
-            extract($data);
-        }
+        extract($data, EXTR_SKIP);
         ob_start();
         require_once $view;
         $output = ob_get_clean();
@@ -164,26 +174,37 @@ class ViewRender {
 
     private static function resloveRenderHtml($viewCurrent, $name, $output, $data = [])
     {
-        if (!empty($data)) {
-            extract($data);
-        }
-        $folder = __DIR__ROOT . '/storage/render';
-        $startPos = strpos($viewCurrent, 'Views');
-        $view = substr($viewCurrent, $startPos);
-        $view_render = "$folder/$view";
-        $view_render = str_replace('.view.php', '.php', $view_render);
-        if (file_exists($view_render)) {
-            require_once $view_render;
-            return $view_render;
-        }
+        $view_render = self::getViewRender($viewCurrent);
         if ($name === 'error.index') {
+            extract($data, EXTR_SKIP);
             require($viewCurrent);
             return $viewCurrent;
         }
         createFolder(getFolder($view_render));
         file_put_contents($view_render, $output);
-        require_once $view_render;
+        $output = self::resloveViewContent($view_render, $data);
+        file_put_contents($view_render, $output);
+        return $output;
+    }
+
+    private static function getViewRender($viewCurrent)
+    {
+        $folder = __DIR__ROOT . '/storage/render';
+        $startPos = strpos($viewCurrent, 'Views');
+        $view = substr($viewCurrent, $startPos);
+        $view_render = "$folder/$view";
+        $view_render = str_replace('.view.php', '.php', $view_render);
         return $view_render;
     }
 
+    private static function resloveArrayToXml($data, &$xml) {
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                $subnode = $xml->addChild($key);
+                self::resloveArrayToXml($value, $subnode);
+            } else {
+                $xml->addChild($key, htmlspecialchars($value));
+            }
+        }
+    }
 }

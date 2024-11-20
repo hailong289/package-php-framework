@@ -67,19 +67,19 @@ class QueueScript extends \Hola\Core\Command
         try {
             switch ($name) {
                 case 'database':
-                    $connection = DBO::connection($name, 'queue');
+                    $connection = DBO::connection(config_env('QUEUE_CONNECTION', $name), 'queue');
                     if (!$only_get) $this->queueWorkWithDB($connection);
                     break;
                 case 'redis':
-                    $connection = Redis::queueConnect($name);
+                    $connection = Redis::queueConnect(config_env('QUEUE_CONNECTION', $name));
                     if (!$only_get) $this->workQueueWithRedis($connection);
                     break;
                 case 'rabbitmq':
-                    $connection = RabbitMQ::queueConnect($name);
+                    $connection = RabbitMQ::queueConnect(config_env('QUEUE_CONNECTION', $name));
                     if (!$only_get) $this->workQueueRabbit($connection);
                     break;
                 default:
-                    $connection = DBO::connection('database', 'queue');
+                    $connection = DBO::connection(config_env('QUEUE_CONNECTION', 'database'), 'queue');
                     if (!$only_get) $this->queueWorkWithDB($connection);
                     break;
             }

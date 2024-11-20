@@ -31,6 +31,7 @@ class PdoSql {
     public function connect($config, $name) {
         $db_connection = $config[$name];
         $host = $db_connection['host'];
+        $port = $db_connection['port'];
         $db_name = $db_connection['db_name'];
         $username = $db_connection['username'];
         $password = $db_connection['password'];
@@ -38,7 +39,7 @@ class PdoSql {
         $driver = $db_connection['driver'] ?? 'mysql';
         try{
             // dsn configuration
-            $dsn = "$driver:dbname=$db_name;host=$host";
+            $dsn = "$driver:dbname=$db_name;host=$host;port=$port";
             if (!is_null($dsn_config)) {
                 $dsn = $dsn_config;
             }
@@ -52,7 +53,10 @@ class PdoSql {
             self::$conn = $conn;
         }catch (\PDOException $e){
             $mess = $e->getMessage();
-            throw new \PDOException("Connection database failed: $mess", 503);
+            throw new \PDOException("Connection database failed: $mess", 500);
+        } catch (\Throwable $e) {
+            $mess = $e->getMessage();
+            throw new \Exception("Connection database failed: $mess", 500);
         }
     }
 

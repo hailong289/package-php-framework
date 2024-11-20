@@ -28,6 +28,13 @@ class Response {
         return ViewRender::render($view, $data);
     }
 
+    public static function xmlFromData($data = [], $status = 200, $headers = [])
+    {
+        $headers['Content-Type'] = 'application/xml; charset=utf-8';
+        self::setHeaders($headers, $status);
+        return ViewRender::renderXml($data);
+    }
+
     public static function withExit($type, \Closure $callback){
         $data = $callback();
         if ($type === 'json') {

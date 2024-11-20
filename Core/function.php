@@ -489,8 +489,7 @@ if (!function_exists('createFolder')) {
  */
 if (!function_exists('getFolder')) {
     function getFolder($link) {
-        preg_match_all('/\b[^\/]+\/\b/', $link, $matches);
-        return implode('', $matches[0]);
+        return dirname($link);
     }
 }
 
@@ -570,4 +569,15 @@ if (!function_exists('updateDataByKeys')) {
             }
         }
     }
+}
+if (!function_exists('isXml')) {
+    function isXml($string) {
+        libxml_use_internal_errors(true);  
+        $xml = simplexml_load_string($string);
+        if ($xml === false) {
+            return false;
+        }
+        return true;
+    }
+
 }
