@@ -9,7 +9,6 @@ class Connection {
     private $enableQueryLog = false;
     private $queryLog = [];
     private $swithConnect = false;
-    private static $instance_queue = null;
 
     public function __construct($conn = null, $type = null) {
         $this->connect($conn, $type);
@@ -122,10 +121,6 @@ class Connection {
     }
 
     public function connect($connection = null, $type = null) {
-        if (!is_null(self::$instance_queue)) {
-            $this->pdo = self::$instance_queue;
-            return $this->pdo;
-        }
         if (!is_null($connection)) {
             $this->switchConnect($connection, $type);
             return $this->pdo;
@@ -133,8 +128,7 @@ class Connection {
         if (!is_null($this->pdo)) {
             return $this->pdo;
         }
-        $con = config('database.default_connection');
-        $this->pdo = PdoSql::instance($con);
+        $this->pdo = PdoSql::instance();
         return $this->pdo;
     }
 
@@ -142,9 +136,9 @@ class Connection {
     {
         $this->swithConnect = true;
         if ($type === 'queue') {
-            $this->pdo = PdoSql::queueConnect($con);
+            $this->pdo = (new PdoSql())->connect($con, 'queue');
         } else {
-            $this->pdo = PdoSql::instance($con);
+            $this->pdo = (new PdoSql())->connect($con, 'database');
         }
     }
 }

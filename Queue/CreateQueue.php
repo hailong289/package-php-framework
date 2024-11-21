@@ -15,7 +15,7 @@ class CreateQueue
     private $connection;
     private static $instance = null;
     function __construct() {
-        $this->connection = config('queue.default_connection');
+        $this->connection = config('queue.default');
         $this->queue = config('queue.queue_default');
         $this->timeout = config('queue.timeout');
     }
@@ -56,7 +56,7 @@ class CreateQueue
                 ]);
             } else if ($this->connection === 'rabbitmq') {
                 $data = json_encode($data_queue, JSON_UNESCAPED_UNICODE);
-                $rabbitMQ = RabbitMQ::queueConnect($this->connection);
+                $rabbitMQ = RabbitMQ::instance($this->connection);
                 $channel = $rabbitMQ->channel();
                 $channel->queue_declare($this->queue, false, true, false, false);
                 $attributes = [

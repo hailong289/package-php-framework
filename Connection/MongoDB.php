@@ -3,15 +3,17 @@ namespace Hola\Connection;
 class MongoDB {
     private static $instance = null;
 
-    public static function instance($name = 'mongodb'){
+    public static function instance($name = null){
+        $conn_name = $name ?? config('database.default', 'mongodb');
         if(self::$instance == null){
-            $connection = new MongoDB($name);
+            $connection = (new MongoDB())->connect($conn_name);
             self::$instance = self::$conn;
         }
         return self::$instance;
     }
 
-    public function connect($config, $name) {
+    public function connect($name, $config_name = 'database'){
+        $config = config("$config_name.connections");
         $db_connection = $config[$name];
         $host = $db_connection['host'];
         $port = $db_connection['port'];

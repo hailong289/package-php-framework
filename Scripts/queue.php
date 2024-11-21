@@ -75,7 +75,7 @@ class QueueScript extends \Hola\Core\Command
                     if (!$only_get) $this->workQueueWithRedis($connection);
                     break;
                 case 'rabbitmq':
-                    $connection = RabbitMQ::queueConnect(config_env('QUEUE_CONNECTION', $name));
+                    $connection = RabbitMQ::instance(config_env('QUEUE_CONNECTION', $name));
                     if (!$only_get) $this->workQueueRabbit($connection);
                     break;
                 default:

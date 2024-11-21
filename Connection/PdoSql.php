@@ -1,34 +1,40 @@
 <?php
 namespace Hola\Connection;
 class PdoSql {
-    private static $conn;
     private static $instance = null;
     private static $instance_queue = null;
 
-    public function __construct($name){
-        $config = config('database.connections');
-        $this->connect($config, $name);
-    }
+    public function __construct() {}
 
-    public static function instance($name = 'mysql'){
-        if(self::$instance == null){
-            $connection = new PdoSql($name);
-            self::$instance = self::$conn;
+    public static function instance($name = null) {
+        $conn_name = $name ?? config('database.default', 'mysql');
+        if(self::$instance == null) {
+            self::$instance = (new PdoSql())->connect($conn_name, 'database');
         }
         return self::$instance;
     }
 
     public static function queueConnect($name = 'database')
     {
+        $conn_name = $name ?? config('queue.default', 'database');
         if(self::$instance_queue == null){
-            $config = config('queue.connections');
-            $connection = self::connect($config, $name);
-            self::$instance_queue = self::$conn;
+            self::$instance_queue = (new PdoSql())->connect($conn_name, 'queue');
         }
         return self::$instance_queue;
     }
 
-    public function connect($config, $name) {
+    public static function isConnect()
+    {
+        return self::$instance != null;
+    }
+
+    public static function isConnectQueue()
+    {
+        return self::$instance_queue != null;
+    }
+
+    public function connect($name, $config_name = 'database') {
+        $config = config("$config_name.connections");
         $db_connection = $config[$name];
         $host = $db_connection['host'];
         $port = $db_connection['port'];
@@ -50,7 +56,7 @@ class PdoSql {
             ];
             // connection command
             $conn = new \PDO($dsn,$username,$password,$options);
-            self::$conn = $conn;
+            return $conn;
         }catch (\PDOException $e){
             $mess = $e->getMessage();
             throw new \PDOException("Connection database failed: $mess", 500);
@@ -59,5 +65,4 @@ class PdoSql {
             throw new \Exception("Connection database failed: $mess", 500);
         }
     }
-
 }

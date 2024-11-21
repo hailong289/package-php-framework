@@ -12,6 +12,7 @@ class Cache {
     ];
 
     public static function init() {
+        
         if (self::$instance == null) {
             self::$instance = new Cache();
         }
@@ -25,7 +26,7 @@ class Cache {
         return $this->getDataRedis($name);
     }
 
-    public function redis($default_connect = 'redis', $is_return = false) {
+    public function redis($default_connect = null, $is_return = false) {
         $name = $default_connect ?? config_env('REDIS_CONNECTION','redis');
         $redis = Redis::instance($name);
         $this->bindings['redis'] = $redis;

@@ -1,34 +1,25 @@
 <?php
 namespace Hola\Connection;
 class RabbitMQ {
-    private static $conn;
     private static $instance = null;
     private static $instance_queue = null;
 
-    public function __construct($name){
-        $config = config('database.connections');
-        $this->connect($config, $name);
-    }
-
-    public static function instance($name = 'rabbitmq'){
+    public static function instance($name = null){
+        $conn_name = $name ?? config('queue.default', 'rabbitmq');
         if(self::$instance == null){
-            $connection = new RabbitMQ($name);
+            $connection = (new RabbitMQ())->connect($conn_name);
             self::$instance = self::$conn;
         }
         return self::$instance;
     }
 
-    public static function queueConnect($name = 'rabbitmq')
+    public static function isConnect()
     {
-        if(self::$instance_queue == null){
-            $config = config('queue.connections');
-            $connection = self::connect($config, $name);
-            self::$instance_queue = self::$conn;
-        }
-        return self::$instance_queue;
+        return self::$instance != null;
     }
 
-    public function connect($config, $name) {
+    public function connect($name, $config_name = 'queue') {
+        $config = config("$config_name.connections");
         $connection = $config[$name];
         $host = $connection['host'];
         $port = $connection['port'];
@@ -39,7 +30,7 @@ class RabbitMQ {
         $options = $connection['options'];
         try {
             if($scheme === "amqps") {
-                self::$conn = new \PhpAmqpLib\Connection\AMQPSSLConnection(
+                $conn = new \PhpAmqpLib\Connection\AMQPSSLConnection(
                     $host,
                     $port,
                     $user,
@@ -48,7 +39,7 @@ class RabbitMQ {
                     $options
                 );
             } else {
-                self::$conn = new \PhpAmqpLib\Connection\AMQPStreamConnection(
+                $conn = new \PhpAmqpLib\Connection\AMQPStreamConnection(
                     $host,
                     $port,
                     $user,
@@ -56,6 +47,7 @@ class RabbitMQ {
                     $vhost
                 );
             }
+            return $conn;
         } catch (\Throwable $e) {
             throw new \RuntimeException("Connect rabbitMQ failed. Error: ".$e->getMessage(), 500);
         }
