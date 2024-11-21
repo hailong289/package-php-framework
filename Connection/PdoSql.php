@@ -50,10 +50,7 @@ class PdoSql {
                 $dsn = $dsn_config;
             }
             // Configure options, - configure uft8, - configure exceptions when query fails
-            $options = $db_connection['options'] ?? [
-                \PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8',
-                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-            ];
+            $options = $db_connection['options'] ?? [];
             // connection command
             $conn = new \PDO($dsn,$username,$password,$options);
             return $conn;
