@@ -8,6 +8,9 @@ class Model {
     private static function build() {
         self::$builder = QueryBuilder::conn();
         $nameModel = get_called_class();
+        if ($nameModel === "Hola\Database\DBO") {
+            return self::$builder;
+        }
         $varModel = get_class_vars($nameModel);
         self::$builder->setModel($nameModel, $varModel);
         self::$builder->from(self::table($varModel, $nameModel));

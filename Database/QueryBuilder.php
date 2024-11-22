@@ -57,7 +57,7 @@ class QueryBuilder {
 
     public function connection($conn = null, $type = null)
     {
-        self::$connection = new Connection($conn, $type = null);
+        self::$connection = new Connection($conn, $type);
         return $this;
     }
 

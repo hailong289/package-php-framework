@@ -8,7 +8,7 @@ class RabbitMQ {
         $conn_name = $name ?? config('queue.default', 'rabbitmq');
         if(self::$instance == null){
             $connection = (new RabbitMQ())->connect($conn_name);
-            self::$instance = self::$conn;
+            self::$instance = $connection;
         }
         return self::$instance;
     }

@@ -13,9 +13,11 @@ class CreateQueue
     private $queue;
     private $timeout = 0;
     private $connection;
+    private $connect_type;
     private static $instance = null;
     function __construct() {
-        $this->connection = config('queue.default');
+        $this->connect_type = config_env('queue.default');
+        $this->connection = config('queue.default_connection');
         $this->queue = config('queue.queue_default');
         $this->timeout = config('queue.timeout');
     }
@@ -44,17 +46,17 @@ class CreateQueue
                 'connection' => $this->connection,
                 'timeout' => $this->timeout
             ];
-            if($this->connection === 'redis') {
+            if($this->connect_type === 'redis') {
                 $redis = RedisCR::workQueue($this->connection);
                 RedisCR::cacheRPush($tag_queue, $data_queue, 0);
-            } elseif ($this->connection === 'database') {
+            } elseif ($this->connect_type === 'database') {
                 $data = json_encode($data_queue, JSON_UNESCAPED_UNICODE);
                 DBO::connection($this->connection,'queue')->from('jobs')->insert([
                     'data' => $data,
                     'queue' => $this->queue,
                     'created_at' => date('Y-m-d H:i:s')
                 ]);
-            } else if ($this->connection === 'rabbitmq') {
+            } else if ($this->connect_type === 'rabbitmq') {
                 $data = json_encode($data_queue, JSON_UNESCAPED_UNICODE);
                 $rabbitMQ = RabbitMQ::instance($this->connection);
                 $channel = $rabbitMQ->channel();
