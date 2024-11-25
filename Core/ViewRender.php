@@ -87,6 +87,7 @@ class ViewRender {
             return $view;
         }
         if (file_exists(self::getViewRender($fileView))) {
+            extract($data, EXTR_SKIP);
             $view_render = self::getViewRender($fileView);
             require_once $view_render;
             return $view_render;
@@ -154,9 +155,7 @@ class ViewRender {
     private static function resloveViewContent($view, $data = [])
     {
         extract($data, EXTR_SKIP);
-        ob_start();
-        require_once $view;
-        $output = ob_get_clean();
+        $output = file_get_contents($view);
         return $output;
     }
 
