@@ -9,17 +9,15 @@ class QueryBuilder {
 
     public function __construct() {}
 
-    private static function connect()
+    public static function connect($conn = null, $type = null)
     {
-        if (is_null(self::$connection)) {
-            self::$connection = new Connection();
+        if (!is_null($conn)) {
+            self::$connection = new Connection($conn, $type);
+        } else {
+            if (is_null(self::$connection)) {
+                self::$connection = new Connection();
+            }
         }
-        return self::$connection;
-    }
-
-    public static function conn()
-    {
-        self::connect();
         return new self();
     }
 
@@ -49,16 +47,10 @@ class QueryBuilder {
         'params' => []
     ];
 
-    public function setModel($nameModel, $varModel = [])
+    public function setModel($modelCalled, $variables = [])
     {
-        $this->model = new $nameModel();
-        $this->bindings['variables'] = $varModel;
-    }
-
-    public function connection($conn = null, $type = null)
-    {
-        self::$connection = new Connection($conn, $type);
-        return $this;
+        $this->model = new $modelCalled();
+        $this->bindings['variables'] = $variables;
     }
 
     public function reconnectDefault()

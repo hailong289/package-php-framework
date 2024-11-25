@@ -5,22 +5,22 @@ namespace Hola\Database;
 class Model {
     private static QueryBuilder $builder;
 
-    private static function build() {
-        self::$builder = QueryBuilder::conn();
-        $nameModel = get_called_class();
-        if ($nameModel === "Hola\Database\DBO") {
+    private static function build($conn = null, $type = null) {
+        self::$builder = QueryBuilder::connect($conn, $type);
+        $modelCalled = static::class;
+        if ($modelCalled === "Hola\Database\DBO") {
             return self::$builder;
         }
-        $varModel = get_class_vars($nameModel);
-        self::$builder->setModel($nameModel, $varModel);
-        self::$builder->from(self::table($varModel, $nameModel));
-        return self::$builder;
+        return self::resloveModel(self::$builder, $modelCalled);
     }
 
-    private static function table($varModel, $nameModel) {
-        $variable = str_replace('App\\Models\\','', $nameModel);
+    private static function resloveModel(QueryBuilder $builder, $modelCalled) {
+        $variables = get_class_vars($modelCalled);
+        $variable = str_replace('App\\Models\\','', $modelCalled);
         $tableName = strtolower($variable);
-        return $varModel['table'] ?? $tableName;
+        $builder->setModel($modelCalled, $variables);
+        $builder->from($variables['table'] ?? $tableName);
+        return $builder;
     }
     
     public static function init() {
@@ -52,7 +52,7 @@ class Model {
 
     public static function connection($conn = null, $type = null)
     {
-        return self::build()->connection($conn, $type);
+        return self::build($conn, $type);
     }
 
     public static function select($columns = ['*'])
