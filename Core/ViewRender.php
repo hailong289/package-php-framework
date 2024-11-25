@@ -152,20 +152,19 @@ class ViewRender {
         return $output;
     }
 
-    private static function resloveViewContent($view, $data = [])
+    private static function resloveViewContent($view)
     {
-        extract($data, EXTR_SKIP);
         $output = file_get_contents($view);
         return $output;
     }
 
-    private static function resloveIncludes($output, $data)
+    private static function resloveIncludes($output)
     {
         $output = preg_replace('/<!--(.*?)-->/', '', $output);
         while (preg_match('/@include\(\s*[\'"](.+?)[\'"]\s*\)/', $output, $matches)) {
             $includedView = view_root($matches[1]);
-            $includedContent = self::resloveViewContent($includedView, $data);
-            $includedContent = self::resloveIncludes($includedContent, $data);
+            $includedContent = self::resloveViewContent($includedView);
+            $includedContent = self::resloveIncludes($includedContent);
             $output = str_replace($matches[0], $includedContent, $output);
         }
         return $output;
@@ -173,17 +172,16 @@ class ViewRender {
 
     private static function resloveRenderHtml($viewCurrent, $name, $output, $data = [])
     {
+        extract($data, EXTR_SKIP);
         $view_render = self::getViewRender($viewCurrent);
         if ($name === 'error.index') {
-            extract($data, EXTR_SKIP);
             require($viewCurrent);
             return $viewCurrent;
         }
         createFolder(getFolder($view_render));
         file_put_contents($view_render, $output);
-        $output = self::resloveViewContent($view_render, $data);
-        file_put_contents($view_render, $output);
-        return $output;
+        require_once $view_render;
+        return $view_render;
     }
 
     private static function getViewRender($viewCurrent)
