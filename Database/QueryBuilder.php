@@ -955,7 +955,8 @@ class QueryBuilder {
             return $item;
         }
         $is_array = is_array($item);
-        $keys = $is_array ? $item : get_object_vars($item);
+        $format = $is_array ? $item : get_object_vars($item);
+        $keys = array_keys($format);
         $attribute = $type === 'SET' || $type === 'UPDATE' ? 'setAttributes' : 'getAttributes';
         foreach ($keys as $key) {
             if (is_numeric($key) || is_object($key) || is_array($key) || is_null($key)) {
