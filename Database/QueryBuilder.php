@@ -798,14 +798,15 @@ class QueryBuilder {
         return $data;
     }
 
-    private function resloveRelationsNotUseQueryN1($original_data)
+    private function resloveRelationsNotUseQueryN1(Collection $original_data)
     {
+        $values = $original_data->values();
         $relationNotUseQueryN1 = array_filter($this->bindings['relations'], function($item) {
             return !$item['useN1Query'];
         });
         foreach ($relationNotUseQueryN1 as $idx => $relation) {
             $current_key = $relation['current_key']['name'];
-            $current_key_val = $original_data->map(function ($item) use ($current_key) {
+            $current_key_val = collection()->set($values)->map(function ($item) use ($current_key) {
                 $keys = get_object_vars($item);
                 if (isset($keys[$current_key])) {
                     return $item->{$current_key};
