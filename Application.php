@@ -144,6 +144,7 @@ class Application extends Container
     private function responseError($return, $code)
     {
         if ($this->isJson()) {
+            http_response_code($code);
             echo json_encode($return);
             return $this;
         }
