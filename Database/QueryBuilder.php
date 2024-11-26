@@ -61,27 +61,27 @@ class QueryBuilder {
 
     public function enableQueryLog()
     {
-        return self::connect()->enableQueryLog();
+        return self::$connection->enableQueryLog();
     }
 
     public function getQueryLog()
     {
-        return self::connect()->getQueryLog();
+        return self::$connection->getQueryLog();
     }
 
     public function beginTransaction()
     {
-        return self::connect()->beginTransaction();
+        return self::$connection->beginTransaction();
     }
 
     public function commit()
     {
-        return self::connect()->commit();;
+        return self::$connection->commit();;
     }
 
     public function rollBack()
     {
-        return self::connect()->rollBack();
+        return self::$connection->rollBack();
     }
 
     public function select($columns = ['*'])
