@@ -16,7 +16,7 @@ class CreateQueue
     private $connect_type;
     private static $instance = null;
     function __construct() {
-        $this->connect_type = config_env('queue.default');
+        $this->connect_type = config('queue.default');
         $this->connection = config('queue.default_connection');
         $this->queue = config('queue.queue_default');
         $this->timeout = config('queue.timeout');
