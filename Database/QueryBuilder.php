@@ -121,7 +121,7 @@ class QueryBuilder {
     {
         $boolean = !empty($this->bindings['where']) ? ' AND ' : '';
         if ($column instanceof \Closure) {
-            $builder = clone $this;
+            $builder = $this->clone();
             $builder->clearBindings(true);
             $this->bindings['where'][] = [
                 'type' => 'nested',
@@ -146,7 +146,7 @@ class QueryBuilder {
     {
         $boolean = !empty($this->bindings['where']) ? ' OR ' : '';
         if ($column instanceof \Closure) {
-            $builder = clone $this;
+            $builder = $this->clone();
             $builder->clearBindings(true);
             $this->bindings['where'][] = [
                 'type' => 'nested',
@@ -388,7 +388,7 @@ class QueryBuilder {
 
     public function clone() {
         $clone = clone $this;
-        return $clone->toSql();
+        return $clone;
     }
 
     public function dump() {
@@ -521,7 +521,7 @@ class QueryBuilder {
 
     public function paginationWithCount($limit = 10, $page = 1)
     {
-        $builder = clone $this;
+        $builder = $this->clone();
         $page = $page === 0 ? 1 : $page;
         $offset = ($page - 1) * $limit;
         $total = $builder->count('*','total')->value('total');
