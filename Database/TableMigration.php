@@ -2,318 +2,399 @@
 
 namespace Hola\Database;
 
-class TableMigration extends TableBuilder {
-
-    public function string($name, $length = 255) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'VARCHAR', $length);
+class TableStructure extends TableBuilder {
+    public function primaryKey($name = '')
+    {
+        if (empty($name)) {
+            $selected = $this->bindings['selected_column'];
+            $this->bindings['columns'][$selected]["primary_key"] = true;
         } else {
-            $this->bindings['columns'][$name]["data_type"] = 'VARCHAR';
-            $this->bindings['columns'][$name]['length'] = $length;
+            if (!empty($this->bindings['columns'][$name])) {
+                $this->bindings['columns'][$name]["primary_key"] = true;
+            } else {
+                throw new \Exception("Column $name not found");
+            }
         }
         return $this;
     }
 
-    public function text($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'TEXT', $length);
+    public function unique($name = null)
+    {
+        if (empty($name)) {
+            $selected = $this->bindings['selected_column'];
+            $this->bindings['columns'][$selected]["unique"] = true;
         } else {
-            $this->bindings['columns'][$name]["data_type"] = 'TEXT';
-            $this->bindings['columns'][$name]['length'] = $length;
+            if (!empty($this->bindings['columns'][$name])) {
+                $this->bindings['columns'][$name]["unique"] = true;
+            } else {
+                throw new \Exception("Column $name not found");
+            }
         }
         return $this;
     }
-
-    public function integer($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'INTEGER');
+    
+    public function index($name = '', $column = null)
+    {
+        $idx_name = !empty($name) ? $name : "idx_{$column}";
+        if (empty($column)) {
+            $selected = $this->bindings['selected_column'];
+            $this->bindings['columns'][$selected]["index"] = [
+                'name' => $idx_name,
+                'type' => 'INDEX'
+            ];
         } else {
-            $this->bindings['columns'][$name]["data_type"] = 'INTEGER';
+            if (!empty($this->bindings['columns'][$column])) {
+                $this->bindings['columns'][$column]["index"] = [
+                    'name' => $idx_name,
+                    'type' => 'INDEX'
+                ];
+            } else {
+                throw new \Exception("Column $column not found");
+            }
         }
         return $this;
     }
-
-    public function bigInteger($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'BIGINT');
+    
+    public function spatialIndex($name = '', $column = null)
+    {
+        $idx_name = !empty($name) ? $name : "idx_{$column}";
+        if (empty($column)) {
+            $selected = $this->bindings['selected_column'];
+            $this->bindings['columns'][$selected]["index"] = [
+                'name' => $idx_name,
+                'type' => 'SPATIAL INDEX'
+            ];
         } else {
-            $this->bindings['columns'][$name]["data_type"] = 'BIGINT';
+            if (!empty($this->bindings['columns'][$column])) {
+                $this->bindings['columns'][$column]["index"] = [
+                    'name' => $idx_name,
+                    'type' => 'SPATIAL INDEX'
+                ];
+            } else {
+                throw new \Exception("Column $column not found");
+            }
         }
         return $this;
     }
-
-    public function tinyInteger($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'TINYINT');
+    
+    public function fullTextIndex($name = '', $column = null)
+    {
+        $idx_name = !empty($name) ? $name : "idx_{$column}";
+        if (empty($column)) {
+            $selected = $this->bindings['selected_column'];
+            $this->bindings['columns'][$selected]["index"] = [
+                'name' => $idx_name,
+                'type' => 'FULLTEXT INDEX'
+            ];
         } else {
-            $this->bindings['columns'][$name]["data_type"] = 'TINYINT';
+            if (!empty($this->bindings['columns'][$column])) {
+                $this->bindings['columns'][$column]["index"] = [
+                    'name' => $idx_name,
+                    'type' => 'FULLTEXT INDEX'
+                ];
+            } else {
+                throw new \Exception("Column $column not found");
+            }
         }
         return $this;
     }
-
-    public function smallInteger($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'SMALLINT');
+    
+    public function foreign($name = null)
+    {
+        if (empty($name)) {
+            $selected = $this->bindings['selected_column'];
+            $this->bindings['columns'][$selected]["foreign_key"] = true;
         } else {
-            $this->bindings['columns'][$name]["data_type"] = 'SMALLINT';
+            if (!empty($this->bindings['columns'][$name])) {
+                $this->bindings['columns'][$name]["foreign_key"] = true;
+            } else {
+                throw new \Exception("Column $name not found");
+            }
         }
         return $this;
     }
-
-    public function mediumInteger($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'MEDIUMINT');
+    
+    public function comment($comment, $name = null)
+    {
+        if (empty($name)) {
+            $selected = $this->bindings['selected_column'];
+            $this->bindings['columns'][$selected]["comment"] = $comment;
         } else {
-            $this->bindings['columns'][$name]["data_type"] = 'MEDIUMINT';
+            if (!empty($this->bindings['columns'][$name])) {
+                $this->bindings['columns'][$name]["comment"] = $comment;
+            } else {
+                throw new \Exception("Column $name not found");
+            }
         }
         return $this;
     }
-
-    public function float($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'FLOAT');
+    
+    public function null($name = null)
+    {
+        if (empty($name)) {
+            $selected = $this->bindings['selected_column'];
+            $this->bindings['columns'][$selected]["nullable"] = true;
         } else {
-            $this->bindings['columns'][$name]["data_type"] = 'FLOAT';
+            if (!empty($this->bindings['columns'][$name])) {
+                $this->bindings['columns'][$name]["nullable"] = true;
+            } else {
+                throw new \Exception("Column $name not found");
+            }
         }
         return $this;
     }
-
-    public function double($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'DOUBLE');
+    
+    public function default($value, $name = null)
+    {
+        if (empty($name)) {
+            $selected = $this->bindings['selected_column'];
+            $this->bindings['columns'][$selected]["default"] = $value;
         } else {
-            $this->bindings['columns'][$name]["data_type"] = 'DOUBLE';
+            if (!empty($this->bindings['columns'][$name])) {
+                $this->bindings['columns'][$name]["default"] = $value;
+            } else {
+                throw new \Exception("Column $name not found");
+            }
         }
         return $this;
     }
-
+    
+    public function autoIncrement($name = null)
+    {
+        if (empty($name)) {
+            $selected = $this->bindings['selected_column'];
+            $this->bindings['columns'][$selected]["auto_increment"] = true;
+        } else {
+            if (!empty($this->bindings['columns'][$name])) {
+                $this->bindings['columns'][$name]["auto_increment"] = true;
+            } else {
+                throw new \Exception("Column $name not found");
+            }
+        }
+        return $this;
+    }
+    
+    public function unsigned($name = null)
+    {
+        if (empty($name)) {
+            $selected = $this->bindings['selected_column'];
+            $this->bindings['columns'][$selected]["unsigned"] = true;
+        } else {
+            if (!empty($this->bindings['columns'][$name])) {
+                $this->bindings['columns'][$name]["unsigned"] = true;
+            } else {
+                throw new \Exception("Column $name not found");
+            }
+        }
+        return $this;
+    }
+    
+   /* numberic type */
+    public function tinyInteger($name, $length = 1) {
+        return $this->addColumn($name,'TINYINT')
+            ->resloveBound(['length' => $length]);
+    }
+    public function smallInteger($name, $length = 6) {
+        return $this->addColumn($name,'SMALLINT')
+            ->resloveBound($name, ['length' => $length]);
+    }
+    public function mediumInteger($name, $length = 8) {
+        return $this->addColumn($name, 'MEDIUMINT')
+            ->resloveBound($name, ['length' => $length]);
+    }
+    public function integer($name, $autoIncrement = false, $primaryKey = false) {
+        return $this->addColumn($name, 'INTEGER')
+            ->resloveBound($name, [
+                'auto_increment' => $autoIncrement,
+                'primary_key' => $primaryKey
+            ]);
+    }
+    public function bigInteger($name, $autoIncrement = false, $primaryKey = false) {
+        return $this->addColumn($name, 'BIGINT')
+            ->resloveBound($name, [
+                'auto_increment' => $autoIncrement,
+                'primary_key' => $primaryKey
+            ]);
+    }
     public function decimal($name, $total = 8, $places = 2) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'DECIMAL', "$total,$places");
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'DECIMAL';
-            $this->bindings['columns'][$name]['length'] = "$total,$places";
-        }
-        return $this;
+        return $this->addColumn($name, 'DECIMAL')
+            ->resloveBound($name, [
+                'length' => "$total,$places"
+            ]);
+    }
+    public function float($name, $total = 8, $places = 2) {
+        return $this->addColumn($name,'FLOAT')
+            ->resloveBound($name, ['length' => "$total,$places"]);
+    }
+    public function double($name, $total = 8, $places = 2) {
+        return $this->addColumn($name,'DOUBLE')
+            ->resloveBound($name, ['length' => "$total,$places"]);
+    }
+    public function real($name, $total = 8, $places = 2)
+    {
+        return $this->addColumn($name, 'REAL')
+            ->resloveBound($name, ['length' => "$total,$places"]);
     }
 
+    public function bit($name)
+    {
+        return $this->addColumn($name, 'BIT');
+    }
     public function boolean($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'BOOLEAN');
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'BOOLEAN';
-        }
-        return $this;
+        return $this->addColumn($name, 'BOOLEAN');
+    }
+    public function serial($name)
+    {
+        return $this->addColumn($name, 'SERIAL');
     }
 
+    /* end numberic type */
+
+    /* date time type */
     public function date($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'DATE');
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'DATE';
-        }
-        return $this;
+        return $this->addColumn($name, 'DATE');
     }
-
     public function dateTime($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'DATETIME');
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'DATETIME';
-        }
-        return $this;
+        return $this->addColumn($name,'DATETIME');
     }
-
     public function time($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'TIME');
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'TIME';
-        }
-        return $this;
+        return $this->addColumn($name,'TIME');
     }
-
     public function timestamp($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'TIMESTAMP');
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'TIMESTAMP';
-        }
-        return $this;
+        return $this->addColumn($name,'TIMESTAMP');
+    }
+    public function year($name) {
+        return $this->addColumn($name,'YEAR');
+    }
+    /* end date time type */
+
+    /* string type */
+    public function char($name, $length = 255) {
+        return $this->addColumn($name, 'CHAR')
+            ->resloveBound($name, ['length' => $length]);
+    }
+    public function varchar($name, $length = 255) {
+        return $this->addColumn($name, 'VARCHAR')
+            ->resloveBound($name, ['length' => $length]);
+    }
+    public function tinyText($name) {
+        return $this->addColumn($name, 'TINYTEXT');
+    }
+    public function text($name) {
+        return $this->addColumn($name,'TEXT');
+    }
+    public function mediumText($name) {
+        return $this->addColumn($name,'MEDIUMTEXT');
+    }
+    public function longText($name) {
+        return $this->addColumn($name,'LONGTEXT');
     }
 
     public function binary($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'BINARY');
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'BINARY';
-        }
-        return $this;
+        return $this->addColumn($name,'BINARY');
+    }
+    public function varbinary($name, $length = 255) {
+        return $this->addColumn($name, 'VARBINARY')
+            ->resloveBound($name, ['length' => $length]);
     }
 
-    public function uuid($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'UUID');
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'UUID';
-        }
-        return $this;
+    public function tinyBlob($name) {
+        return $this->addColumn($name,'TINYBLOB');
+    }
+    public function blob($name) {
+        return $this->addColumn($name,'BLOB');
+    }
+    public function mediumBlob($name) {
+        return $this->addColumn($name,'MEDIUMBLOB');
+    }
+    public function longBlob($name) {
+        return $this->addColumn($name,'LONGBLOB');
     }
 
     public function enum($name, $values) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'ENUM', $values);
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'ENUM';
-            $this->bindings['columns'][$name]['values'] = $values;
-        }
-        return $this;
+        return $this->addColumn($name,'ENUM')
+            ->resloveBound($name, ['values' => $values]);
     }
-
     public function set($name, $values) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'SET', $values);
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'SET';
-            $this->bindings['columns'][$name]['values'] = $values;
-        }
-        return $this;
+        return $this->addColumn($name,'SET')
+            ->resloveBound($name, ['values' => $values]);
     }
 
+    /* end string type */
+
+    /* spatial */
+    public function geometry($name) {
+        return $this->addColumn($name,'GEOMETRY');
+    }
+    public function point($name) {
+        return $this->addColumn($name,'POINT');
+    }
+    public function linestring($name) {
+        return $this->addColumn($name,'LINESTRING');
+    }
+    public function polygon($name) {
+        return $this->addColumn($name,'POLYGON');
+    }
+    public function multipoint($name) {
+        return $this->addColumn($name,'MULTIPOINT');
+    }
+    public function multilinestring($name) {
+        return $this->addColumn($name,'MULTILINESTRING');
+    }
+    public function multipolygon($name) {
+        return $this->addColumn($name,'MULTIPOLYGON');
+    }
+    public function geometrycollection($name) {
+        return $this->addColumn($name,'GEOMETRYCOLLECTION');
+    }
+    /* end spatial */
+
+    /* json type */
     public function json($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'JSON');
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'JSON';
-        }
-        return $this;
+        return $this->addColumn($name,'JSON');
     }
-
     public function jsonb($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'JSONB');
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'JSONB';
-        }
-        return $this;
+        return $this->addColumn($name,'JSONB');
     }
-
-    public function mediumText($name)
-    {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'MEDIUMTEXT');
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'MEDIUMTEXT';
-        }
-        return $this;
-    }
+    /* end json type */
     
-    public function longText($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'LONGTEXT');
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'LONGTEXT';
-        }
-        return $this;
-    }
-
+    /* unsigned type */
     public function unsignedBigInteger($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'UNSIGNED BIGINT');
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'UNSIGNED BIGINT';
-        }
-        return $this;
+        return $this->addColumn($name,'UNSIGNED BIGINT');
     }
-
     public function unsignedInteger($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'UNSIGNED INTEGER');
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'UNSIGNED INTEGER';
-        }
-        return $this;
+        return $this->addColumn($name,'UNSIGNED INTEGER');
     }
-
     public function unsignedMediumInteger($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'UNSIGNED MEDIUMINT');
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'UNSIGNED MEDIUMINT';
-        }
-        return $this;
+        return $this->addColumn($name,'UNSIGNED MEDIUMINT');
     }
 
     public function unsignedSmallInteger($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'UNSIGNED SMALLINT');
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'UNSIGNED SMALLINT';
-        }
-        return $this;
+        return $this->addColumn($name,'UNSIGNED SMALLINT');
     }
 
     public function unsignedTinyInteger($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'UNSIGNED TINYINT');
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'UNSIGNED TINYINT';
-        }
-        return $this;
+        return $this->addColumn($name,'UNSIGNED TINYINT');
     }
 
     public function unsignedDecimal($name, $total = 8, $places = 2) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'UNSIGNED DECIMAL', "$total,$places");
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'UNSIGNED DECIMAL';
-            $this->bindings['columns'][$name]['length'] = "$total,$places";
-        }
-        return $this;
+        return $this->addColumn($name,'UNSIGNED DECIMAL')
+            ->resloveBound($name, ['length' => "$total,$places"]);
     }
 
-    public function unsignedFloat($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'UNSIGNED FLOAT');
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'UNSIGNED FLOAT';
-        }
-        return $this;
+    public function unsignedFloat($name, $total = 8, $places = 2) {
+        return $this->addColumn($name,'UNSIGNED FLOAT')
+            ->resloveBound($name, ['length' => "$total,$places"]);
     }
 
-    public function unsignedDouble($name) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'UNSIGNED DOUBLE');
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'UNSIGNED DOUBLE';
-        }
-        return $this;
+    public function unsignedDouble($name, $total = 8, $places = 2) {
+        return $this->addColumn($name,'UNSIGNED DOUBLE')
+            ->resloveBound($name, ['length' => "$total,$places"]);
     }
-    
-    public function default($value) {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'DEFAULT', null, $value);
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'DEFAULT';
-            $this->bindings['columns'][$name]['default'] = $value;
-        }
-        return $this;
-    }
-    
-    public function null()
-    {
-        if (empty($this->bindings['columns'][$name])) {
-            $this->bindings['columns'][$name] = $this->addColumn($name, 'NULL');
-        } else {
-            $this->bindings['columns'][$name]["data_type"] = 'NULL';
-        }
-        return $this;
-    }
-    
+
     public function change()
     {
-        foreach ($this->bindings['columns'] as $name => $column) {
-            $this->bindings['columns'][$name]['type'] = 'CHANGE';
-        }
+        $selected = $this->bindings['selected_column'];
+        $this->bindings['columns'][$selected]['change'] = true;
     }
 }

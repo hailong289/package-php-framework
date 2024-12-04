@@ -23,11 +23,17 @@ class GenerateScript extends \Hola\Core\Command
             $this->output()->text(sprintf('File "%s" was not found', $concurrentDirectory));
             return;
         }
-        $file_contents = preg_replace(
-            '/const PROJECT_KEY.*=.*\'.*?\'/',
-            'const PROJECT_KEY=\'' . $new_project_key . '\'',
-            file_get_contents($concurrentDirectory)
-        );
+
+        $file_contents = file_get_contents($concurrentDirectory);
+        if (preg_match('/const PROJECT_KEY.*=.*\'.*?\'/', $file_contents)) {
+            $file_contents = preg_replace(
+                '/const PROJECT_KEY.*=.*\'.*?\'/',
+                'const PROJECT_KEY=\'' . $new_project_key . '\'',
+                $file_contents
+            );
+        } else {
+            $file_contents .= PHP_EOL . 'const PROJECT_KEY=\'' . $new_project_key . '\';';
+        }
         file_put_contents($concurrentDirectory, $file_contents);
         $this->output()->text("Key generate successfully. KEY:$new_project_key" . PHP_EOL);
     }
