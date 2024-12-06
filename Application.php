@@ -81,7 +81,8 @@ class Application extends Container
             $this->make(\Hola\Scripts\RouterScript::class),
             $this->make(\Hola\Scripts\CacheScript::class),
             $this->make(\Hola\Scripts\GenerateScript::class),
-            $this->make(\Hola\Scripts\MigrateScript::class),
+            $this->make(\Hola\Scripts\TableCreatorScript::class),
+            $this->make(\Hola\Scripts\MigrationsScript::class),
         ]);
         foreach ($array_command as $item) {
             $app->add($item);
