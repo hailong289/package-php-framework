@@ -71,7 +71,6 @@ class TableCreatorScript extends \Hola\Core\Command {
             $token = $tokens[$i];
 
             if (is_array($token)) {
-                // Lấy namespace nếu có
                 if ($token[0] === T_NAMESPACE) {
                     $namespace = '';
                     $isNamespace = true;
@@ -82,8 +81,6 @@ class TableCreatorScript extends \Hola\Core\Command {
                 if ($isNamespace && $token === ';') {
                     $isNamespace = false;
                 }
-
-                // Lấy class
                 if ($token[0] === T_CLASS && isset($tokens[$i + 2][1])) {
                     $className = $tokens[$i + 2][1];
                     $classes[] = $namespace ? "$namespace\\$className" : $className;

@@ -59,7 +59,7 @@ class QueueScript extends \Hola\Core\Command
     private function data($data)
     {
         return [
-            'key' => $data['key'] ?? 0,
+            'key' => $data['key'] ?? $data['id'] ?? 0,
             'uid' => $data['uid'],
             'class' => "Queue\\Jobs\\{$data['class']}",
             'payload' => $data['payload'],
@@ -161,25 +161,18 @@ class QueueScript extends \Hola\Core\Command
         }
     }
 
-    private function queueWorkWithDB(\Hola\Database\DBO $db)
+    private function queueWorkWithDB(QueryBuilder $db)
     {
         $queue_name = $this->jobs_queue;
         if ($queue_name === 'rollback_failed_job') {
             $queue_name = 'failed_jobs';
         }
-        
-        $queue = $db
-            ->from($queue_name)
-            ->where('queue', $queue_name)
-            ->limit(1)
-            ->first()
-            ->toArray();
 
-        if ($this->break_job || empty($queue)) {
-            return;
-        }
-
-        while ($queue = $db
+        while ($queue = $db->select([
+                'id',
+                'queue',
+                'data'
+            ])
             ->from($queue_name)
             ->where('queue', $queue_name)
             ->limit(1)
@@ -189,9 +182,9 @@ class QueueScript extends \Hola\Core\Command
             }
             sleep(1);
             $queue = $queue->toArray();
-            $queue = json_decode($queue['data'], true);
-            $queue['key'] = $queue['id'];
-            $queue = $this->data($queue);
+            $queue['data'] = json_decode($queue['data'], true);
+            $queue['data']['key'] = $queue['id'];
+            $queue = $this->data($queue['data']);
             $db->from($queue_name)
                 ->where('queue', $queue_name)
                 ->where('id', $queue['key'])

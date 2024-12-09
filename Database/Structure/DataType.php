@@ -14,7 +14,7 @@ class DataType {
     /* numberic type */
     public function integer($name, $autoIncrement = false): AttributeType 
     {
-        $attributes = $this->addColumn($name,'INT ');
+        $attributes = $this->addColumn($name,'INT');
         if ($autoIncrement) {
             $attributes->autoIncrement()->primaryKey();
         }

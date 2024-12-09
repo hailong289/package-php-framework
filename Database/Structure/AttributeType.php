@@ -13,112 +13,85 @@ class AttributeType {
     
     public function length($length)
     {
-        $this->attributes[0] = "($length)";
+        $this->value = "($length)";
         return $this;
     }
 
     public function values($values)
     {
-        $this->attributes[0] = "($values)";
+        $this->value = "($values)";
         return $this;
     }
     
     public function unsigned()
     {
-        $this->attributes[1] = 'UNSIGNED';
+        $this->unsigned = 'UNSIGNED';
         return $this;
     }
     
     public function autoIncrement()
     {
-        $this->attributes[2] = 'AUTO_INCREMENT';
+        $this->autoIncrement = 'AUTO_INCREMENT';
         return $this;
     }
     
     public function primaryKey()
     {
-        $this->attributes[3] = 'PRIMARY KEY';
+        $this->primaryKey = 'PRIMARY KEY';
         return $this;
     }
     
     public function unique()
     {
-        $this->attributes[4] = 'UNIQUE';
+        $this->unique = 'UNIQUE';
         return $this;
     }
     
     public function notNull()
     {
-        $this->attributes[5] = 'NOT NULL';
+        $this->notNull = 'NOT NULL';
         return $this;
     }
 
     public function null()
     {
-        if (!empty($this->attributes[5])) {
+        if (!empty($this->notNull)) {
             return $this;
         }
-        $this->attributes[6] = 'DEFAULT NULL';
+        $this->default = 'DEFAULT NULL';
         return $this;
     }
     
     public function default($value)
     {
-        $this->attributes[6] = "DEFAULT $value";
+        $this->default = "DEFAULT $value";
         return $this;
     }
     
     public function comment($value)
     {
-        $this->attributes[7] = "COMMENT $value";
+        $this->comment = "COMMENT $value";
         return $this;
     }
     
     public function index($name = '')
     {
         $index_name = $name ? $name : "idx_{$this->column}";
-        $this->attributes[8] = "INDEX $index_name({$this->column})";
+        $this->index = "INDEX $index_name({$this->column})";
         return $this;
     }
     
     public function fullTextIndex($name = '')
     {
         $index_name = $name ? $name : "idx_{$this->column}";
-        $this->attributes[8] = "FULLTEXT INDEX $index_name({$this->column})";
+        $this->index = "FULLTEXT INDEX $index_name({$this->column})";
         return $this;
     }
 
     public function spatialIndex($name = '')
     {
         $index_name = $name ? $name : "idx_{$this->column}";
-        $this->attributes[8] = "SPATIAL INDEX $index_name({$this->column})";
-        return $this;
-    }
-
-    public function get()
-    {
-        $attribute = array_filter($this->attributes ?? [], function ($value, $key) {
-            return $key !== 8 && $key !== 0;
-        }, ARRAY_FILTER_USE_BOTH);
-        return $attribute;
-    }
-    
-    public function getLength()
-    {
-        return $this->attributes[0] ?? '';
-    }
-
-    public function getIndex()
-    {
-        $attributes = array_filter($this->attributes ?? [], function ($value, $key) {
-            return  $key === 8;
-        }, ARRAY_FILTER_USE_BOTH);
-        return $attributes;
-    }
-    
-    public function clear()
-    {
-        $this->attributes = [];
+        $this->index = "SPATIAL INDEX $index_name({$this->column})";
         return $this;
     }
 
