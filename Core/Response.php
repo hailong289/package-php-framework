@@ -41,6 +41,12 @@ class Response {
             echo self::json(...$data);
         } else if ($type === 'view') {
             self::view(...$data);
+        } else if ($type === 'require_once') {
+            require_once($data);
+        } else if ($type === 'include') {
+            include($data);
+        } else if ($type === 'readfile') {
+            readfile($data);
         } else {
             echo $data;
         }
