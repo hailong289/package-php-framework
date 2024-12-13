@@ -64,13 +64,19 @@ class AttributeType {
     
     public function default($value)
     {
-        $this->default = "DEFAULT $value";
+        $this->default = "DEFAULT '$value'";
+        return $this;
+    }
+
+    public function defaultCurrentTimestamp()
+    {
+        $this->default = "DEFAULT CURRENT_TIMESTAMP";
         return $this;
     }
     
     public function comment($value)
     {
-        $this->comment = "COMMENT $value";
+        $this->comment = "COMMENT '$value'";
         return $this;
     }
     

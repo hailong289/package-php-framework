@@ -97,7 +97,7 @@ class DataType {
         $attributes = $this->addColumn($name,'DATE');
         return $attributes;
     }
-    public function dateTime($name) {
+    public function dateTime($name): AttributeType {
         $attributes = $this->addColumn($name,'DATETIME');
         return $attributes;
     }
@@ -281,7 +281,7 @@ class DataType {
         return $this->addColumn($name,'UNSIGNED FLOAT')->length("$total,$places");
     }
 
-    public function unsignedDouble($name, $total = 8, $places = 2) {
+    public function unsignedDouble($name, $total = 8, $places = 2): AttributeType {
         return $this->addColumn($name,'UNSIGNED DOUBLE')->length("$total,$places");
     }
 }

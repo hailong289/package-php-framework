@@ -49,7 +49,9 @@ class MigrationsScript extends \Hola\Core\Command {
 namespace App\Database\Migrations;
 use Hola\Database\Structure\Table;
 use Hola\Database\Structure\DBSchema;
-class ' . $className . ' {
+use Hola\Database\TableMigration;
+
+class ' . $className . ' extends TableMigration {
     public function up() {
          DBSchema::'.$method.'(\'' . $table_name . '\', function(Table $table) {
             

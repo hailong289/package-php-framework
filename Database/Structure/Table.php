@@ -33,7 +33,6 @@ class Table extends DataType {
                 $sql[] = ($this->isUse ? $column['category'] : '') . implode(' ', $attributesIndex);
             }
         }
-        log_debug($sql);
         return implode(', ', $sql);
     }
 
