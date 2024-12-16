@@ -301,6 +301,21 @@ if(!function_exists('config_env')){
     }
 }
 
+if (!function_exists('conval')) {
+    function conval($value, $default = '', $first_val = null)
+    {
+        if (!is_null($first_val)) {
+            return $first_val;
+        }
+
+        if (defined($value) && constant($value)) {
+            return constant($value);
+        }
+
+        return $default;
+    }
+}
+
 /**
  * @param $data
  * @return string

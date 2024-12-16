@@ -6,7 +6,7 @@ use Hola\Container\Container;
 use Hola\Core\Middleware;
 use Hola\Core\Request;
 use Hola\Core\Response;
-use Hola\Core\Router;
+use Hola\Routers\Router;
 
 class Application extends Container
 {

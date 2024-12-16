@@ -6,17 +6,34 @@ use PHPMailer\PHPMailer\SMTP;
 
 class Mail {
     private $mail;
+    private $isConfig = false;
+
     public function __construct()
     {
         $this->mail = new PHPMailer(true);
-        $this->mail->SMTPDebug = config_env('MAIL_DEBUG', SMTP::DEBUG_OFF);// Enable verbose debug output
+    }
+
+    public function config(
+        $host = null,
+        $username = null,
+        $password = null,
+        $port = null,
+        $charset = null,
+        $encryption = null,
+        $auth = null,
+        $debug = null
+    ) {
+        $this->isConfig = true;
+        $this->mail->SMTPDebug = conval('MAIL_DEBUG', SMTP::DEBUG_OFF, $debug);// Enable verbose debug output
         $this->mail->isSMTP();
-        $this->mail->Host = config_env('MAIL_HOST','smtp.gmail.com');
-        $this->mail->SMTPAuth = config_env('MAIL_AUTH', true);// Enable SMTP authentication
-        $this->mail->Username = config_env('MAIL_USERNAME','user@gmail.com');// SMTP username
-        $this->mail->Password = config_env('MAIL_PASSWORD','password'); // SMTP password
-        $this->mail->SMTPSecure = config_env('MAIL_ENCRYPTION', PHPMailer::ENCRYPTION_SMTPS); // Enable TLS encryption; `PHPMailer::ENCRYPTION_SMTPS` also accepted
-        $this->mail->Port = config_env('MAIL_PORT', 587); // TCP port to connect to
+        $this->mail->Host = conval('MAIL_HOST','smtp.gmail.com', $host);
+        $this->mail->SMTPAuth = conval('MAIL_AUTH', true, $auth);// Enable SMTP authentication
+        $this->mail->Username = conval('MAIL_USERNAME','user@gmail.com', $username);// SMTP username
+        $this->mail->Password = conval('MAIL_PASSWORD','password', $password); // SMTP password
+        $this->mail->CharSet = conval('MAIL_CHARSET', PHPMailer::CHARSET_UTF8, $charset);
+        $this->mail->SMTPSecure = conval('MAIL_ENCRYPTION', PHPMailer::ENCRYPTION_SMTPS, $encryption); // Enable TLS encryption; `PHPMailer::ENCRYPTION_SMTPS` also accepted
+        $this->mail->Port = conval('MAIL_PORT', 587, $port); // TCP port to connect to
+        return $this;
     }
 
     public function getMail()
@@ -98,6 +115,9 @@ class Mail {
 
     public function work()
     {
+        if (!$this->isConfig) {
+            $this->config();
+        }
         $this->mail->send();
         return $this;
     }
