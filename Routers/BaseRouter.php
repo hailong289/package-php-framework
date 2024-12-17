@@ -12,7 +12,7 @@ class BaseRouter {
         $uri = self::$prefix . self::normalizePath($uri);
         self::$router[] = [
             'method' => $method,
-            'path' => $uri,
+            'path' => preg_replace('/^\/?/', '/', $uri),
             'callback' => $callback,
             'middlewares' => self::$middlewares
         ];
@@ -60,18 +60,20 @@ class BaseRouter {
         }
         $previousPrefix = self::$prefix;
         self::$prefix .= self::normalizePath($fun_ags[0]);
-        $fun_ags[1](new static());
+        $fun_ags[1](new Router());
         self::$prefix = $previousPrefix;
+        self::$middlewares = [];
     }
 
     public static function middleware($middleware)
     {
         self::$middlewares[] = $middleware;
-        return new static();
+        return new Router();
     }
 
     private static function normalizePath(string $path): string {
-        return rtrim($path, '/') ?: '/';
+        $path = rtrim($path, '/') ?: '/';
+        return $path;
     }
 
     public static function list() {
