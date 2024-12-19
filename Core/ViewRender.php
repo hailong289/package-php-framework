@@ -5,6 +5,7 @@ namespace Hola\Core;
 class ViewRender {
     private static $instance = null;
     private static $directive = [];
+    private static $fileHtml = [];
 
     public static function instance()
     {
@@ -12,6 +13,12 @@ class ViewRender {
             self::$instance = new ViewRender();
         }
         return self::$instance;
+    }
+
+    public static function cacheFile(array $names)
+    {
+        self::$fileHtml = $names;
+        return self::instance();
     }
 
     private static function defaultDirective()
@@ -81,18 +88,13 @@ class ViewRender {
 
     public static function render($view, $data = []) {
         $fileView = self::resloveFileView($view);
-        if (config_env('NOT_USE_RENDER_VIEW', false)) {
+        if (file_exists(self::getViewRender($fileView, $view))) {
             extract($data, EXTR_SKIP);
-            require_once $fileView;
-            return $view;
-        }
-        if (file_exists(self::getViewRender($fileView))) {
-            extract($data, EXTR_SKIP);
-            $view_render = self::getViewRender($fileView);
+            $view_render = self::getViewRender($fileView, $view);
             require_once $view_render;
             return $view_render;
         }
-        $output = self::resloveViewContent($fileView);
+        $output = self::resloveViewContent($fileView, $view);
         $output = self::resloveIncludes($output, $data);
         $output = self::resloveDirective($output);
         return self::resloveRenderHtml($fileView, $view, $output, $data);
@@ -152,9 +154,15 @@ class ViewRender {
         return $output;
     }
 
-    private static function resloveViewContent($view)
+    private static function resloveViewContent($view, $name)
     {
-        $output = file_get_contents($view);
+        if (in_array($name, self::$fileHtml)) {
+            ob_start();
+            $output = require($view);
+            $output = ob_get_clean();
+        } else {
+            $output = file_get_contents($view);
+        }
         return $output;
     }
 
@@ -163,7 +171,7 @@ class ViewRender {
         $output = preg_replace('/<!--(.*?)-->/', '', $output);
         while (preg_match('/@include\(\s*[\'"](.+?)[\'"]\s*\)/', $output, $matches)) {
             $includedView = view_root($matches[1]);
-            $includedContent = self::resloveViewContent($includedView);
+            $includedContent = self::resloveViewContent($includedView, $matches[1]);
             $includedContent = self::resloveIncludes($includedContent);
             $output = str_replace($matches[0], $includedContent, $output);
         }
@@ -173,7 +181,7 @@ class ViewRender {
     private static function resloveRenderHtml($viewCurrent, $name, $output, $data = [])
     {
         extract($data, EXTR_SKIP);
-        $view_render = self::getViewRender($viewCurrent);
+        $view_render = self::getViewRender($viewCurrent, $name);
         if ($name === 'error.index') {
             require($viewCurrent);
             return $viewCurrent;
@@ -184,13 +192,14 @@ class ViewRender {
         return $view_render;
     }
 
-    private static function getViewRender($viewCurrent)
+    private static function getViewRender($viewCurrent, $name)
     {
         $folder = __DIR__ROOT . '/storage/render';
         $startPos = strpos($viewCurrent, 'Views');
         $view = substr($viewCurrent, $startPos);
         $view_render = "$folder/$view";
-        $view_render = str_replace('.view.php', '.php', $view_render);
+        $extension = in_array($view, self::$fileHtml) ? '.html' : '.php';
+        $view_render = str_replace('.view.php', $extension, $view_render);
         return $view_render;
     }
 
