@@ -78,10 +78,14 @@ class Router {
         $requestUri = rtrim($url, '/') ?: '/';
         $routers = self::list();
         $result = [];
+        $matches = [];
         foreach($routers as $route) {
-            if (self::match($route, $requestMethod, $requestUri)) {
+            if (self::match($route, $requestMethod, $requestUri, $matches)) {
+                if (count($matches) > 0) {
+                    array_shift($matches);
+                }
                 $result = [
-                    'action' => $route['callback'],
+                    'action' => array_merge($route['callback'], $matches),
                     'middlewares' => $route['middlewares']
                 ];
                 break;
@@ -93,11 +97,11 @@ class Router {
         return $result;
     }
 
-    private function match(array $route, string $method, string $uri): bool {
+    private function match(array $route, string $method, string $uri, array &$matches): bool {
         if ($route['method'] !== $method) {
             return false;
         }
         $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '([^/]+)', $route['path']);
-        return preg_match("#^$pattern$#", $uri);
+        return preg_match("#^$pattern$#", $uri, $matches);
     }
 }
