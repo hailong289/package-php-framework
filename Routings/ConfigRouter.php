@@ -1,12 +1,16 @@
 <?php
-namespace Hola\Core;
+namespace Hola\Routings;
 class ConfigRouter extends Router {
     private $default = 'web';
     private $pathArray = [];
+    private static $instance = null;
 
-    public function __construct()
+    public static function init()
     {
-        require_once __DIR__ROOT."/router/$this->default.php";
+        if (self::$instance === null) {
+            self::$instance = new ConfigRouter();
+        }
+        return self::$instance;
     }
 
     public function loadFile($name) {
@@ -16,7 +20,6 @@ class ConfigRouter extends Router {
             http_response_code(500);
             throw new \RuntimeException("File $name in router does not exit", 500);
         }
-        self::$path_load_file = '';
         return $this;
     }
 
@@ -25,7 +28,6 @@ class ConfigRouter extends Router {
             $this->pathArray = $name;
             return $this;
         }
-        self::$path_load_file = '/'. $name;
         return $this;
     }
 
@@ -33,9 +35,14 @@ class ConfigRouter extends Router {
         if(empty($this->pathArray)) {
             throw new \RuntimeException('Name function add() is not null', 500);
         }
-        foreach ($this->pathArray as $name=>$fileName) {
-            self::$path_load_file = '/'. $name;
-            $this->loadFile($fileName);
+        foreach ($this->pathArray as $value) {
+            if (!isset($value['url']) || !isset($value['file'])) {
+                throw new \RuntimeException('Url and file is not null', 500);
+            }
+            if (!empty($value['url'])) {
+                self::mainPath($value['url'] . '/');
+            }
+            $this->loadFile($value['file']);
         }
     }
 }
