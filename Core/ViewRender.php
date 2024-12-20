@@ -15,10 +15,15 @@ class ViewRender {
         return self::$instance;
     }
 
-    public static function cacheFile(array $names)
+    public static function cacheFileHtml(array $names)
     {
         self::$fileHtml = $names;
         return self::instance();
+    }
+
+    public static function hasCacheFileHtml($name)
+    {
+        return in_array($name, self::$fileHtml) && file_exists(self::viewRenderByName($name, '.html'));
     }
 
     private static function defaultDirective()
@@ -89,8 +94,12 @@ class ViewRender {
     public static function render($view, $data = []) {
         $fileView = self::resloveFileView($view);
         if (file_exists(self::getViewRender($fileView, $view))) {
-            extract($data, EXTR_SKIP);
             $view_render = self::getViewRender($fileView, $view);
+            if (in_array($view, self::$fileHtml)) {
+                require_once $view_render;
+                return $view_render;
+            }
+            extract($data, EXTR_SKIP);
             require_once $view_render;
             return $view_render;
         }
@@ -198,8 +207,16 @@ class ViewRender {
         $startPos = strpos($viewCurrent, 'Views');
         $view = substr($viewCurrent, $startPos);
         $view_render = "$folder/$view";
-        $extension = in_array($view, self::$fileHtml) ? '.html' : '.php';
+        $extension = in_array($name, self::$fileHtml) ? '.html' : '.php';
         $view_render = str_replace('.view.php', $extension, $view_render);
+        return $view_render;
+    }
+
+    private static function viewRenderByName($name, $ext = '.php')
+    {
+        $view = preg_replace('/([.]+)/', '/' , $name);
+        $folder = __DIR__ROOT . '/storage/render';
+        $view_render = "$folder/Views/{$view}{$ext}";
         return $view_render;
     }
 

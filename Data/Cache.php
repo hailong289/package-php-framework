@@ -19,8 +19,11 @@ class Cache {
         return self::$instance;
     }
 
-    public function get($name) {
+    public function get($name, $callback = null) {
         if ($this->bindings['file']) {
+            if ($callback instanceof \Closure) {
+                return $callback($this, $this->getDataFile($name));
+            }
             return $this->getDataFile($name);
         }
         return $this->getDataRedis($name);
@@ -126,6 +129,5 @@ class Cache {
     private function getLinkFile($name) {
         return __DIR__ROOT ."/storage/cache/$name.cache";
     }
-
 
 }
