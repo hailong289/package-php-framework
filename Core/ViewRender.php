@@ -167,7 +167,7 @@ class ViewRender {
     {
         if (in_array($name, self::$fileHtml)) {
             ob_start();
-            $output = require($view);
+            require($view);
             $output = ob_get_clean();
         } else {
             $output = file_get_contents($view);

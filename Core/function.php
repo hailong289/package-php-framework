@@ -194,7 +194,6 @@ if(!function_exists('get_view')){
         extract($data);
         $file = __DIR__ROOT . '/App/Views/'.$view.'.view.php';
         require_once $file;
-        return $file;
     }
 }
 

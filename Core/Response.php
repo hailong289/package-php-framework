@@ -20,7 +20,7 @@ class Response {
         return $data;
     }
 
-    public static function view($view, $data = [], $headers = [], $status = 200, $callback = null){
+    public static function view($view, $data = [], $status = 200, $headers = []){
         $headers['Content-Type'] = 'text/html; charset=utf-8';
         self::setHeaders($headers, $status);
         self::resloveDataCollect($data);
