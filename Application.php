@@ -177,8 +177,8 @@ class Application extends Container
 
     private function registerRouter()
     {
-        $router = $this->make(Router::class)->url();
-        $this->control = $router['action'];
+        $router = $this->make(Router::class)->handle();
+        $this->control = $router['controls'];
         $this->middleware = $router['middleware'];
     }
 

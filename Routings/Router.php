@@ -3,9 +3,6 @@ namespace Hola\Routings;
 
 class Router {
     private static BuildRouter|null $instance = null;
-    public function url() {
-        return $this->handle($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);
-    }
 
     public static function build() {
         if (is_null(self::$instance)) {
@@ -73,7 +70,9 @@ class Router {
         return self::build()->mainPath($name);
     }
 
-    private function handle($url, $method) {
+    public function handle() {
+        $url = $_SERVER['REQUEST_URI'];
+        $method = $_SERVER['REQUEST_METHOD'];
         $requestMethod = $method;
         $requestUri = rtrim($url, '/') ?: '/';
         $routers = self::list();
@@ -85,7 +84,7 @@ class Router {
                     array_shift($matches);
                 }
                 $result = [
-                    'action' => array_merge($route['callback'], $matches),
+                    'controls' => array_merge($route['callback'], $matches),
                     'middlewares' => $route['middlewares']
                 ];
                 break;
