@@ -4,6 +4,11 @@ class Redis {
     private static $instance = null;
     private static $instance_queue = null;
 
+    /**
+     * @param string|null $name
+     * @return \Redis
+     * @throws \Exception
+     */
     public static function instance($name = null) {
         $conn_name = $name ?? 'redis';
         if(self::$instance == null){
@@ -12,6 +17,11 @@ class Redis {
         return self::$instance;
     }
 
+    /**
+     * @param string|null $name
+     * @return \Redis
+     * @throws \Exception
+     */
     public static function queueConnect($name = null)
     {
         $conn_name = $name ?? 'redis';
@@ -21,16 +31,29 @@ class Redis {
         return self::$instance_queue;
     }
 
+    /**
+     * @return bool
+     */
     public static function isConnect()
     {
         return self::$instance != null;
     }
 
+    /**
+     * @return bool
+     */
     public static function isConnectQueue()
     {
         return self::$instance_queue != null;
     }
 
+    /**
+     * @param $name
+     * @param string $config_name
+     * @return \Redis
+     * @throws \RedisException
+     * @throws \Throwable
+     */
     public function connect($name, $config_name = 'database') {
         try {
             $config = config("$config_name.connections");

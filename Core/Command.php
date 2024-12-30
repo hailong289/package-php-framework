@@ -20,6 +20,11 @@ class Command extends SymfonyCommand {
         parent::__construct();
     }
 
+    /**
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @return int
+     */
     protected function configure()
     {
         $command = $this->setName($this->command)
@@ -50,26 +55,46 @@ class Command extends SymfonyCommand {
         }
     }
 
+    /**
+     * @param InputInterface $input
+     * @return void
+     */
     private function setOptions(InputInterface $input) {
         foreach ($this->options as $option) {
             $this->list_options[$option] = $input->getOption($option);
         }
     }
 
+    /**
+     * @param InputInterface $input
+     * @return void
+     */
     private function setArguments(InputInterface $input) {
         foreach ($this->arguments as $argument) {
             $this->list_arguments[$argument] = $input->getArgument($argument);
         }
     }
 
+    /**
+     * @param string $key
+     * @return mixed
+     */
     protected function getOption($key) {
         return $this->list_options[$key];
     }
 
+    /**
+     * @param string $key
+     * @return mixed
+     */
     protected function getArgument($key) {
         return $this->list_arguments[$key];
     }
 
+    /**
+     * @param int $count_number
+     * @return ProgressBar
+     */
     protected function createProgressBar($count_number = 0) {
         if ($this->styleSymfony instanceof SymfonyStyle) {
             $this->progressBar = $this->styleSymfony->createProgressBar($count_number);
@@ -77,11 +102,19 @@ class Command extends SymfonyCommand {
         return $this->progressBar;
     }
 
+    /**
+     * @return ProgressBar
+     */
     protected function output()
     {
         return $this->styleSymfony instanceof SymfonyStyle ? $this->styleSymfony:$this->styleSymfony;
     }
 
+    /**
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @return int
+     */
     protected function execute(InputInterface $input, OutputInterface $output){
         $method = method_exists($this, 'handle') ? 'handle' : '__invoke';
         if(!empty($this->options)) $this->setOptions($input);

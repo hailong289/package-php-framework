@@ -11,12 +11,14 @@ class Container
      * @var static
      */
     protected static $instance;
-
     /**
      * @var array
      */
     protected $bindings = [];
 
+    /**
+     * @return static
+     */
     public static function instance()
     {
         if (is_null(self::$instance)) {
@@ -25,10 +27,18 @@ class Container
         return self::$instance;
     }
 
+    /**
+     * get class binding
+     */
     private function get($abstract) {
         return isset($this->bindings[$abstract]) ? $this->bindings[$abstract]:$abstract;
     }
 
+    /**
+     * @param $abstract
+     * @param $factory
+     * @return $this
+     */
     public function set($abstract, $factory = null)
     {
         if (is_null($factory)) {
@@ -44,6 +54,11 @@ class Container
         return $this;
     }
 
+    /**
+     * @param $abstract
+     * @param $factory
+     * @return void
+     */
     public function replace($abstract, $factory): void
     {
         if (isset($this->bindings[$abstract])) {
@@ -51,10 +66,19 @@ class Container
         }
     }
 
+    /**
+     * @param $abstract
+     * @param $factory
+     * @return mixed
+     */
     public function make($abstract, $factory = null) {
         return $this->build($abstract);
     }
 
+    /**
+     * @param $factory
+     * @return \Closure
+     */
     private function getClosure($factory)
     {
         return function () use ($factory) {
@@ -62,6 +86,12 @@ class Container
         };
     }
 
+
+    /**
+     * @param $abstract
+     * @param  array  $params
+     * @return mixed
+     */
     public function callWithParams($abstract, $params = []) {
         return $this->build($abstract, $params);
     }
@@ -137,6 +167,12 @@ class Container
     }
 
 
+    /**
+     * @param $class
+     * @param  array  $params
+     * @return mixed
+     * @throws \ReflectionException
+     */
     private function build($class, $params = [])
     {
         try {
@@ -168,6 +204,10 @@ class Container
         return $classReflection->newInstanceArgs($instances);
     }
 
+    /**
+     * @param array $dependencies
+     * @return array
+     */
     private function resolveConstructorDependencies(array $dependencies): array
     {
         $array = [];
@@ -182,6 +222,10 @@ class Container
     }
 
 
+    /**
+     * @param $parameter
+     * @return \ReflectionClass|null
+     */
     public function getReflectionClassFromParameter($parameter): ?\ReflectionClass
     {
         return $parameter->getType() && !$parameter->getType()->isBuiltin()

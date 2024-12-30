@@ -4,6 +4,13 @@ use Hola\Core\ConfigApp;
 
 class RegisterLoad
 {
+
+    /**
+     * Register file
+     *
+     * @param string $name
+     * @return $this
+     */
     public function registerFile($name)
     {
         $pathName = __DIR__ROOT . "/$name.php";
@@ -13,12 +20,24 @@ class RegisterLoad
         return $this;
     }
 
+
+    /**
+     * Register session
+     *
+     * @return $this
+     */
     public function registerSession()
     {
         session_start();
         return $this;
     }
 
+
+    /**
+     * Register router
+     *
+     * @return $this
+     */
     public function routerWorkLoad()
     {
         $pathName = __DIR__ROOT . "/router/index.php";
@@ -27,7 +46,12 @@ class RegisterLoad
         }
         return $this;
     }
-    
+
+    /**
+     * load config
+     *
+     * @return $this
+     */
     public function loadConfig()
     {
         $config = rglob(__DIR__ROOT ."/config/*.php") ?? [];
@@ -45,6 +69,11 @@ class RegisterLoad
         }
     }
 
+    /**
+     * load language
+     *
+     * @return $this
+     */
     public function loadLanguage()
     {
         $language = rglob(__DIR__ROOT ."/language/*.php") ?? [];
@@ -57,7 +86,13 @@ class RegisterLoad
             }
         }
     }
-    
+
+    /**
+     * load timezone
+     *
+     * @param string $timezone
+     * @return $this
+     */
     public function loadTimeZone($timezone = null)
     {
         $timezone = $timezone ?? config_env('TIMEZONE', 'Asia/Ho_Chi_Minh');
@@ -65,6 +100,11 @@ class RegisterLoad
         return $this;
     }
 
+    /**
+     * init app
+     *
+     * @return $this
+     */
     public function initApp()
     {
         $pathName = __DIR__ROOT . "/App/App.php";
@@ -74,6 +114,12 @@ class RegisterLoad
         return $this;
     }
 
+    /**
+     * Register folder
+     *
+     * @param string|array $pathName
+     * @return $this
+     */
     public function registerFolder($pathName)
     {
         if (is_array($pathName)) {
@@ -90,6 +136,12 @@ class RegisterLoad
         return $this;
     }
 
+    /**
+     * load files
+     *
+     * @param array $files
+     * @return void
+     */
     private function loadFiles($files)
     {
         foreach ($files as $item) {

@@ -7,6 +7,9 @@ class ConfigApp {
     private static $instance = null;
     private static $bindings = [];
 
+    /**
+     * ConfigApp constructor.
+     */
     public static function init() {
         if (self::$instance == null) {
             self::$instance = new ConfigApp();
@@ -14,6 +17,10 @@ class ConfigApp {
         return self::$instance;
     }
 
+    /**
+     * @param $key
+     * @param $value
+     */
     public function create($key, $value) {
         if (empty(constant('PROJECT_KEY'))) {
            die('PROJECT_KEY is not defined');
@@ -21,11 +28,18 @@ class ConfigApp {
         self::$bindings[PROJECT_KEY][$key] = $value;
     }
 
+    /**
+     * @return array
+     */
     public function all()
     {
         return self::$bindings[PROJECT_KEY];
     }
 
+    /**
+     * @param $name
+     * @return mixed
+     */
     public function get($name) {
         $list_config = self::$bindings[PROJECT_KEY] ?? [];
         $keys = explode('.', $name);
@@ -34,6 +48,11 @@ class ConfigApp {
         return findDataByKeys($keys, $config);
     }
 
+    /**
+     * @param $name
+     * @param $value
+     * @return $this
+     */
     public function set($name, $value) {
         $list_config = self::$bindings[PROJECT_KEY] ?? [];
         $keys = explode('.', $name);

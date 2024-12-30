@@ -3,6 +3,10 @@ namespace Hola\Connection;
 class MongoDB {
     private static $instance = null;
 
+    /**
+     * @param null $name
+     * @return MongoDB
+     */
     public static function instance($name = null){
         $conn_name = $name ?? config('database.default', 'mongodb');
         if(self::$instance == null){
@@ -12,6 +16,13 @@ class MongoDB {
         return self::$instance;
     }
 
+    /**
+     * @param $name
+     * @param string $config_name
+     * @return void
+     * @throws \MongoDB\Driver\Exception\Exception
+     * @throws \Throwable
+     */
     public function connect($name, $config_name = 'database'){
         $config = config("$config_name.connections");
         $db_connection = $config[$name];

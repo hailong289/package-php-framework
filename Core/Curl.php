@@ -33,7 +33,7 @@ class Curl
         'saveFile' => '',
     ];
 
-    public static function instance(){
+    public static function init() {
         return new Curl();
     }
     /**

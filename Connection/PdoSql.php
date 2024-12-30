@@ -6,6 +6,11 @@ class PdoSql {
 
     public function __construct() {}
 
+    /**
+     * @param string|null $name
+     * @return \PDO
+     * @throws \Exception
+     */
     public static function instance($name = null) {
         $conn_name = $name ?? config('database.default', 'mysql');
         if(self::$instance == null) {
@@ -14,6 +19,11 @@ class PdoSql {
         return self::$instance;
     }
 
+    /**
+     * @param string|null $name
+     * @return \PDO
+     * @throws \Exception
+     */
     public static function queueConnect($name = 'database')
     {
         $conn_name = $name ?? config('queue.default', 'database');
@@ -23,16 +33,29 @@ class PdoSql {
         return self::$instance_queue;
     }
 
+    /**
+     * @return bool
+     */
     public static function isConnect()
     {
         return self::$instance != null;
     }
 
+    /**
+     * @return bool
+     */
     public static function isConnectQueue()
     {
         return self::$instance_queue != null;
     }
 
+    /**
+     * @param $name
+     * @param string $config_name
+     * @return \PDO
+     * @throws \Throwable
+     * @throws \PDOException
+     */
     public function connect($name, $config_name = 'database') {
         $config = config("$config_name.connections");
         $db_connection = $config[$name];

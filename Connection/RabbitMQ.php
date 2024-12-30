@@ -4,6 +4,11 @@ class RabbitMQ {
     private static $instance = null;
     private static $instance_queue = null;
 
+    /**
+     * @param string|null $name
+     * @return \PhpAmqpLib\Connection\AMQPStreamConnection
+     * @throws \Exception
+     */
     public static function instance($name = null){
         $conn_name = $name ?? config('queue.default', 'rabbitmq');
         if(self::$instance == null){
@@ -13,11 +18,20 @@ class RabbitMQ {
         return self::$instance;
     }
 
+    /**
+     * @return bool
+     */
     public static function isConnect()
     {
         return self::$instance != null;
     }
 
+    /**
+     * @param $name
+     * @param string $config_name
+     * @return \PhpAmqpLib\Connection\AMQPStreamConnection
+     * @throws \Throwable
+     */
     public function connect($name, $config_name = 'queue') {
         $config = config("$config_name.connections");
         $connection = $config[$name];
