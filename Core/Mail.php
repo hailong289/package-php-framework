@@ -122,41 +122,59 @@ class Mail {
         return $this;
     }
 
+    public function withAttachment($file)
+    {
+        if (is_array($file)) {
+            foreach ($file as $item) {
+                $this->mail->addAttachment($item);
+            }
+        } else {
+            $this->mail->addAttachment($file);
+        }
+        return $this;
+    }
+
+    public function withCC($cc)
+    {
+        if (is_array($cc)) {
+            foreach ($cc as $email) {
+                $this->mail->addCC($email);
+            }
+        } else {
+            $this->mail->addCC($cc);
+        }
+        return $this;
+    }
+
+    public function withBCC($bcc)
+    {
+        if (is_array($bcc)) {
+            foreach ($bcc as $email) {
+                $this->mail->addBCC($email);
+            }
+        } else {
+            $this->mail->addBCC($bcc);
+        }
+        return $this;
+    }
+
     public function withData($data)
     {
         foreach ($data as $key=>$value) {
             if ($key === 'title') {
-                $this->mail->Subject = $value;
+                $this->setSubject($value);
             }
             if ($key === 'content') {
-                $this->mail->Body = $value;
+                $this->setBody($value);
             }
             if ($key === 'cc') {
-                if (is_array($value)) {
-                    foreach ($value as $cc) {
-                        $this->mail->addCC($cc['email'], $cc['name'] ?? '');
-                    }
-                } else {
-                    $this->mail->addCC($value);
-                }
+                $this->withCC($value);
             }
             if ($key === 'bcc') {
-                if (is_array($value)) {
-                    foreach ($value as $cc) {
-                        $this->mail->addBCC($cc['email'], $cc['name'] ?? '');
-                    }
-                } else {
-                    $this->mail->addBCC($value);
-                }
+                $this->withBCC($value);
             }
             if($key === 'attachment') {
-                if(is_array($value)) {
-                    foreach ($value as $file) {
-                        $this->mail->addAttachment($file['name']);
-                    }
-                } else {
-                    $this->mail->addAttachment($value);
-                }
+                $this->withAttachment($value);
             }
         }
     }
