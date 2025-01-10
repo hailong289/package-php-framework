@@ -54,17 +54,14 @@ class RegisterLoad
      */
     public function loadConfig()
     {
+        require_once __DIR__ROOT ."/config/constant.php";
         $config = rglob(__DIR__ROOT ."/config/*.php") ?? [];
         foreach ($config as $item) {
-            if (file_exists($item)) {
-                if ($item === __DIR__ROOT ."/config/constant.php") {
-                    require_once $item;
-                } else {
-                    $items = explode("/", $item);
-                    $end = end($items);
-                    $end = str_replace('.php', '', $end);
-                    ConfigApp::init()->create($end, require($item));
-                }
+            if (file_exists($item) && $item !== __DIR__ROOT ."/config/constant.php") {
+                $items = explode("/", $item);
+                $end = end($items);
+                $end = str_replace('.php', '', $end);
+                ConfigApp::init()->create($end, require($item));
             }
         }
     }

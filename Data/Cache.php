@@ -6,128 +6,153 @@ use Hola\Connection\Redis;
 
 class Cache {
     public static $instance = null;
-    public $bindings = [
-        'redis' => null,
-        'file' => false
-    ];
+    private static $bind = null;
+    private $default_connection = null;
+    private $prefix = 'cache_';
+    private $path = __DIR__ROOT . '/storage/cache';
+
+    public function __construct() {
+        $this->bind = config('cache.default');
+        $this->default_connection = config('cache.default_connections');
+        $this->prefix = config('cache.prefix');
+        $this->path = __DIR__ROOT . '/' . config("cache.stores.{$this->bind}.path");
+    }
 
     public static function init() {
-        
         if (self::$instance == null) {
             self::$instance = new Cache();
         }
         return self::$instance;
     }
 
-    public function get($name, $callback = null) {
-        if ($this->bindings['file']) {
-            if ($callback instanceof \Closure) {
-                return $callback($this, $this->getDataFile($name));
-            }
-            return $this->getDataFile($name);
-        }
-        return $this->getDataRedis($name);
-    }
-
-    public function redis($default_connect = null, $is_return = false) {
-        $name = $default_connect ?? config_env('REDIS_CONNECTION','redis');
-        $redis = Redis::instance($name);
-        $this->bindings['redis'] = $redis;
-        $this->bindings['file'] = false;
-        if ($is_return) {
-            return $redis;
+    public function redis($name = null) {
+        $this->bind = 'redis';
+        if (!is_null($name)) {
+            $this->default_connection = $name;
         }
         return $this;
     }
 
     public function file() {
-        $this->bindings['file'] = true;
-        $this->bindings['redis'] = null;
+        $this->bind = 'file';
         return $this;
     }
 
-    public function store($name, $data = [], $time = 3600) {
-        if ($this->bindings['file']) {
-            $this->storeFile($name, $data, $time);
-        } else {
-            $this->storeRedis($name, $data, $time);
+    public function get($name) {
+        $name = $this->prefix . $name;
+        switch ($this->bind) {
+            case 'file':
+                return $this->getDataFile($name, $callback);
+                break;
+            case 'redis':
+                return $this->getDataRedis($name, $callback);
+                break;
+            default:
+                throw new \Exception('Cache driver do not support');
+                break;
+        }
+    }
+
+    public function store($name, $data = [], $time = null) {
+        $name = $this->prefix . $name;
+        switch ($this->bind) {
+            case 'file':
+                $this->storeFile($name, $data, $time);
+                break;
+            case 'redis':
+                $this->storeRedis($name, $data, $time);
+                break;
+            default:
+                throw new \Exception('Cache driver do not support');
+                break;
         }
         return $this;
     }
 
-    public function getOrStore($name, $data = [], $time = 3600)
+    public function getOrStore($name, $data = [], $time = null)
     {
-        if ($this->bindings['file']) {
-            return $this->storeFile($name, $data, $time,true);
+        if (empty($this->get($name))) {
+            $this->store($name, $data, $time);
+            return $data;
         }
-        return $this->storeRedis($name, $data, $time, true);
+        return $this->get($name);
     }
 
     private function getDataRedis($name) {
-        $data_cache = $this->bindings['redis']->get($name);
+        $data_cache = $this->getRedis()->get($name);
         if (!empty($data_cache)) {
             return unserialize($data_cache);
         }
         return [];
-    }
-
-    private function storeRedis($tags, $data = [], $time = 3600, $is_get = false) {
-        $this->bindings['redis']->set($tags, serialize($data));
-        $this->bindings['redis']->expire($tags, $time);
-        if ($is_get) {
-            return $data;
-        }
     }
 
     private function getDataFile($name) {
-        $data_cache = file_get_contents(__DIR__ROOT ."/storage/cache/$name.cache");
+        $data_cache = file_get_contents("$this->path/$name.cache");
         if (!empty($data_cache)) {
             return unserialize($data_cache);
         }
         return [];
     }
 
-    private function storeFile($name, $data = [], $time = 3600, $is_get = false) {
-        createFolder(__DIR__ROOT .'/storage/cache');
+    private function storeRedis($tags, $data = [], $time = null) {
+        if (is_null($time)) {
+            $time = config("cache.stores.{$this->bind}.expire");
+        }
+        $this->getRedis()->setex($tags, $time, serialize($data));
+    }
+
+    private function storeFile($name, $data = [], $time = null) {
+        if (is_null($time)) {
+            $time = config("cache.stores.{$this->bind}.expire");
+        }
+        createFolder($this->path);
         $cacheFile = $this->getLinkFile($name);
         if (file_exists($cacheFile)) {
             $effect = (time() - filemtime($cacheFile) < $time);
             if (!$effect) {
-                file_put_contents(__DIR__ROOT ."/storage/cache/$name.cache", serialize($data));
+                file_put_contents($cacheFile, serialize($data));
             }
         } else {
-            file_put_contents(__DIR__ROOT ."/storage/cache/$name.cache", serialize($data));
-        }
-
-        if ($is_get) {
-            return $data;
+            file_put_contents($cacheFile, serialize($data));
         }
     }
 
-    public function clear($key)
+    public function clear($name)
     {
-        if ($this->bindings['file']) {
-            $this->clearFile($key);
-        } else {
-            $this->clearRedis($key);
+        $name = $this->prefix . $name;
+        switch($this->bind) {
+            case 'file':
+                $this->clearFile($name);
+                break;
+            case 'redis':
+                $this->clearRedis($name);
+                break;
+            default:
+                throw new \Exception('Cache driver do not support');
+                break;
         }
     }
 
-    private function clearFile($key)
+    private function clearFile($name)
     {
-        $cacheFile = $this->getLinkFile($key);
+        $cacheFile = $this->getLinkFile($name);
         if (file_exists($cacheFile)) {
             unlink($cacheFile);
         }
     }
 
-    private function clearRedis($key)
+    private function clearRedis($name)
     {
-        $this->bindings['redis']->del($key);
+        $this->getRedis()->del($name);
     }
 
     private function getLinkFile($name) {
-        return __DIR__ROOT ."/storage/cache/$name.cache";
+        return "$this->path/$name.cache";
+    }
+
+    private function getRedis(): \Redis {
+        $redis = Redis::instance($this->default_connection);
+        return $redis;
     }
 
 }

@@ -63,17 +63,13 @@ class Files {
     }
 
     public function uploadAndResizeImage(
-        $files = [
-            'file' => null,
-            'path' => null,
-            'filename' => null,
-            'extension' => null
-        ],
-        $resize = [
-            'width' => 0,
-            'height' => 0,
-            'quality' => 75,
-        ]
+        string $file,
+        string $path,
+        string $filename,
+        string $extension,
+        int $width,
+        int $height,
+        int $quality = 75
     )
     {
         try {

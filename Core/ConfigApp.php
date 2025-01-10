@@ -11,6 +11,9 @@ class ConfigApp {
      * ConfigApp constructor.
      */
     public static function init() {
+        if (empty(defined('PROJECT_KEY') && constant('PROJECT_KEY'))) {
+            die('PROJECT_KEY is not defined');
+        }
         if (self::$instance == null) {
             self::$instance = new ConfigApp();
         }
@@ -22,9 +25,6 @@ class ConfigApp {
      * @param $value
      */
     public function create($key, $value) {
-        if (empty(constant('PROJECT_KEY'))) {
-           die('PROJECT_KEY is not defined');
-        }
         self::$bindings[PROJECT_KEY][$key] = $value;
     }
 
