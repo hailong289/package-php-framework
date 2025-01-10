@@ -115,9 +115,19 @@ class Model {
         return self::build()->whereIn($column, $value);
     }
 
+    public static function orWhereIn($column, array $value)
+    {
+        return self::build()->orWhereIn($column, $value);
+    }
+
     public static function whereNotIn($column, array $value)
     {
         return self::build()->whereNotIn($column, $value);
+    }
+
+    public static function orWhereNotIn($column, array $value)
+    {
+        return self::build()->orWhereNotIn($column, $value);
     }
 
     public static function whereRaw($sql)

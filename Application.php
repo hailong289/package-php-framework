@@ -98,8 +98,6 @@ class Application extends Container
             }
             $control_array = array_values($this->control);
             $result = $this->call($control_array);
-            // check middlware in controller
-            $this->registerMiddlware();
             return $this->responseSuccess($result);
         } catch (\Throwable $e) {
             $this->handleErrorLogs($e);
@@ -150,7 +148,7 @@ class Application extends Container
             echo json_encode($return);
             return $this;
         }
-        return Response::view('error.index', $return, [], $code);
+        return Response::view('error.index', $return, $code, []);
     }
 
     private function isJson()

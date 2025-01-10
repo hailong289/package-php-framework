@@ -202,9 +202,27 @@ class QueryBuilder {
         return $this;
     }
 
+    public function orWhereIn($column, array $value)
+    {
+        $boolean = !empty($this->bindings['where']) ? ' OR ' : '';
+        $operator = " IN";
+        $type = 'array';
+        $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean', 'type');
+        return $this;
+    }
+
     public function whereNotIn($column, array $value)
     {
         $boolean = !empty($this->bindings['where']) ? ' AND ' : '';
+        $operator = " NOT IN";
+        $type = 'array';
+        $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean', 'type');
+        return $this;
+    }
+
+    public function orWhereNotIn($column, array $value)
+    {
+        $boolean = !empty($this->bindings['where']) ? ' OR ' : '';
         $operator = " NOT IN";
         $type = 'array';
         $this->bindings['where'][] = compact('column', 'operator', 'value', 'boolean', 'type');
@@ -466,7 +484,13 @@ class QueryBuilder {
     public function update($data, $id = null)
     {
         if (!is_null($id)) {
-            $this->where('id', $id);
+            if (is_array($id)) {
+                foreach ($id as $key => $value) {
+                    $this->where($key, $value);
+                }
+            } else {
+                $this->where('id', $id);
+            }
         }
         return $this->resloveData($this->toSql('UPDATE', $data), 'update', function ($selectData, $status) {
             $this->clearBindings(true);

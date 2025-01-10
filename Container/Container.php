@@ -67,9 +67,10 @@ class Container
     }
 
     /**
-     * @param $abstract
-     * @param $factory
-     * @return mixed
+     * @template T
+     * @param class-string<T> $abstract The class name to instantiate.
+     * @param mixed $factory Optional factory to resolve the instance.
+     * @return T The instantiated object of the class.
      */
     public function make($abstract, $factory = null) {
         return $this->build($abstract);
@@ -88,17 +89,17 @@ class Container
 
 
     /**
-     * @param $abstract
-     * @param  array  $params
-     * @return mixed
+     * @template T
+     * @param class-string<T> $abstract The class name to instantiate.
+     * @param array $params Additional parameters to pass to the constructor.
+     * @return T The instantiated object of the class.
      */
     public function callWithParams($abstract, $params = []) {
         return $this->build($abstract, $params);
     }
 
     /**
-     * @param $callable -- string class and method name
-     * @param  array  $parameters
+     * @var array
      */
     public function call($callable)
     {
@@ -107,8 +108,8 @@ class Container
         if (empty($this->callbackClass)) {
             throw new \TypeError(self::class . '::call(): Class must not be empty');
         }
-
-        $methodReflection = new \ReflectionMethod($this->callbackClass, $this->callbackMethod);
+        $bindingClass = $this->get($this->callbackClass);
+        $methodReflection = new \ReflectionMethod($bindingClass, $this->callbackMethod);
         $methodParams = $methodReflection->getParameters();
         $dependencies = [];
 
@@ -117,18 +118,18 @@ class Container
             $type = $param->getType(); // check type
             if ($type && $type instanceof \ReflectionNamedType) { /// if parameter is a class
                 $className = $type->getName();
-                $name = new $className();
-                if (isset($this->bindings[$className])) {
-                    $name = $this->bindings[$className];
+                $bindingClassMethod = $this->get($className);
+                if (is_string($bindingClassMethod)) {
+                    $bindingClassMethod = $this->build($bindingClassMethod);
                 }
-                array_push($dependencies, $name); // push  to $dependencies array
+                array_push($dependencies, $bindingClassMethod); // push  to $dependencies array
             }
         }
         foreach ($this->callbackMethodParams as $value) {
             array_push($dependencies, $value);
         }
         // make class instance
-        $initClass = $this->build($this->callbackClass);
+        $initClass = $this->build($bindingClass);
         // call method with $dependencies/parameters
         return $methodReflection->invoke($initClass, ...$dependencies);
     }
@@ -168,15 +169,19 @@ class Container
 
 
     /**
-     * @param $class
-     * @param  array  $params
-     * @return mixed
-     * @throws \ReflectionException
+     * Build an instance of the given class, resolving dependencies as needed.
+     *
+     * @template T
+     * @param class-string<T> $class The class name to instantiate.
+     * @param array $params Additional parameters to pass to the constructor.
+     * @return T The instantiated object of type T.
+     * @throws \ReflectionException If the class cannot be reflected or instantiated.
      */
     private function build($class, $params = [])
     {
         try {
-            $classReflection = new \ReflectionClass($class);
+            $bindingClass = $this->get($class);
+            $classReflection = new \ReflectionClass($bindingClass);
         } catch (\ReflectionException $e) {
             throw new \ReflectionException($e->getMessage(), 500);
         }

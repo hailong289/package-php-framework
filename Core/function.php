@@ -451,26 +451,27 @@ if(!function_exists('rglob')) {
     }
 }
 
-/**
- * Get app instance
- * @param null $abstract
- * @return \Hola\Container\Container
- */
 if (!function_exists('app')) {
-    function app($abstract = null): \Hola\Container\Container {
+    /**
+     * Get app instance or make a class instance.
+     * @param class-string<T>|null $abstractThe class name to instantiate or null to get the container instance.
+     * @return \Hola\Container\Container|T The container instance or the resolved class instance.
+     */
+    function app($abstract = null) {
         if (is_null($abstract)) {
             return \Hola\Container\Container::instance();
         }
-        return \Hola\Container\Container::instance()->set($abstract);
+        return \Hola\Container\Container::instance()->make($abstract);
     }
 }
 
-/**
- * Get config
- * @param string|null $name
- * @return mixed
- */
+
 if (!function_exists('config')) {
+    /**
+     * Get config
+     * @param string|null $name
+     * @return mixed
+     */
     function config($name = null) {
         $config = \Hola\Core\ConfigApp::init();
         if (is_null($name)) {
@@ -480,13 +481,13 @@ if (!function_exists('config')) {
     }
 }
 
-/**
- * Create folder
- * @param string $path
- * @param int $mode
- * @throws \RuntimeException
- */
 if (!function_exists('createFolder')) {
+    /**
+     * Create folder
+     * @param string $path
+     * @param int $mode
+     * @throws \RuntimeException
+     */
     function createFolder($path, $mode = 0777) {
         if (!empty($path) && !file_exists($path)) {
             if (!mkdir($concurrentDirectory = $path, $mode, true) && !is_dir($concurrentDirectory)) {
