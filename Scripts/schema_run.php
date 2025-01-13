@@ -32,10 +32,10 @@ class SchemaRunScript extends \Hola\Core\Command {
         $migrationPath = $this->getOption('path');
         if (!empty($migrationPath)) {
             $migration = str_replace('.php', '', $migrationPath);
-            $migration = str_replace(__DIR__ROOT . '/database/migrations/', '', $migration);
+            $migration = str_replace(__DIR__ROOT . '/database/SchemaMigrate/', '', $migration);
             return [$migration];
         }
-        $migrations = rglob(__DIR__ROOT . '/database/migrations/*.php') ?? [];
+        $migrations = rglob(__DIR__ROOT . '/database/SchemaMigrate/*.php') ?? [];
         $migrationsClass = array_map(function ($migration) {
             $migration = $this->getClassesFromFile($migration);
             return $migration;
@@ -46,7 +46,7 @@ class SchemaRunScript extends \Hola\Core\Command {
     protected function runMigration($migration, $type = 'up') {
         try {
             $typeRun = 'run' . ucfirst($type);
-            $class = '\\App\\Database\\Migrations\\' . $migration;
+            $class = '\\App\\Database\\SchemaMigrate\\' . $migration;
             $handle = new $class();
             $handle->{$typeRun}();
             $this->output()->text('Migration ' . $migration . ' run successfully');

@@ -42,11 +42,11 @@ class SchemaScript extends \Hola\Core\Command {
         $firstChar = ucfirst($type);
         $nameFile = $this->getOption('name_file');
         $migration = date('Y_m_d_His'). ($nameFile ? $nameFile : "_$type_".$table_name).'_table';
-        $migrationPath = __DIR__ROOT . "/database/migrations/".str_slug($migration,'_').".php";
+        $migrationPath = __DIR__ROOT . "/database/SchemaMigrate/".str_slug($migration,'_').".php";
         if (!file_exists($migrationPath)) {
-            createFolder(__DIR__ROOT . "/database/migrations");
+            createFolder(__DIR__ROOT . "/database/SchemaMigrate");
             file_put_contents($migrationPath, '<?php
-namespace App\Database\Migrations;
+namespace App\Database\SchemaMigrate;
 use Hola\Database\Structure\Table;
 use Hola\Database\Structure\DBSchema;
 use Hola\Database\TableMigration;

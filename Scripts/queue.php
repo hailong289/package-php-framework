@@ -215,6 +215,9 @@ class QueueScript extends \Hola\Core\Command
                 ->delete();
 
             $taskName = $queue['class'] . '_' . uid();
+            if ($queue['timeout'] !== config_env('QUEUE_TIMEOUT', 600)) {
+                $this->timeoutManager->setTimeOut($queue['timeout']);
+            }
             $this->timeoutManager->execute($taskName, function () use ($queue) {
                 $start = new \DateTime();
                 $this->output()->writeln("<info>{$queue['class']} running</info>");
@@ -251,6 +254,9 @@ class QueueScript extends \Hola\Core\Command
             }
             $queue = $this->data(json_decode($queue, true));
             $taskName = $queue['class'] . '_' . uid();
+            if ($queue['timeout'] !== config_env('QUEUE_TIMEOUT', 600)) {
+                $this->timeoutManager->setTimeOut($queue['timeout']);
+            }
             $this->timeoutManager->execute($taskName, function () use ($queue) {
                 $start = new \DateTime();
                 $this->output()->writeln("<info>{$queue['class']} running</info>");
@@ -300,6 +306,9 @@ class QueueScript extends \Hola\Core\Command
             $queue = json_decode($msg->body, true);
             $queue = $this->data($queue);
             $taskName = $queue['class'] . '_' . uid();
+            if ($queue['timeout'] !== config_env('QUEUE_TIMEOUT', 600)) {
+                $this->timeoutManager->setTimeOut($queue['timeout']);
+            }
             $this->timeoutManager->execute($taskName, function () use ($queue, $msg) {
                 $start = new \DateTime();
                 $this->output()->writeln("<info>{$queue['class']} running</info>");

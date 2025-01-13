@@ -33,6 +33,9 @@ class TimeoutManager
 
     public function execute(string $taskName, callable $task, $data = [])
     {
+        if (!extension_loaded('pcntl')) {
+            throw new \Exception('PCNTL extension is NOT enabled.');
+        }
         $this->payload = [
             'taskName' => $taskName,
             'data' => $data

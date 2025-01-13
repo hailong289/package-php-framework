@@ -122,8 +122,7 @@ class Connection {
 
     public function connect($connection = null, $type = null) {
         if (!is_null($connection)) {
-            $this->switchConnect($connection, $type);
-            return $this->pdo;
+            return $this->switchConnect($connection, $type);
         }
         if (!is_null($this->pdo)) {
             return $this->pdo;
@@ -140,5 +139,6 @@ class Connection {
         } else {
             $this->pdo = (new PdoSql())->connect($con, 'database');
         }
+        return $this->pdo;
     }
 }
