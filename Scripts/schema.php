@@ -2,9 +2,9 @@
 
 namespace Hola\Scripts;
 
-class MigrationsScript extends \Hola\Core\Command {
-    protected $command = 'create:migration';
-    protected $command_description = 'Run the database create migration';
+class SchemaScript extends \Hola\Core\Command {
+    protected $command = 'create:schema';
+    protected $command_description = 'Run the database create schema';
     protected $options = [
         'class',
         'table',

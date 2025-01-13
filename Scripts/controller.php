@@ -36,8 +36,7 @@ class ControllerScript extends \Hola\Core\Command
         if (!file_exists(__DIR__ROOT . "/App/Controllers/$name_controller.php")) {
             file_put_contents(__DIR__ROOT . "/App/Controllers/$name_controller.php", "<?php
 namespace App\Controllers;
-use Hola\Core\BaseController;
-class {$name_controller} extends BaseController {
+class {$name_controller} {
     public function __construct(){}
 } 
 ", FILE_APPEND);
