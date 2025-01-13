@@ -3,8 +3,8 @@ namespace Hola\Queue;
 use Hola\Connection\PdoSql;
 use Hola\Connection\RabbitMQ;
 use Hola\Core\RedisCR;
-use Hola\Core\Request;
-use Hola\Core\Response;
+use Hola\Transport\Request;
+use Hola\Transport\Response;
 use Hola\Connection\Redis;
 use Hola\Database\DBO;
 

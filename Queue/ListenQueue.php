@@ -39,4 +39,14 @@ class ListenQueue {
         return !empty($this->listeners['success']);
     }
 
+    public function isBindingConnection()
+    {
+        return !empty($this->bindings['connection']);
+    }
+
+    public function isBindingConnectionType()
+    {
+        return !empty($this->bindings['connection_type']);
+    }
+
 }

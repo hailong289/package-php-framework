@@ -4,6 +4,7 @@ namespace Hola\Scripts;
 use Hola\Connection\RabbitMQ;
 use Hola\Connection\Redis;
 use Hola\Core\RedisCR;
+use Hola\Core\TimeoutManager;
 use Hola\Database\DBO;
 use Hola\Database\QueryBuilder;
 use Hola\Queue\ListenQueue;
@@ -22,9 +23,11 @@ class QueueScript extends \Hola\Core\Command
     private $queueRunning = null;
     private $break_job = false;
     private ListenQueue $listenQueue;
+    private TimeoutManager $timeoutManager;
 
     public function __construct()
     {
+        $this->timeout = config('queue.timeout');
         parent::__construct();
     }
 
@@ -35,25 +38,37 @@ class QueueScript extends \Hola\Core\Command
         $this->connection = config_env('QUEUE_CONNECTION', 'database');
         $queue_name = $this->getOption('queue');
         $connection = $this->getOption('connection');
+        $timeout_options = $this->getOption('timeout');
         $connection_type = $this->getArgument('type_connection');
-        if(!empty($connection_type)) $this->connection_type = $connection_type;
-        if(!empty($queue_name)) $this->jobs_queue = $queue_name;
-        if(!empty($connection)) $this->connection = $connection;
+        if(!empty($connection_type)) {
+            $this->connection_type = $connection_type;
+        }
+        if(!empty($queue_name)) {
+            $this->jobs_queue = $queue_name;
+        }
+        if(!empty($connection)) {
+            $this->connection = $connection;
+        }
+        if (!empty($timeout_options)) {
+            $this->timeout = $timeout_options;
+        }
+        $this->timeout = 10;
         sleep(1);
+        $this->handleListenTimeOut();
         $this->switchDB($this->connection_type);
     }
 
-    public function setTimeOutJob($timeout = 0)
+    public function handleListenTimeOut()
     {
-        register_shutdown_function([$this, 'stopJobTimeout']);
-        $timeout_options = $this->getOption('timeout');
-        if(!empty($timeout_options)) {
-            $this->timeout = $timeout_options;
-        } else {
-            $timeout = $timeout === 0 ? config('queue.timeout') : $timeout;
-            $this->timeout = $timeout;
-        }
-        set_time_limit($this->timeout);
+        $this->timeoutManager = new TimeoutManager();
+        $this->timeoutManager->setTimeOut($this->timeout);
+        $this->timeoutManager->eventTimeOut(function ($payload) {
+            $taskName = $payload['taskName'];
+            $data = $payload['data'];
+            $this->break_job = true;
+            $this->failed($data, new \Exception("$taskName timeout queue"));
+            $this->output()->error("$taskName timeout queue");
+        });
     }
 
     private function data($data)
@@ -107,6 +122,15 @@ class QueueScript extends \Hola\Core\Command
     private function failed($data, $e)
     {
         try {
+            if ($this->listenQueue->isFailed()) {
+                $this->listenQueue->trigger('failed', $queue, $exception);
+                if ($this->listenQueue->isBindingConnection()) {
+                    $this->connection = $this->listenQueue->bindings['connection'];
+                }
+                if ($this->listenQueue->isBindingConnectionType()) {
+                    $this->connection_type = $this->listenQueue->bindings['connection_type'];
+                }
+            }
             $conn = $this->switchDB($this->connection_type, true);
             $class = str_replace('Queue\\Jobs\\','', $data['class']);
             $data = [
@@ -122,7 +146,7 @@ class QueueScript extends \Hola\Core\Command
                 $conn->from('failed_jobs')->insert([
                     'data' => $data,
                     'queue' => 'failed_jobs',
-                    'exception' => $e->getMessage() . ". Trace: " . base64_encode($e->getTraceAsString()),
+                    'exception' => $e->getMessage() . ". Trace: " . $e->getTraceAsString(),
                     'created_at' => date('Y-m-d H:i:s')
                 ]);
             } elseif ($conn instanceof \Redis) {
@@ -189,40 +213,27 @@ class QueueScript extends \Hola\Core\Command
                 ->where('queue', $queue_name)
                 ->where('id', $queue['key'])
                 ->delete();
-            $start = new \DateTime();
-            $this->output()->text("{$queue['class']} running");
-            try {
-                if (!method_exists($queue['class'], 'handle')) {
-                    throw new \Exception("function handle does not exits in {$queue['class']}");
-                }
-                $this->setTimeOutJob($queue['timeout']);
-                $this->queueRunning = $queue;
-                app()->callWithParams($queue['class'], $queue['payload'])->handle();
-                $time = $this->endTimeJob($start);
-                $this->output()->text("{$queue['class']} work success ---- Time: $time");
+
+            $taskName = $queue['class'] . '_' . uid();
+            $this->timeoutManager->execute($taskName, function () use ($queue) {
+                $start = new \DateTime();
+                $this->output()->writeln("<info>{$queue['class']} running</info>");
                 try {
+                    if (!method_exists($queue['class'], 'handle')) {
+                        throw new \Exception("function handle does not exits in {$queue['class']}");
+                    }
+                    app()->callWithParams($queue['class'], $queue['payload'])->handle();
+                    $time = $this->endTimeJob($start);
+                    $this->output()->writeln(PHP_EOL."<info>{$queue['class']} work success ---- Time: $time</info>");
                     if ($this->listenQueue->isDone()) {
                         $this->listenQueue->trigger('success', $queue);
                     }
                 } catch (\Throwable $exception) {
-                    log_write($exception);
-                }
-            }catch (\Throwable $exception) {
-                $time = $this->endTimeJob($start);
-                $this->output()->text("$class failed  ---- Time: $time");
-                if ($this->listenQueue->isFailed()) {
-                    $this->listenQueue->trigger('failed', $queue, $exception);
-                    if (isset($this->listenQueue->bindings['connection'])) {
-                        $this->connection = $this->listenQueue->bindings['connection'];
-                    }
-                    if (isset($this->listenQueue->bindings['connection_type'])) {
-                        $this->connection_type = $this->listenQueue->bindings['connection_type'];
-                    }
-                }
-                if (!$this->custom_failed) {
+                    $time = $this->endTimeJob($start);
+                    $this->output()->writeln(PHP_EOL."<error>{$queue['class']} failed ---- Time: $time</error>");
                     $this->failed($queue, $exception);
                 }
-            }
+            }, $queue);
         }
         return;
     }
@@ -239,40 +250,26 @@ class QueueScript extends \Hola\Core\Command
                 break;
             }
             $queue = $this->data(json_decode($queue, true));
-            $start = new \DateTime();
-            $this->output()->text("{$queue['class']} running");
-            try {
-                if (!method_exists($queue['class'], 'handle')) {
-                    throw new \Exception("function handle does not exits in {$queue['class']}");
-                }
-                $this->setTimeOutJob($queue['timeout']);
-                $this->queueRunning = $queue;
-                app()->callWithParams($queue['class'], $queue['payload'])->handle();
-                $time = $this->endTimeJob($start);
-                $this->output()->text("{$queue['class']} work success ---- Time: $time");
+            $taskName = $queue['class'] . '_' . uid();
+            $this->timeoutManager->execute($taskName, function () use ($queue) {
+                $start = new \DateTime();
+                $this->output()->writeln("<info>{$queue['class']} running</info>");
                 try {
+                    if (!method_exists($queue['class'], 'handle')) {
+                        throw new \Exception("function handle does not exits in {$queue['class']}");
+                    }
+                    app()->callWithParams($queue['class'], $queue['payload'])->handle();
                     if ($this->listenQueue->isDone()) {
                         $this->listenQueue->trigger('success', $queue);
                     }
+                    $time = $this->endTimeJob($start);
+                    $this->output()->writeln(PHP_EOL."<info>{$queue['class']} work success ---- Time: $time</info>");
                 } catch (\Throwable $exception) {
-                    log_write($exception);
-                }
-            } catch (\Throwable $exception) {
-                $time = $this->endTimeJob($start);
-                $this->output()->text("{$queue['class']} failed ---- Time: $time");
-                if ($this->listenQueue->isFailed()) {
-                    $this->listenQueue->trigger('failed', $queue, $exception);
-                    if (isset($this->listenQueue->bindings['connection'])) {
-                        $this->connection = $this->listenQueue->bindings['connection'];
-                    }
-                    if (isset($this->listenQueue->bindings['connection_type'])) {
-                        $this->connection_type = $this->listenQueue->bindings['connection_type'];
-                    }
-                }
-                if (!$this->custom_failed) {
+                    $time = $this->endTimeJob($start);
+                    $this->output()->writeln(PHP_EOL."<error>{$queue['class']} failed ---- Time: $time</error>");
                     $this->failed($queue, $exception);
                 }
-            }
+            }, $queue);
         }
         return;
     }
@@ -295,43 +292,34 @@ class QueueScript extends \Hola\Core\Command
         $channel->queue_declare($queue, false, true, false, false);
 
         $callback = function (\PhpAmqpLib\Message\AMQPMessage $msg) use ($db, $channel) {
+            if ($this->break_job) {
+                $channel->close();
+                $db->close();
+                return;
+            }
             $queue = json_decode($msg->body, true);
             $queue = $this->data($queue);
-            $start = new \DateTime();
-            $this->output()->text("{$queue['class']} running ");
-            $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-            try {
-                if (!method_exists($queue['class'], 'handle')) {
-                    throw new \Exception("function handle does not exits in {$queue['class']}");
-                }
-//                $this->setTimeOutJob($queue['timeout']);
-                $this->queueRunning = $queue;
-                app()->callWithParams($queue['class'], $queue['payload'])->handle();
-                $time = $this->endTimeJob($start);
-                $this->output()->text("{$queue['class']} work success ---- Time: $time");
+            $taskName = $queue['class'] . '_' . uid();
+            $this->timeoutManager->execute($taskName, function () use ($queue, $msg) {
+                $start = new \DateTime();
+                $this->output()->writeln("<info>{$queue['class']} running</info>");
+                $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
                 try {
+                    if (!method_exists($queue['class'], 'handle')) {
+                        throw new \Exception("function handle does not exits in {$queue['class']}");
+                    }
+                    app()->callWithParams($queue['class'], $queue['payload'])->handle();
                     if ($this->listenQueue->isDone()) {
                         $this->listenQueue->trigger('success', $queue);
                     }
-                } catch (\Throwable $exception) {
-                    log_write($exception);
-                }
-            } catch (\Throwable $e) {
-                $time = $this->endTimeJob($start);
-                $this->output()->text("{$queue['class']} failed ---- Time: $time");
-                if ($this->listenQueue->isFailed()) {
-                    $this->listenQueue->trigger('failed', $queue, $exception);
-                    if (isset($this->listenQueue->bindings['connection'])) {
-                        $this->connection = $this->listenQueue->bindings['connection'];
-                    }
-                    if (isset($this->listenQueue->bindings['connection_type'])) {
-                        $this->connection_type = $this->listenQueue->bindings['connection_type'];
-                    }
-                }
-                if (!$this->custom_failed) {
+                    $time = $this->endTimeJob($start);
+                    $this->output()->writeln(PHP_EOL."<info>{$queue['class']} work success ---- Time: $time</info>");
+                } catch (\Throwable $e) {
+                    $time = $this->endTimeJob($start);
+                    $this->output()->writeln(PHP_EOL."<error>{$queue['class']} failed ---- Time: $time</error>");
                     $this->failed($queue, $exception);
                 }
-            }
+            }, $queue);
         };
 
         $channel->basic_qos(null, 1, null);
@@ -345,32 +333,4 @@ class QueueScript extends \Hola\Core\Command
         $db->close();
     }
 
-    private function stopJobTimeout() {
-        $error = error_get_last();
-        if (!is_null($error)) {
-            $seconds = $this->timeout > 1 ? 'seconds' : 'second';
-            if (
-                $error['type'] === E_ERROR &&
-                strpos($error['message'], "Maximum execution time of {$this->timeout} $seconds exceeded") !== false &&
-                !empty($this->queueRunning)
-            ) {
-                $exception = new \Exception("Timeout queue");
-                $this->break_job = true;
-                if ($this->listenQueue->isFailed()) {
-                    $this->listenQueue->trigger('failed', $this->queueRunning, $exception);
-                    if (isset($this->listenQueue->bindings['connection'])) {
-                        $this->connection = $this->listenQueue->bindings['connection'];
-                    }
-                    if (isset($this->listenQueue->bindings['connection_type'])) {
-                        $this->connection_type = $this->listenQueue->bindings['connection_type'];
-                    }
-                }
-                if (!$this->custom_failed) {
-                    $this->failed($this->queueRunning, $exception);
-                }
-                $this->output()->error("{$this->queueRunning['class']} failed. Error: Timeout queue" . PHP_EOL);
-                $this->queueRunning = [];
-            }
-        }
-    }
 }

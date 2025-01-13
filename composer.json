@@ -12,7 +12,11 @@
     ],
     "require": {
         "symfony/console": "^6.4",
-        "phpmailer/phpmailer": "v6.9.1"
+        "phpmailer/phpmailer": "v6.9.1",
+        "ext-pcntl": "*"
+    },
+    "require-dev": {
+        "ext-pcntl": "*"
     },
     "autoload": {
         "psr-4": {
