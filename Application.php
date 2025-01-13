@@ -4,14 +4,14 @@ namespace Hola;
 
 use Hola\Container\Container;
 use Hola\Core\Middleware;
-use Hola\Core\Request;
-use Hola\Core\Response;
+use Hola\Transport\Request;
+use Hola\Transport\Response;
 use Hola\Routings\Router;
 
 class Application extends Container
 {
     private $control;
-    private $middleware;
+    private $middlewares;
 
     public function __construct(){
         if ($this->isJson()) {
@@ -177,16 +177,16 @@ class Application extends Container
     {
         $router = $this->make(Router::class)->handle();
         $this->control = $router['controls'];
-        $this->middleware = $router['middleware'];
+        $this->middlewares = $router['middlewares'];
     }
 
     private function registerMiddlware()
     {
-        if (empty($this->middleware)) {
+        if (empty($this->middlewares)) {
             return false;
         }
         $contract = $this->make(Middleware::class);
-        $result = $contract->set($this->middleware)->work();
+        $result = $contract->set($this->middlewares)->work();
         if (!empty($result['pass_middleware'])) {
             $this->replace(Request::class, function () use ($result) {
                return $result['request'];

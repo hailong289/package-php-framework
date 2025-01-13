@@ -1,6 +1,7 @@
 <?php
 
 namespace Hola\Transport;
+use Hola\Core\ViewRender;
 use Hola\Data\Collection;
 use Hola\Data\ShareData;
 

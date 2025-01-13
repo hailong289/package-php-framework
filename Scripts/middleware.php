@@ -27,8 +27,8 @@ class MiddlewareScript extends \Hola\Core\Command
             }
             file_put_contents($concurrentDirectory, '<?php
 namespace Middleware;
-use Hola\Core\Request;
-use Hola\Core\Response;
+use Hola\Transport\Request;
+use Hola\Transport\Response;
 
 class ' . $name_middleware . ' {
      public function handle(Request $request, Response $response){

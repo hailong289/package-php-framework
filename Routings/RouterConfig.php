@@ -1,6 +1,6 @@
 <?php
 namespace Hola\Routings;
-class ConfigRouter extends Router {
+class RouterConfig extends Router {
     private $default = 'web';
     private $pathArray = [];
     private static $instance = null;
@@ -8,7 +8,7 @@ class ConfigRouter extends Router {
     public static function init()
     {
         if (self::$instance === null) {
-            self::$instance = new ConfigRouter();
+            self::$instance = new RouterConfig();
         }
         return self::$instance;
     }

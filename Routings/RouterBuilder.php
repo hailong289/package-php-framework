@@ -2,7 +2,7 @@
 
 namespace Hola\Routings;
 
-class BuildRouter {
+class RouterBuilder {
     private array $router = [];
     private $prefix = '';
     private $middlewares = [];

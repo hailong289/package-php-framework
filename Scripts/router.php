@@ -1,6 +1,6 @@
 <?php
 namespace Hola\Scripts;
-use Hola\Core\Router;
+use Hola\Routings\Router;
 
 class RouterScript extends \Hola\Core\Command
 {
@@ -33,7 +33,7 @@ class RouterScript extends \Hola\Core\Command
             }
             $path = $item['path'];
             $method = $item['method'];
-            $actions = $item['action'];
+            $actions = $item['callback'];
             $controller = $actions[0];
             $method_function = $actions[1];
             $this->output()->writeln("<fg=$color>$method</>   $path <fg=$color>==================</> > $controller->$method_function()");

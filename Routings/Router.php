@@ -2,11 +2,11 @@
 namespace Hola\Routings;
 
 class Router {
-    private static BuildRouter|null $instance = null;
+    private static RouterBuilder|null $instance = null;
 
     public static function build() {
         if (is_null(self::$instance)) {
-            self::$instance = new BuildRouter();
+            self::$instance = new RouterBuilder();
         }
         return self::$instance;
     }
@@ -74,7 +74,9 @@ class Router {
         $url = $_SERVER['REQUEST_URI'];
         $method = $_SERVER['REQUEST_METHOD'];
         $requestMethod = $method;
-        $requestUri = rtrim($url, '/') ?: '/';
+        $urlParts = parse_url($url);
+        $requestUri = rtrim($urlParts['path'], '/') ?: '/';
+        $queryString = isset($urlParts['query']) ? $urlParts['query'] : '';
         $routers = self::list();
         $result = [];
         $matches = [];
