@@ -10,14 +10,22 @@ class MailerBuilder extends Mailer {
 
     public function send()
     {
-        if (method_exists($this,'title')) {
-            $this->setSubject($this->title());
+        try {
+            if (method_exists($this,'title')) {
+                $this->setSubject($this->title());
+            }
+            if (method_exists($this,'view')) {
+                $this->withHtml();
+                $this->setBody($this->view());
+            }
+            $this->work();
+            return true;
+        } catch (\Throwable $e) {
+            if (method_exists($this,'failed')) {
+                $this->failed($e);
+            }
+            return false;
         }
-        if (method_exists($this,'view')) {
-            $this->withHtml();
-            $this->setBody($this->view());
-        }
-        return $this->work();
     }
 
 }
