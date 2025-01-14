@@ -161,17 +161,19 @@ class Application extends Container
         }
     }
 
-    private function handleErrorLogs($e)
+    private function handleErrorLogs(\Throwable $e)
     {
         $enable_db = config_env('DEBUG_LOG', false);
         if (!$enable_db) return;
-        $date = "[" . date('Y-m-d H:i:s') . "]: ";
+        $date = "[" . date('Y-m-d H:i:s') . "][{$e->getCode()}]: ";
         if (!file_exists(__DIR__ROOT . '/storage')) {
             if (!mkdir($concurrentDirectory = __DIR__ROOT . '/storage', 0777, true) && !is_dir($concurrentDirectory)) {
                 throw new \AppException(sprintf('Directory "%s" was not created', $concurrentDirectory));
             }
         }
-        file_put_contents(__DIR__ROOT . '/storage/debug.log', $date . $e . PHP_EOL . PHP_EOL, FILE_APPEND);
+        $stringError = "$date{$e->getMessage()} in {$e->getFile()} on line {$e->getLine()}". PHP_EOL;
+        $stringError .= $e->getTraceAsString() . PHP_EOL . PHP_EOL;
+        file_put_contents(__DIR__ROOT . '/storage/debug.log', $stringError, FILE_APPEND);
     }
 
     private function registerRouter()
