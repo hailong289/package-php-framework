@@ -3,6 +3,8 @@
 namespace Hola\Core;
 
 use Hola\Data\ShareData;
+use Hola\Transport\Request;
+use Hola\Transport\Response;
 
 class FormRequest extends Request {
     private $data_errors = null;
@@ -31,10 +33,11 @@ class FormRequest extends Request {
                     $data = $this->data_auth();
                 }
                 if ($is_json) {
-                    echo json_encode($data);
-                    exit();
+                    return Response::withExit('json', function() use ($data) {
+                        return $data;
+                    });
                 }
-                Response::withExit('view', function() use ($name_view, $data) {
+                return Response::withExit('view', function() use ($name_view, $data) {
                     return [$name_view, $data];
                 });
             }
@@ -61,6 +64,6 @@ class FormRequest extends Request {
     public function data()
     {
         $data = $this->data;
-        return collection()->set($data);
+        return collection()->set($data)->toObject();
     }
 }

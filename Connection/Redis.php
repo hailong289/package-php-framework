@@ -1,5 +1,7 @@
 <?php
 namespace Hola\Connection;
+use Hola\Exceptions\ConnectionException;
+
 class Redis {
     private static $instance = null;
     private static $instance_queue = null;
@@ -73,10 +75,10 @@ class Redis {
             }
             return $conn;
         } catch (\RedisException $e) {
-            throw new \RedisException("Connect redis failed. Error: ".$e->getMessage(), 500);
+            throw new ConnectionException("Connect redis failed. Error: ".$e->getMessage(), 500);
         } catch (\Throwable $e) {
             $mess = $e->getMessage();
-            throw new \Exception("Connect redis failed. Error: $mess", 500);
+            throw new ConnectionException("Connect redis failed. Error: $mess", 500);
         }
     }
 }

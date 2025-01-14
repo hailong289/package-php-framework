@@ -1,6 +1,8 @@
 <?php
 namespace Hola\Routings;
 
+use Hola\Exceptions\AppException;
+
 class Router {
     private static RouterBuilder|null $instance = null;
 
@@ -77,7 +79,7 @@ class Router {
         $urlParts = parse_url($url);
         $requestUri = rtrim($urlParts['path'], '/') ?: '/';
         $queryString = isset($urlParts['query']) ? $urlParts['query'] : '';
-        $routers = self::list();
+        $routers = cache()->file()->getOrStore('routers', self::list());
         $result = [];
         $matches = [];
         foreach($routers as $route) {
@@ -93,7 +95,7 @@ class Router {
             }
         }
         if (empty($result)){
-            throw new \Exception('Router not found', 404);
+            throw new AppException('Router not found', 404);
         }
         return $result;
     }

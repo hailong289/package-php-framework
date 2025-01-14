@@ -1,5 +1,7 @@
 <?php
 namespace Hola\Connection;
+use Hola\Exceptions\ConnectionException;
+
 class PdoSql {
     private static $instance = null;
     private static $instance_queue = null;
@@ -79,10 +81,10 @@ class PdoSql {
             return $conn;
         }catch (\PDOException $e){
             $mess = $e->getMessage();
-            throw new \PDOException("Connection database failed: $mess", 500);
+            throw new ConnectionException("Connection database failed: $mess", 500);
         } catch (\Throwable $e) {
             $mess = $e->getMessage();
-            throw new \Exception("Connection database failed: $mess", 500);
+            throw new ConnectionException("Connection database failed: $mess", 500);
         }
     }
 }

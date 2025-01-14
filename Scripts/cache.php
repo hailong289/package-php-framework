@@ -16,14 +16,14 @@ class CacheScript extends \Hola\Core\Command
                 if(file_exists($item)){ 
                     unlink($item);
                 }
-                $this->output()->text("Clear cache router successfully");
+                $this->output()->info("=== Clear cache router successfully ===");
                 break;
             case 'config':
                 $item = __DIR__ROOT.'/storage/cache/config.cache';
                 if(file_exists($item)){
                     unlink($item);
                 }
-                $this->output()->text("Clear cache config successfully");
+                $this->output()->info("=== Clear cache config successfully ===");
                 break;
             case 'view':
                 $item = __DIR__ROOT.'/storage/render/views';
@@ -35,7 +35,29 @@ class CacheScript extends \Hola\Core\Command
                         }
                     }
                 }
-                $this->output()->text("Clear cache view successfully");
+                $this->output()->info("=== Clear cache view successfully ===");
+                break;
+            case 'all':
+                $cache = rglob(__DIR__ROOT.'/storage/cache/*.cache');
+                if (!empty($cache)) {
+                    foreach($cache as $item){
+                        if(file_exists($item)){
+                            unlink($item);
+                        }
+                    }
+                }
+                $item_view = __DIR__ROOT.'/storage/render/views';
+                if(is_dir($item_view)){
+                    $cache = rglob("$item_view/*");
+                    foreach($cache as $v){
+                        if(file_exists($v)){
+                            unlink($v);
+                        }
+                    }
+                }
+                $this->output()->info("=== Clear cache router successfully ===");
+                $this->output()->info("=== Clear cache config successfully ===");
+                $this->output()->info("=== Clear render view successfully ===");
                 break;
             default:
                 $cache = rglob(__DIR__ROOT.'/storage/cache/*.cache');
@@ -46,7 +68,7 @@ class CacheScript extends \Hola\Core\Command
                         }
                     }
                 }
-                $this->output()->text("Clear cache successfully");
+                $this->output()->info("=== Clear cache successfully ===");
                 break;
         }
     }

@@ -3,6 +3,7 @@ namespace Hola\Queue;
 use Hola\Connection\PdoSql;
 use Hola\Connection\RabbitMQ;
 use Hola\Core\RedisCR;
+use Hola\Exceptions\QueueException;
 use Hola\Transport\Request;
 use Hola\Transport\Response;
 use Hola\Connection\Redis;
@@ -33,7 +34,7 @@ class CreateQueue
     public function enQueue($class) {
         if (!method_exists($class,'handle')) {
             $class = get_class($class);
-            throw new \RuntimeException("Function handle in class $class does not exit", 500);
+            throw new QueueException("Function handle in class $class does not exit", 500);
         }
         try {
             $tag_queue = "queue:{$this->queue}";
@@ -75,7 +76,7 @@ class CreateQueue
                 $rabbitMQ->close();
             }
         } catch (\Throwable $e) {
-            throw $e;
+            throw new QueueException($e->getMessage(), 500);
         }
     }
 

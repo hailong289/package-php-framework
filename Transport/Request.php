@@ -1,6 +1,8 @@
 <?php
 namespace Hola\Transport;
 
+use Hola\Exceptions\AppException;
+
 class Request extends RequestBuilder {
     private $file = '';
 
@@ -59,7 +61,7 @@ class Request extends RequestBuilder {
     public function tmpName()
     {
         if (empty($this->file)) {
-            throw new \Exception('File not set');
+            throw new AppException('File not set');
         }
         return $this->file['tmp_name'];
     }
@@ -67,7 +69,7 @@ class Request extends RequestBuilder {
     public function size()
     {
         if (empty($this->file)) {
-            throw new \Exception('File not set');
+            throw new AppException('File not set');
         }
         return $this->file['size'];
     }
@@ -75,7 +77,7 @@ class Request extends RequestBuilder {
     public function type()
     {
         if (empty($this->file)) {
-            throw new \Exception('File not set');
+            throw new AppException('File not set');
         }
         return $this->file['type'];
     }
@@ -83,7 +85,7 @@ class Request extends RequestBuilder {
     public function errorFile()
     {
         if (empty($this->file)) {
-            throw new \Exception('File not set');
+            throw new AppException('File not set');
         }
         return $this->file['error'];
     }
@@ -91,7 +93,7 @@ class Request extends RequestBuilder {
     public function originName()
     {
         if (empty($this->file)) {
-            throw new \Exception('File not set');
+            throw new AppException('File not set');
         }
         return current((explode(".", $this->file['name'])));
     }

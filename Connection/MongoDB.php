@@ -1,5 +1,7 @@
 <?php
 namespace Hola\Connection;
+use Hola\Exceptions\ConnectionException;
+
 class MongoDB {
     private static $instance = null;
 
@@ -43,10 +45,10 @@ class MongoDB {
             self::$conn = $client->{$db_name};
         } catch (\MongoDB\Driver\Exception\Exception $e) {
             $mess = $e->getMessage();
-            throw new \Exception("MongoDB connection failed: $mess", 500);
+            throw new ConnectionException("MongoDB connection failed: $mess", 500);
         } catch (\Throwable $e) {
             $mess = $e->getMessage();
-            throw new \Exception("Connection failed: $mess", 500);
+            throw new ConnectionException("Connection failed: $mess", 500);
         }
     }
 

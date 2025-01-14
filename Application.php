@@ -4,6 +4,7 @@ namespace Hola;
 
 use Hola\Container\Container;
 use Hola\Core\Middleware;
+use Hola\Exceptions\AppException;
 use Hola\Transport\Request;
 use Hola\Transport\Response;
 use Hola\Routings\Router;
@@ -94,7 +95,7 @@ class Application extends Container
     {
         try {
             if (empty($this->control)) {
-                throw new \RuntimeException("Class controller in router does not exit", 500);
+                throw new AppException("Class controller in router does not exit", 500);
             }
             $control_array = array_values($this->control);
             $result = $this->call($control_array);
@@ -167,7 +168,7 @@ class Application extends Container
         $date = "[" . date('Y-m-d H:i:s') . "]: ";
         if (!file_exists(__DIR__ROOT . '/storage')) {
             if (!mkdir($concurrentDirectory = __DIR__ROOT . '/storage', 0777, true) && !is_dir($concurrentDirectory)) {
-                throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
+                throw new \AppException(sprintf('Directory "%s" was not created', $concurrentDirectory));
             }
         }
         file_put_contents(__DIR__ROOT . '/storage/debug.log', $date . $e . PHP_EOL . PHP_EOL, FILE_APPEND);

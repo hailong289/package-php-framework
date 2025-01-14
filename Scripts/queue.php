@@ -7,6 +7,7 @@ use Hola\Core\RedisCR;
 use Hola\Core\TimeoutManager;
 use Hola\Database\DBO;
 use Hola\Database\QueryBuilder;
+use Hola\Exceptions\QueueException;
 use Hola\Queue\ListenQueue;
 
 class QueueScript extends \Hola\Core\Command
@@ -52,7 +53,6 @@ class QueueScript extends \Hola\Core\Command
         if (!empty($timeout_options)) {
             $this->timeout = $timeout_options;
         }
-        $this->timeout = 10;
         sleep(1);
         $this->handleListenTimeOut();
         $this->switchDB($this->connection_type);
@@ -66,7 +66,7 @@ class QueueScript extends \Hola\Core\Command
             $taskName = $payload['taskName'];
             $data = $payload['data'];
             $this->break_job = true;
-            $this->failed($data, new \Exception("$taskName timeout queue"));
+            $this->failed($data, new QueueException("$taskName timeout queue"));
             $this->output()->error("$taskName timeout queue");
         });
     }
@@ -123,7 +123,7 @@ class QueueScript extends \Hola\Core\Command
     {
         try {
             if ($this->listenQueue->isFailed()) {
-                $this->listenQueue->trigger('failed', $queue, $exception);
+                $this->listenQueue->trigger('failed', $queue, $e);
                 if ($this->listenQueue->isBindingConnection()) {
                     $this->connection = $this->listenQueue->bindings['connection'];
                 }
@@ -223,7 +223,7 @@ class QueueScript extends \Hola\Core\Command
                 $this->output()->writeln("<info>{$queue['class']} running</info>");
                 try {
                     if (!method_exists($queue['class'], 'handle')) {
-                        throw new \Exception("function handle does not exits in {$queue['class']}");
+                        throw new QueueException("function handle does not exits in {$queue['class']}");
                     }
                     app()->callWithParams($queue['class'], $queue['payload'])->handle();
                     $time = $this->endTimeJob($start);
@@ -262,7 +262,7 @@ class QueueScript extends \Hola\Core\Command
                 $this->output()->writeln("<info>{$queue['class']} running</info>");
                 try {
                     if (!method_exists($queue['class'], 'handle')) {
-                        throw new \Exception("function handle does not exits in {$queue['class']}");
+                        throw new QueueException("function handle does not exits in {$queue['class']}");
                     }
                     app()->callWithParams($queue['class'], $queue['payload'])->handle();
                     if ($this->listenQueue->isDone()) {
@@ -315,7 +315,7 @@ class QueueScript extends \Hola\Core\Command
                 $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
                 try {
                     if (!method_exists($queue['class'], 'handle')) {
-                        throw new \Exception("function handle does not exits in {$queue['class']}");
+                        throw new QueueException("function handle does not exits in {$queue['class']}");
                     }
                     app()->callWithParams($queue['class'], $queue['payload'])->handle();
                     if ($this->listenQueue->isDone()) {

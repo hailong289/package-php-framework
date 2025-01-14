@@ -1,5 +1,7 @@
 <?php
 namespace Hola\Connection;
+use Hola\Exceptions\ConnectionException;
+
 class RabbitMQ {
     private static $instance = null;
     private static $instance_queue = null;
@@ -63,7 +65,7 @@ class RabbitMQ {
             }
             return $conn;
         } catch (\Throwable $e) {
-            throw new \RuntimeException("Connect rabbitMQ failed. Error: ".$e->getMessage(), 500);
+            throw new ConnectionException("Connect rabbitMQ failed. Error: ".$e->getMessage(), 500);
         }
     }
 
