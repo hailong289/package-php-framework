@@ -1,10 +1,10 @@
 <?php
-namespace Hola\Core;
+namespace Hola\Mailing;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\SMTP;
 
-class Mail {
+class Mailer {
     private $mail;
     private $isConfig = false;
 
