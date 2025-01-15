@@ -360,28 +360,11 @@ if(!function_exists('val')){
  * @return object|InterfaceRes|__anonymous@7689
  */
 if(!function_exists('res')){
+    /**
+     * @return \Hola\Transport\Response
+     */
     function res() {
-        return new class() implements \Hola\Interfaces\FunctionInterface\InterfaceRes {
-            function view($name, $data = [], $status = 200) {
-                $view = preg_replace('/([.]+)/', '/' , $name);
-                if(!file_exists(__DIR__ROOT . '/App/Views/'.$view.'.view.php')){
-                    throw new \RuntimeException("File App/Views/$view.view.php does not exist", 500);
-                }
-                http_response_code($status);
-                extract($data);
-                $file = __DIR__ROOT . '/App/Views/'.$view.'.view.php';
-                require_once $file;
-                return $file;
-            }
-            function data($data = []) {
-                return $this;
-            }
-            function json($data, $status = 200){
-                http_response_code($status);
-                header('Accept: application/json');
-                return $data;
-            }
-        };
+        return \Hola\Transport\Response::build();
     }
 }
 

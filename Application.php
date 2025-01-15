@@ -102,54 +102,50 @@ class Application extends Container
             return $this->responseSuccess($result);
         } catch (\Throwable $e) {
             $this->handleErrorLogs($e);
-            $code = (int)$e->getCode();
-            $code = $code ? $code : 500;
             $errors = $this->errorDefault($e);
-            return $this->responseError($errors, $code);
+            return $this->responseError($errors);
         }
     }
 
-
-    private function responseSuccess($return)
-    {
-        if (is_array($return) || is_object($return)) {
-            echo json_encode($return);
-        } else if (is_file($return)) { // return file
-            $ext = pathinfo($return, PATHINFO_EXTENSION);
-            if ($ext === 'php' || $ext === 'html') {
-                return $this;
-            }
-            echo file_get_contents($return);
-        } else if ($return instanceof \SimpleXMLElement) {
+    private function responseCore($return) {
+        if ($return instanceof \SimpleXMLElement) {
             echo $return->asXML();
+        } else if (is_array($return) || is_object($return)) {
+            echo json_encode($return);
+        } else if (is_file($return)) {
+            echo file_get_contents($return);
         } else {
             echo $return;
-        };
+        }
         return $this;
     }
 
-    private function errorDefault($e)
+    private function responseSuccess($return)
     {
+        return $this->responseCore($return);
+    }
+
+    private function responseError($return)
+    {
+        if ($this->isJson()) {
+            $res = Response::json($return, $return['code']);
+        } else {
+            $res = Response::view('error.index', $return, $return['code']);
+        }
+        return $this->responseCore($res);
+    }
+
+    private function errorDefault($e) {
         $code = (int)$e->getCode();
         $code = $code ? $code : 500;
         $errors = [
             "message" => $e->getMessage(),
+            "code" => $code,
             "line" => $e->getLine(),
             "file" => $e->getFile(),
-            "trace" => $e->getTraceAsString(),
-            "code" => $code
+            "trace" => $e->getTraceAsString()
         ];
         return $errors;
-    }
-
-    private function responseError($return, $code)
-    {
-        if ($this->isJson()) {
-            http_response_code($code);
-            echo json_encode($return);
-            return $this;
-        }
-        return Response::view('error.index', $return, $code, []);
     }
 
     private function isJson()

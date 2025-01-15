@@ -94,14 +94,15 @@ class ViewRender {
     public static function render($view, $data = []) {
         $fileView = self::resloveFileView($view);
         if (file_exists(self::getViewRender($fileView, $view))) {
+            ob_start();
+            extract($data, EXTR_SKIP);
             $view_render = self::getViewRender($fileView, $view);
             if (in_array($view, self::$fileHtml)) {
                 require_once $view_render;
-                return $view_render;
+                return ob_get_clean();
             }
-            extract($data, EXTR_SKIP);
             require_once $view_render;
-            return $view_render;
+            return ob_get_clean();
         }
         $output = self::resloveViewContent($fileView, $view);
         $output = self::resloveIncludes($output, $data);
@@ -189,16 +190,17 @@ class ViewRender {
 
     private static function resloveRenderHtml($viewCurrent, $name, $output, $data = [])
     {
+        ob_start();
         extract($data, EXTR_SKIP);
         $view_render = self::getViewRender($viewCurrent, $name);
         if ($name === 'error.index') {
             require($viewCurrent);
-            return $viewCurrent;
+            return ob_get_clean();
         }
         createFolder(getFolder($view_render));
         file_put_contents($view_render, $output);
         require_once $view_render;
-        return $view_render;
+        return ob_get_clean();
     }
 
     private static function getViewRender($viewCurrent, $name)
