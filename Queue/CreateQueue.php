@@ -42,7 +42,7 @@ class CreateQueue
             $data_queue = [
                 'uid' => uid(),
                 'payload' => get_object_vars($class),
-                'class' => $reflectionClass->getShortName(),
+                'class' => addslashes($reflectionClass->getName()),
                 'queue' => $this->queue,
                 'connection' => $this->connection,
                 'timeout' => $this->timeout

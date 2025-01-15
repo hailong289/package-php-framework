@@ -76,7 +76,7 @@ class QueueScript extends \Hola\Core\Command
         return [
             'key' => $data['key'] ?? $data['id'] ?? 0,
             'uid' => $data['uid'],
-            'class' => "Queue\\Jobs\\{$data['class']}",
+            'class' => stripslashes($data['class']),
             'payload' => $data['payload'],
             'timeout' => $data['timeout'] ?? 0,
         ];
