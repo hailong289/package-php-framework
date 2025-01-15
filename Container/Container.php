@@ -31,7 +31,14 @@ class Container
      * get class binding
      */
     private function get($abstract) {
-        return isset($this->bindings[$abstract]) ? $this->bindings[$abstract]:$abstract;
+        if (is_string($abstract)) {
+            if (!isset($this->bindings[$abstract])) {
+                return $abstract;
+            } else {
+                return $this->bindings[$abstract];
+            }
+        }
+        return $abstract;
     }
 
     /**
