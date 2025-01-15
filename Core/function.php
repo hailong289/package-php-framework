@@ -1,21 +1,21 @@
 <?php
-/**
- * @param $key
- * @return bool
- */
 if(!function_exists('startsWith')){
+    /**
+     * @param $key
+     * @return bool
+     */
     function startsWith( $haystack, $needle ) {
         $length = strlen( $needle );
         return substr( $haystack, 0, $length ) === $needle;
     }
 }
 
-/**
- * @param $haystack
- * @param $needle
- * @return bool
- */
 if(!function_exists('endsWith')){
+    /**
+     * @param $haystack
+     * @param $needle
+     * @return bool
+     */
     function endsWith( $haystack, $needle ) {
         $length = strlen( $needle );
         if( !$length ) {
@@ -25,12 +25,12 @@ if(!function_exists('endsWith')){
     }
 }
 
-/**
- * @param $str
- * @param string $delimiter
- * @return string
- */
 if(!function_exists('str_slug')){
+    /**
+     * @param $str
+     * @param string $delimiter
+     * @return string
+     */
     function str_slug($str, $delimiter = '-')
     {
         $search = array(
@@ -75,33 +75,33 @@ if(!function_exists('str_slug')){
     }
 }
 
-/**
- * @param $url
- * @return string
- */
 if(!function_exists('path_root')){
+    /**
+     * @param $url
+     * @return string
+     */
     function path_root($url)
     {
         return str_replace('\\','/',$_SERVER["DOCUMENT_ROOT"] ."/" . $url);
     }
 }
 
-/**
- * @param $path
- * @return string
- */
 if(!function_exists('url')){
+    /**
+     * @param $path
+     * @return string
+     */
     function url($path = '')
     {
         return (!empty($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . '/' . $path;
     }
 }
 
-/**
- * @param $view
- * @return string
- */
 if(!function_exists('view_root')){
+    /**
+     * @param $view
+     * @return string
+     */
     function view_root($view)
     {
         $view = preg_replace('/([.]+)/', '/' , $view);
@@ -112,11 +112,11 @@ if(!function_exists('view_root')){
     }
 }
 
-/**
- * @param $data
- * @return string
- */
 if(!function_exists('log_debug')){
+    /**
+     * @param $data
+     * @return string
+     */
     function log_debug(...$args) {
         http_response_code(500);
         echo "<pre>";
@@ -126,10 +126,10 @@ if(!function_exists('log_debug')){
     }
 }
 
-/**
- * @return InterfaceLogs|__anonymous@2793
- */
 if(!function_exists('logs')){
+    /**
+     * @return InterfaceLogs|__anonymous@2793
+     */
     function logs(): object {
         return new class implements \Hola\Interfaces\InterfaceLogs\Log {
             public function dump(...$args) {
@@ -165,11 +165,11 @@ if(!function_exists('logs')){
     }
 }
 
-/**
- * @param $e
- * @param string $name
- */
 if(!function_exists('log_write')){
+    /**
+     * @param $e
+     * @param string $name
+     */
     function log_write($e, $name = 'debug') {
         $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
         if (!file_exists(__DIR__ROOT .'/storage')) {
@@ -179,12 +179,12 @@ if(!function_exists('log_write')){
     }
 }
 
-/**
- * @param $name
- * @param array $data
- * @return mixed
- */
 if(!function_exists('get_view')){
+    /**
+     * @param $name
+     * @param array $data
+     * @return mixed
+     */
     function get_view($name, $data = [])
     {
         $view = preg_replace('/([.]+)/', '/' , $name);
@@ -197,11 +197,11 @@ if(!function_exists('get_view')){
     }
 }
 
-/**
- * @param $key
- * @return bool
- */
 if(!function_exists('__')){
+    /**
+     * @param $key
+     * @return bool
+     */
     function __($key, $data_key = [], $lang = null)
     {
         $language = $lang ?? config_env('LANGUAGE', 'vi');
@@ -214,11 +214,11 @@ if(!function_exists('__')){
     }
 }
 
-/**
- * @param $key
- * @return bool
- */
 if(!function_exists('translate')){
+    /**
+     * @param $key
+     * @return bool
+     */
     function translate($key, $data_key = [], $lang = null)
     {
         $language = $lang ?? config_env('LANGUAGE', 'vi');
@@ -231,11 +231,11 @@ if(!function_exists('translate')){
     }
 }
 
-/**
- * @param $key
- * @return bool
- */
 if(!function_exists('lang_has')){
+    /**
+     * @param $key
+     * @return bool
+     */
     function lang_has($key)
     {
         $language = config_env('LANGUAGE', 'vi');
@@ -244,11 +244,11 @@ if(!function_exists('lang_has')){
     }
 }
 
-/**
- * @param $value
- * @return bool
- */
 if(!function_exists('isDate')){
+    /**
+     * @param $value
+     * @return bool
+     */
     function isDate($value)
     {
         if (!$value) {
@@ -263,11 +263,11 @@ if(!function_exists('isDate')){
     }
 }
 
-/**
- * @param $value
- * @return array
- */
 if(!function_exists('convert_to_array')){
+    /**
+     * @param $value
+     * @return array
+     */
     function convert_to_array($value)
     {
         if (!is_object($value)) die('The convert_to_array function parameter is not object');
@@ -275,11 +275,11 @@ if(!function_exists('convert_to_array')){
     }
 }
 
-/**
- * @param $value
- * @return object
- */
 if(!function_exists('convert_to_object')){
+    /**
+     * @param $value
+     * @return object
+     */
     function convert_to_object($value)
     {
         if (!is_array($value)) die('The convert_to_object function parameter is not array');
@@ -287,13 +287,12 @@ if(!function_exists('convert_to_object')){
     }
 }
 
-
-/**
- * @param $value
- * @param string $default
- * @return mixed|string
- */
 if(!function_exists('config_env')){
+    /**
+     * @param $value
+     * @param string $default
+     * @return mixed|string
+     */
     function config_env($value, $default = '')
     {
         return defined($value) && constant($value) ?  constant($value):$default;
@@ -301,6 +300,12 @@ if(!function_exists('config_env')){
 }
 
 if (!function_exists('conval')) {
+    /**
+     * @param $value
+     * @param string $default
+     * @param null $first_val
+     * @return mixed|string
+     */
     function conval($value, $default = '', $first_val = null)
     {
         if (!is_null($first_val)) {
@@ -315,11 +320,11 @@ if (!function_exists('conval')) {
     }
 }
 
-/**
- * @param $data
- * @return string
- */
 if(!function_exists('uid')){
+    /**
+     * @param $data
+     * @return string
+     */
     function uid($data = null) {
         // Generate 16 bytes (128 bits) of random data or use the data passed into the function.
         $data = $data ?? random_bytes(16);
@@ -335,30 +340,27 @@ if(!function_exists('uid')){
     }
 }
 
-/**
- * @param $key
- * @return object|InterfaceErrors|mixed|__anonymous@7689
- */
 if(!function_exists('errors')){
+    /**
+     * @param $key
+     * @return object|mixed|null
+     */
     function errors($key = ''): object {
         return \Hola\Data\ShareData::init()->getErrorByKey($key);
     }
 }
 
-/**
- * @param $key
- * @param $value
- * @return mixed
- */
 if(!function_exists('val')){
+    /**
+     * @param $key
+     * @param $value
+     * @return mixed
+     */
     function val($key = '', $default = null) {
         return \Hola\Data\ShareData::init()->get($key, $default);
     }
 }
 
-/**
- * @return object|InterfaceRes|__anonymous@7689
- */
 if(!function_exists('res')){
     /**
      * @return \Hola\Transport\Response
@@ -368,26 +370,26 @@ if(!function_exists('res')){
     }
 }
 
-/**
- * @param $data
- * @return \Hola\Data\Collection
- */
 if(!function_exists('collection')) {
+    /**
+     * @param $data
+     * @return \Hola\Data\Collection
+     */
     function collection($data = [])
     {
         return new \Hola\Data\Collection($data);
     }
 }
 
-/**
- * @param $job
- * @param $queue_name
- * @param $connection
- * @param $timeout
- * @return void
- * @throws Throwable
- */
 if (!function_exists('sendJobs')) {
+    /**
+     * @param $job
+     * @param $queue_name
+     * @param $connection
+     * @param $timeout
+     * @return void
+     * @throws Throwable
+     */
     function sendJobs($job, $queue_name = null, $connection = null, $timeout = null) {
         $queue = \Hola\Queue\CreateQueue::instance();
         if (!is_null($queue_name)) {
@@ -403,25 +405,25 @@ if (!function_exists('sendJobs')) {
     }
 }
 
-/**
- * @param $name
- * @param array $data
- * @return mixed
- */
 if(!function_exists('cache')) {
+    /**
+     * @param $name
+     * @param array $data
+     * @return \Hola\Data\Cache
+     */
     function cache() {
         $cache = \Hola\Data\Cache::init();
         return $cache;
     }
 }
 
-/**
- * Recursive glob
- * @param $pattern
- * @param int $flags
- * @return array
- */
 if(!function_exists('rglob')) {
+    /**
+     * Recursive glob
+     * @param $pattern
+     * @param int $flags
+     * @return array
+     */
     function rglob($pattern, $flags = 0) {
         $files = glob($pattern, $flags);
         foreach (glob(dirname($pattern).'/*', GLOB_ONLYDIR|GLOB_NOSORT) as $dir) {
@@ -480,23 +482,23 @@ if (!function_exists('createFolder')) {
     }
 }
 
-/**
- * Get folder from link
- * @param string $link
- * @return string
- */
 if (!function_exists('getFolder')) {
+    /**
+     * Get folder from link
+     * @param string $link
+     * @return string
+     */
     function getFolder($link) {
         return dirname($link);
     }
 }
 
-/**
- * Check if the array is two-dimensional
- * @param array $array
- * @return bool
- */
 if(!function_exists('isTwoDimensionalArray')) {
+    /**
+     * Check if the array is two-dimensional
+     * @param array $array
+     * @return bool
+     */
     function isTwoDimensionalArray($array) {
         if (!is_array($array)) {
             return false;
@@ -510,12 +512,12 @@ if(!function_exists('isTwoDimensionalArray')) {
     }
 }
 
-/**
- * Generate random key
- * @param int $length
- * @return string
- */
 if(!function_exists('generateKey')) {
+    /**
+     * Generate random key
+     * @param int $length
+     * @return string
+     */
     function generateKey($length = 16) {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $charactersLength = strlen($characters);
@@ -527,13 +529,13 @@ if(!function_exists('generateKey')) {
     }
 }
 
-/**
- * Find data by keys
- * @param array $keys
- * @param array $items
- * @return mixed|null
- */
 if (!function_exists('findDataByKeys')) {
+    /**
+     * Find data by keys
+     * @param array $keys
+     * @param array $items
+     * @return mixed|null
+     */
     function findDataByKeys($keys, $items) {
         foreach ($keys as $key) {
             if (isset($items[$key])) {
@@ -546,13 +548,13 @@ if (!function_exists('findDataByKeys')) {
     }
 }
 
-/**
- * Update data by keys
- * @param array $array
- * @param array $keys
- * @param $value
- */
 if (!function_exists('updateDataByKeys')) {
+    /**
+     * Update data by keys
+     * @param array $array
+     * @param array $keys
+     * @param $value
+     */
     function updateDataByKeys(&$array, $keys, $value) {
         if (is_array($array) && !empty($keys)) {
             $key = array_shift($keys);
@@ -568,7 +570,13 @@ if (!function_exists('updateDataByKeys')) {
         }
     }
 }
+
 if (!function_exists('isXml')) {
+    /**
+     * Check if the string is XML
+     * @param string $string
+     * @return bool
+     */
     function isXml($string) {
         libxml_use_internal_errors(true);  
         $xml = simplexml_load_string($string);
