@@ -28,19 +28,19 @@ class Request extends RequestBuilder {
         return $data[$key] ?? $default;
     }
 
-    private function post($key = '', $default = null)
+    public function post($key = '', $default = null)
     {
         $data = $this->requestData('POST');
         return $data[$key] ?? $default;
     }
 
-    private function patch($key = '', $default = false)
+    public function patch($key = '', $default = false)
     {
         $_PATCH = $this->requestData('PATCH');
         return $_PATCH[$key] ?? $default;
     }
 
-    private function put($key = '', $default = null)
+    public function put($key = '', $default = null)
     {
         $_PUT = $this->requestData('PUT');
         return $_PUT[$key] ?? $default;
@@ -52,7 +52,7 @@ class Request extends RequestBuilder {
         return $this;
     }
 
-    public function get_file($key = '')
+    public function getFile($key = '')
     {
         $this->file = $_FILES[$key] ?? '';
         return $this->file;
@@ -152,4 +152,11 @@ class Request extends RequestBuilder {
         $data = $this->all();
         return isset($data[$key]) ? true : false;
     }
+
+    public function any($name)
+    {
+        $data = $this->all();
+        return $data[$name] ?? null;
+    }
+
 }
