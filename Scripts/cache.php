@@ -9,17 +9,17 @@ class CacheScript extends \Hola\Core\Command
 
     public function handle()
     {
-        $type = $this->getArgument('type');
+        $prefix = config('cache.prefix') ?? 'cache_';
         switch ($type) {
             case 'router':
-                $item = __DIR__ROOT.'/storage/cache/router.cache';
+                $item = __DIR__ROOT."/storage/cache/{$prefix}_routers.cache";
                 if(file_exists($item)){ 
                     unlink($item);
                 }
                 $this->output()->info("=== Clear cache router successfully ===");
                 break;
             case 'config':
-                $item = __DIR__ROOT.'/storage/cache/config.cache';
+                $item = __DIR__ROOT."/storage/cache/{$prefix}_config.cache";
                 if(file_exists($item)){
                     unlink($item);
                 }

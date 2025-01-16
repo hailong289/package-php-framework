@@ -14,7 +14,7 @@ class Cache {
     public function __construct() {
         $this->bind = config('cache.default');
         $this->default_connection = config('cache.default_connections');
-        $this->prefix = config('cache.prefix');
+        $this->prefix = config('cache.prefix') ?? 'cache_';
         $this->path = __DIR__ROOT . '/' . config("cache.stores.{$this->bind}.path");
     }
 
