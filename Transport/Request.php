@@ -159,4 +159,81 @@ class Request extends RequestBuilder {
         return $data[$name] ?? null;
     }
 
+    public function domain() {
+        return $_SERVER['HTTP_HOST'];
+    }
+
+    public function domainName() {
+        return $_SERVER['SERVER_NAME'];
+    }
+
+    public function path() {
+        $request_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        return $request_path;
+    }
+
+    public function hasPath($path) {
+        return $this->path() === $path;
+    }
+
+    public function method() {
+        return $_SERVER['REQUEST_METHOD'];
+    }
+
+    public function isMethod($method) {
+        return $this->method() === strtoupper($method);
+    }
+
+    public function isGet() {
+        return $this->isMethod('GET');
+    }
+
+    public function isPost() {
+        return $this->isMethod('POST');
+    }
+
+    public function isPut() {
+        return $this->isMethod('PUT');
+    }
+
+    public function isPatch() {
+        return $this->isMethod('PATCH');
+    }
+
+    public function isDelete() {
+        return $this->isMethod('DELETE');
+    }
+
+    public function isOptions() {
+        return $this->isMethod('OPTIONS');
+    }
+
+    public function isHead() {
+        return $this->isMethod('HEAD');
+    }
+
+    public function isAjax() {
+        return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest';
+    }
+
+    public function isSecure() {
+        return isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
+    }
+
+    public function isXmlRequest() {
+        return $this->headers('Content-Type') === 'application/xml';
+    }
+
+    public function isHtmlRequest() {
+        return $this->headers('Content-Type') === 'text/html';
+    }
+
+    public function isFormRequest() {
+        return $this->headers('Content-Type') === 'application/x-www-form-urlencoded';
+    }
+
+    public function isMultipartRequest() {
+        return $this->headers('Content-Type') === 'multipart/form-data';
+    }
+
 }
