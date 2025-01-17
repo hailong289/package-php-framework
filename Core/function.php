@@ -412,7 +412,7 @@ if(!function_exists('cache')) {
      * @return \Hola\Data\Cache
      */
     function cache() {
-        $cache = \Hola\Data\Cache::init();
+        $cache = new \Hola\Data\Cache();
         return $cache;
     }
 }

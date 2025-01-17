@@ -18,13 +18,6 @@ class Cache {
         $this->path = __DIR__ROOT . '/' . config("cache.stores.{$this->bind}.path");
     }
 
-    public static function init(): Cache {
-        if (self::$instance == null) {
-            self::$instance = new Cache();
-        }
-        return self::$instance;
-    }
-
     public function redis($name = null) {
         $this->bind = 'redis';
         if (!is_null($name)) {
