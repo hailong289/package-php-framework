@@ -4,17 +4,27 @@ namespace Hola\Database\Structure;
 
 class Table extends DataType {
     private $isUse = false;
+    private $category = [
+        'ADD',
+        'MODIFY',
+        'DROP',
+        'CHANGE',
+    ];
     public function __construct($isUse = false)
     {
         $this->isUse = $isUse;
     }
-    
-    public function addColumn($name, $type): AttributeType
+
+    /**
+     * @param string $name
+     * @param string $type
+     * @return AttributeType
+     */
+    public function resloveColumn($name, $type)
     {
         $this->columns[$name] = [
             'name' => $name,
             'type' => $type,
-            'category' => 'ADD',
             'callback' => $this->getAtributes($name)
         ];
         return $this->columns[$name]['callback'];
@@ -24,13 +34,56 @@ class Table extends DataType {
     {
         $sql = [];
         foreach ($this->columns as $column) {
+            $category = '';
+            $attributesCategory = 'ADD';
+            $attributesIndexString = '';
+            $attributesString = '';
             $attributes = get_object_vars($column['callback']);
             $length = $this->reloveLength($attributes);
-            $attributesString = $this->reloveAtributes($attributes);
+            $attributesDefault = $this->reloveAtributes($attributes);
             $attributesIndex = $this->reloveAtributesIndex($attributes);
-            $sql[] = ($this->isUse ? $column['category'] . ' COLUMN ' : '') . $column['name'] . ' ' . $column['type'] . $length . ' ' . $attributesString;
+
             if (!empty($attributesIndex)) {
-                $sql[] = ($this->isUse ? $column['category'] : '') . implode(' ', $attributesIndex);
+                $attributesIndexString = implode(' ', $attributesIndex);
+            }
+
+            if (!empty($attributesDefault)) {
+                $attributesString = implode(' ', $attributesDefault);
+            }
+
+            if (!$this->isUse) {
+                $sql[] = $column['name'] . ' ' . $column['type'] . $length . ' ' . $attributesString;
+                if (!empty($attributesIndex)) {
+                    $sql[] = $attributesIndexString;
+                }
+            } else {
+                $sqlString = '';
+                $attributesCategory = $attributes['category'] ?? 'ADD';
+                switch ($attributesCategory) {
+                    case 'ADD':
+                        $category = 'ADD COLUMN';
+                        $sqlString = $column['name'] . ' ' . $column['type'] . $length . ' ' . $attributesString;
+                        break;
+                    case 'MODIFY':
+                        $category = 'MODIFY COLUMN';
+                        $sqlString = $column['name'] . ' ' . $column['type'] . $length . ' ' . $attributesString;
+                        break;
+                    case 'DROP':
+                        $category = 'DROP COLUMN';
+                        $sqlString = $column['name'];
+                        break;
+                    case 'CHANGE':
+                        $category = 'CHANGE COLUMN';
+                        $sqlString = $column['name'] . ' ' . $attributes['new_name'] . ' ' . $column['type'] . $length . ' ' . $attributesString;
+                        break;
+                }
+                $sql[] = $category . ' ' . $sqlString;
+                if (
+                    !empty($attributesIndex) &&
+                    in_array($column['category'], ['ADD', 'DROP'])
+                ) {
+                    $sql[] = $column['category'] . $attributesIndexString;
+                }
             }
         }
         return implode(', ', $sql);
@@ -45,10 +98,11 @@ class Table extends DataType {
 
     private function reloveAtributes($values = [])
     {
-        $attribute = array_filter($values, function ($value, $key) {
-            return $key !== 'index' && $key !== 'value';
+        $not_get = ['index', 'value', 'category', 'new_name'];
+        $attributes = array_filter($values, function ($value, $key) use ($not_get) {
+            return !in_array($key, $not_get);
         }, ARRAY_FILTER_USE_BOTH);
-        return implode(' ', $attribute);
+        return empty($attributes) ? [] : $attributes;
     }
 
     private function reloveAtributesIndex($values = [])
@@ -56,6 +110,6 @@ class Table extends DataType {
         $attributes = array_filter($values, function ($value, $key) {
             return  $key === 'index';
         }, ARRAY_FILTER_USE_BOTH);
-        return $attributes;
+        return empty($attributes) ? [] : $attributes;
     }
 }

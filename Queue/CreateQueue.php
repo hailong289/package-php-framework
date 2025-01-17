@@ -2,7 +2,6 @@
 namespace Hola\Queue;
 use Hola\Connection\PdoSql;
 use Hola\Connection\RabbitMQ;
-use Hola\Core\RedisCR;
 use Hola\Exceptions\QueueException;
 use Hola\Transport\Request;
 use Hola\Transport\Response;
@@ -15,7 +14,7 @@ class CreateQueue
     private $timeout = 0;
     private $connection;
     private $connect_type;
-    private static $instance = null;
+    private static CreateQueue|null $instance = null;
     function __construct() {
         $this->connect_type = config('queue.default');
         $this->connection = config('queue.default_connection');
@@ -23,7 +22,7 @@ class CreateQueue
         $this->timeout = config('queue.timeout');
     }
     
-    public static function instance() {
+    public static function instance(): CreateQueue {
         if (is_null(self::$instance)) {
             self::$instance = new CreateQueue();
         }
@@ -47,18 +46,17 @@ class CreateQueue
                 'connection' => $this->connection,
                 'timeout' => $this->timeout
             ];
+            $data = json_encode($data_queue, JSON_UNESCAPED_UNICODE);
             if($this->connect_type === 'redis') {
-                $redis = RedisCR::workQueue($this->connection);
-                RedisCR::cacheRPush($tag_queue, $data_queue, 0);
+                $redis = Redis::queueConnect($this->connection);
+                $redis->rPush($tag_queue, $data);
             } elseif ($this->connect_type === 'database') {
-                $data = json_encode($data_queue, JSON_UNESCAPED_UNICODE);
                 DBO::connection($this->connection,'queue')->from('jobs')->insert([
                     'data' => $data,
                     'queue' => $this->queue,
                     'created_at' => date('Y-m-d H:i:s')
                 ]);
             } else if ($this->connect_type === 'rabbitmq') {
-                $data = json_encode($data_queue, JSON_UNESCAPED_UNICODE);
                 $rabbitMQ = RabbitMQ::instance($this->connection);
                 $channel = $rabbitMQ->channel();
                 $channel->queue_declare($this->queue, false, true, false, false);
@@ -76,7 +74,7 @@ class CreateQueue
                 $rabbitMQ->close();
             }
         } catch (\Throwable $e) {
-            throw new QueueException($e->getMessage(), 500);
+            throw new QueueException($e->getMessage(), 500, $e);
         }
     }
 

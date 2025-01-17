@@ -6,7 +6,7 @@ class Response {
 
     public function __construct() {}
 
-    public static function build() {
+    public static function build(): ResponseBuilder {
         if (is_null(self::$instance)) {
             self::$instance = new ResponseBuilder();
         }

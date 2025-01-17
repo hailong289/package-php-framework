@@ -41,7 +41,7 @@ class Application extends Container
             $this->register();
             $this->registerDependencies();
             $this->registerRouter();
-            $this->registerMiddlware();
+            $this->registerMiddleware();
             $this->work();
         } catch (\Throwable $e) {
             $this->handleErrorLogs($e);
@@ -143,7 +143,8 @@ class Application extends Container
             "code" => $code,
             "line" => $e->getLine(),
             "file" => $e->getFile(),
-            "trace" => $e->getTraceAsString()
+            "trace" => $e->getTraceAsString(),
+            "previous" => $e->getPrevious()
         ];
         return $errors;
     }
@@ -164,7 +165,7 @@ class Application extends Container
         $date = "[" . date('Y-m-d H:i:s') . "][{$e->getCode()}]: ";
         if (!file_exists(__DIR__ROOT . '/storage')) {
             if (!mkdir($concurrentDirectory = __DIR__ROOT . '/storage', 0777, true) && !is_dir($concurrentDirectory)) {
-                throw new \AppException(sprintf('Directory "%s" was not created', $concurrentDirectory));
+                echo sprintf('Directory "%s" was not created', $concurrentDirectory);
             }
         }
         $stringError = "$date{$e->getMessage()} in {$e->getFile()} on line {$e->getLine()}". PHP_EOL;
@@ -179,7 +180,7 @@ class Application extends Container
         $this->middlewares = $router['middlewares'];
     }
 
-    private function registerMiddlware()
+    private function registerMiddleware()
     {
         if (empty($this->middlewares)) {
             return false;

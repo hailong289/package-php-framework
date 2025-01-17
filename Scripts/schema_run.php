@@ -13,12 +13,14 @@ class SchemaRunScript extends \Hola\Core\Command {
     }
 
     public function handle() {
-        $migrations = $this->getMigrations();
         $type = $this->getArgument('type');
         if ($type != 'up' && $type != 'down') {
             $this->output()->text('Type must be up or down');
             return;
         }
+
+        $migrations = $this->getMigrations();
+
         if ($type == 'down') {
             $migrations = array_reverse($migrations);
         }
@@ -46,9 +48,7 @@ class SchemaRunScript extends \Hola\Core\Command {
     protected function runMigration($migration, $type = 'up') {
         try {
             $typeRun = 'run' . ucfirst($type);
-            $class = '\\App\\Database\\SchemaMigrate\\' . $migration;
-            $handle = new $class();
-            $handle->{$typeRun}();
+            app('\\App\\Database\\SchemaMigrate\\' . $migration)->{$typeRun}();
             $this->output()->text('Migration ' . $migration . ' run successfully');
         } catch (\Throwable $e) {
             $this->output()->text('Error: ' . $e->getMessage());

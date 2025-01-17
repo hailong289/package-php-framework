@@ -6,7 +6,7 @@ use Hola\Exceptions\AppException;
 class Router {
     private static RouterBuilder|null $instance = null;
 
-    public static function build() {
+    public static function build(): RouterBuilder {
         if (is_null(self::$instance)) {
             self::$instance = new RouterBuilder();
         }

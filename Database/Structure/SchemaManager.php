@@ -28,7 +28,7 @@ class SchemaManager {
         $table = new Table();
         $callback($table);
         $sql_column = $table->toSql();
-        $sql = "CREATE TABLE IF NOT EXISTS $tableName (";
+        $sql = "CREATE TABLE $tableName (";
         $sql .= $sql_column;
         $sql .= ");";
         return $this->execute($sql);
@@ -36,9 +36,9 @@ class SchemaManager {
     
     public function useTable($tableName, $callback)
     {
-        $params = new Table(true);
+        $table = new Table(true);
         $callback($table);
-        $sql_column = $params->toSql();
+        $sql_column = $table->toSql();
         $sql = "ALTER TABLE $tableName ";
         $sql .= $sql_column;
         $sql .= ";";

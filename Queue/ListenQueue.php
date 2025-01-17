@@ -3,11 +3,11 @@
 namespace Hola\Queue;
 
 class ListenQueue {
-    private static $instance = null;
+    private static ListenQueue|null $instance = null;
     private $listeners = [];
     public $bindings = [];
 
-    public static function instance() {
+    public static function instance(): ListenQueue {
         if (is_null(self::$instance)) {
             self::$instance = new ListenQueue();
         }

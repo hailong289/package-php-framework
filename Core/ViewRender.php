@@ -3,11 +3,11 @@
 namespace Hola\Core;
 
 class ViewRender {
-    private static $instance = null;
+    private static ViewRender|null $instance = null;
     private static $directive = [];
     private static $fileHtml = [];
 
-    public static function instance()
+    public static function instance(): ViewRender
     {
         if (is_null(self::$instance)) {
             self::$instance = new ViewRender();

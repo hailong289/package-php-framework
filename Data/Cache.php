@@ -5,7 +5,7 @@ namespace Hola\Data;
 use Hola\Connection\Redis;
 
 class Cache {
-    public static $instance = null;
+    public static Cache|null $instance = null;
     private static $bind = null;
     private $default_connection = null;
     private $prefix = 'cache_';
@@ -18,7 +18,7 @@ class Cache {
         $this->path = __DIR__ROOT . '/' . config("cache.stores.{$this->bind}.path");
     }
 
-    public static function init() {
+    public static function init(): Cache {
         if (self::$instance == null) {
             self::$instance = new Cache();
         }

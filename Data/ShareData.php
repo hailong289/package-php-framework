@@ -2,10 +2,10 @@
 namespace Hola\Data;
 
 class ShareData {
-    public static $instance = null;
+    public static ShareData|null $instance = null;
     public static $bindings = [];
     
-    public static function init() {
+    public static function init(): ShareData {
         if (empty(defined('PROJECT_KEY') && constant('PROJECT_KEY'))) {
             die('PROJECT_KEY is not defined');
         }

@@ -3,7 +3,6 @@ namespace Hola\Scripts;
 
 use Hola\Connection\RabbitMQ;
 use Hola\Connection\Redis;
-use Hola\Core\RedisCR;
 use Hola\Core\TimeoutManager;
 use Hola\Database\DBO;
 use Hola\Database\QueryBuilder;

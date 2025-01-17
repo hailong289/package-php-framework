@@ -5,6 +5,7 @@ namespace Hola\Database\Structure;
 class AttributeType {
     private $attributes;
     private $column;
+    public $category = 'ADD';
     
     public function __construct($column)
     {
@@ -98,6 +99,30 @@ class AttributeType {
     {
         $index_name = $name ? $name : "idx_{$this->column}";
         $this->index = "SPATIAL INDEX $index_name({$this->column})";
+        return $this;
+    }
+
+    public function modify() {
+        $this->category = 'MODIFY';
+        return $this;
+    }
+
+    public function add() {
+        $this->category = 'ADD';
+        return $this;
+    }
+
+    public function drop() {
+        $this->category = 'DROP';
+        return $this;
+    }
+
+    public function change($newName = null) {
+        $this->category = 'CHANGE';
+        if (is_null($newName)) {
+            $newName = $this->column;
+        }
+        $this->new_name = $newName;
         return $this;
     }
 

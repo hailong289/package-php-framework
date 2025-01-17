@@ -5,7 +5,7 @@ namespace Hola\Database\Structure;
 class DBSchema {
     private static SchemaManager|null $schemaMG = null;
 
-    public static function schemaManage()
+    public static function schemaManage(): SchemaManager
     {
         if (is_null(self::$schemaMG)) {
             self::$schemaMG = new SchemaManager();
@@ -17,7 +17,7 @@ class DBSchema {
     {
         $schema = self::schemaManage();
         if (is_null($callback)) {
-            $sql = "CREATE TABLE IF NOT EXISTS $tableName;";
+            $sql = "CREATE TABLE $tableName;";
             return $schema->execute($sql);
         }
         return $schema->createTable($tableName, $callback);
@@ -42,7 +42,7 @@ class DBSchema {
         $schema = self::schemaManage();
         $sql = "SHOW TABLES LIKE '$tableName';";
         $execute = $schema->execute($sql);
-        return count($execute) > 0;
+        return $execute->rowCount() > 0;
     }
     
     public static function dropColumn($tableName, $columnName)

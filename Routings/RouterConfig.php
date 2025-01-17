@@ -5,9 +5,9 @@ use Hola\Exceptions\AppException;
 class RouterConfig extends Router {
     private $default = 'web';
     private $pathArray = [];
-    private static $instance = null;
+    private static RouterConfig|null $instance = null;
 
-    public static function init()
+    public static function init(): RouterConfig
     {
         if (self::$instance === null) {
             self::$instance = new RouterConfig();
