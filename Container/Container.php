@@ -2,6 +2,7 @@
 namespace Hola\Container;
 
 use Hola\Core\Request;
+use Hola\Exceptions\AppException;
 
 class Container
 {
@@ -212,6 +213,13 @@ class Container
     {
         if ($class instanceof \Closure) {
             return $class($this);
+        }
+
+        if (interface_exists($class)) {
+            $class = $this->bindings[$class] ?? null;
+            if (!$class) {
+                throw new AppException("No concrete implementation found for interface $class");
+            }
         }
 
         try {
