@@ -3,50 +3,55 @@
 namespace Hola\Core;
 
 class Validation {
-     private static $errors;
-     private static $data;
+     public static \stdClass $bind;
 
      public static function create($data, $rules = []) {
-         self::$errors = new \stdClass();
-         self::$errors->errors = new \stdClass();
+         self::$bind = new \stdClass();
+         self::$bind->errors = new \stdClass();
+         self::$bind->data = new \stdClass();
          if (!empty($data)) {
              $keys_validate = array_keys($rules);
              foreach ($keys_validate as $name) {
                  if (!isset($data[$name])) {
                      $value = '';
-                     self::handleRule($name, $value, $rules, self::$errors);
+                     self::handleRule($name, $value, $rules, self::$bind->errors);
                  } else {
                      $value = $data[$name];
-                     self::handleRule($name, $value, $rules, self::$errors);
+                     self::handleRule($name, $value, $rules, self::$bind->errors);
                  }
              }
          } else {
              $keys_validate = array_keys($rules);
              foreach ($keys_validate as $name) {
-                 self::handleRule($name, '', $rules, self::$errors);
+                 self::handleRule($name, '', $rules, self::$bind->errors);
              }
          }
-         self::$data = $data;
-         return new static();
+         self::$bind->data = $data;
+         return new self();
      }
 
     public function errors() {
-        return count((array)self::$errors->errors) ? self::$errors->errors:null;
+        $isCount = count((array)self::$bind->errors);
+        return $isCount ? self::$bind->errors : null;
     }
 
     public function data() {
-         return count((array)self::$data) ? json_decode(json_encode(self::$data)):null;
+        $data = convert_to_object(self::$bind->data);
+        $isCount = count((array)$data);
+        return $isCount ? $data : null;
     }
 
     public function errorsArray() {
-        return count((array)self::$errors->errors) ? json_decode(json_encode(self::$errors->errors), true):null;
+        $errors = convert_to_array(self::$bind->errors);
+        $isCount = count($data);
+        return $isCount ? $errors :null;
     }
 
     public function dataArray() {
-        return count((array)self::$data) ? json_decode(json_encode(self::$data), true):null;
+        $data = convert_to_array(self::$bind->data);
+        $isCount = count($data);
+        return $isCount ? $data : null;
     }
-
-
 
     private static function handleRule($name, $value, $rules = [], &$errors){
         $list_rule = [
@@ -118,32 +123,32 @@ class Validation {
             ],
         ];
         if (!empty($rules[$name]) && count($rules[$name])) {
-            self::$errors->errors->{$name} = new \stdClass();
+            $errors->{$name} = new \stdClass();
             foreach ($rules[$name] as $key => $rule) {
                 $key = explode(':', $key);
                 $rule = explode(':', $rule);
                 if (is_string($key[0]) && isset($list_rule[$key[0]])) {
                     $data_key = $key;
                     $key = $key[0];
-                    self::$errors->errors->{$name}->{$key} = call_user_func($list_rule[$key]['function'], $value, $data_key[1] ?? 'none');
-                    if (self::$errors->errors->{$name}->{$key}) {
-                        self::$errors->errors->{$name}->{$key} = $rule[0];
-                        self::$errors->errors->{$name}->{$key} = str_replace("{{" . $name . "}}", $data_key[1] ?? '', self::$errors->errors->{$name}->{$key});
+                    $errors->{$name}->{$key} = call_user_func($list_rule[$key]['function'], $value, $data_key[1] ?? 'none');
+                    if ($errors->{$name}->{$key}) {
+                        $errors->{$name}->{$key} = $rule[0];
+                        $errors->{$name}->{$key} = str_replace("{{" . $name . "}}", $data_key[1] ?? '', $errors->{$name}->{$key});
                     } else {
-                        unset(self::$errors->errors->{$name}->{$key});
+                        unset($errors->{$name}->{$key});
                     }
                 } else if (isset($list_rule[$rule[0]])) {
                     $data_rule = $rule;
                     $rule = $data_rule[0];
-                    self::$errors->errors->{$name}->{$rule} = call_user_func($list_rule[$rule]['function'], $value, $data_rule[1] ?? 'none');
-                    if (self::$errors->errors->{$name}->{$rule}) {
-                        self::$errors->errors->{$name}->{$rule} = preg_replace("({{field}}|{{max}}|{{min}})", $name, $list_rule[$rule]['text']);
+                    $errors->{$name}->{$rule} = call_user_func($list_rule[$rule]['function'], $value, $data_rule[1] ?? 'none');
+                    if ($errors->{$name}->{$rule}) {
+                        $errors->{$name}->{$rule} = preg_replace("({{field}}|{{max}}|{{min}})", $name, $list_rule[$rule]['text']);
                     } else {
-                        unset(self::$errors->errors->{$name}->{$rule});
+                        unset($errors->{$name}->{$rule});
                     }
                 }
             }
-            if (!count((array)self::$errors->errors->{$name})) unset(self::$errors->errors->{$name});
+            if (!count((array)$errors->{$name})) unset($errors->{$name});
         }
         return $errors;
     }
