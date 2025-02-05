@@ -51,7 +51,12 @@ class SchemaRunScript extends \Hola\Core\Command {
             app('\\App\\Database\\SchemaMigrate\\' . $migration)->{$typeRun}();
             $this->output()->text('Migration ' . $migration . ' run successfully');
         } catch (\Throwable $e) {
-            $this->output()->text('Error: ' . $e->getMessage());
+            $this->output()->error([
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return;
         }
     }

@@ -102,6 +102,31 @@ class AttributeType {
         return $this;
     }
 
+    public function foreignKey($name = '')
+    {
+        $foreignKey = $name ? $name : "fk_{$this->column}";
+        $this->foreign_key = "CONSTRAINT $foreignKey FOREIGN KEY ($this->column)";
+        return $this;
+    }
+
+    public function references($table, $column)
+    {
+        $this->references = "REFERENCES $table($column)";
+        return $this;
+    }
+
+    public function onDelete($action)
+    {
+        $this->on_delete = "ON DELETE $action";
+        return $this;
+    }
+
+    public function onUpdate($action)
+    {
+        $this->on_update = "ON UPDATE $action";
+        return $this;
+    }
+
     public function modify() {
         $this->category = 'MODIFY';
         return $this;

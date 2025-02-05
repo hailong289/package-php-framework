@@ -42,9 +42,14 @@ class Table extends DataType {
             $length = $this->reloveLength($attributes);
             $attributesDefault = $this->reloveAtributes($attributes);
             $attributesIndex = $this->reloveAtributesIndex($attributes);
+            $attributesForeignKey = $this->reloveAtributesForeignKey($attributes);
 
             if (!empty($attributesIndex)) {
                 $attributesIndexString = implode(' ', $attributesIndex);
+            }
+
+            if (!empty($attributesForeignKey)) {
+                $attributesForeignKeyString = implode(' ', $attributesForeignKey);
             }
 
             if (!empty($attributesDefault)) {
@@ -55,6 +60,9 @@ class Table extends DataType {
                 $sql[] = $column['name'] . ' ' . $column['type'] . $length . ' ' . $attributesString;
                 if (!empty($attributesIndex)) {
                     $sql[] = $attributesIndexString;
+                }
+                if (!empty($attributesForeignKey)) {
+                    $sql[] = $attributesForeignKeyString;
                 }
             } else {
                 $sqlString = '';
@@ -78,11 +86,13 @@ class Table extends DataType {
                         break;
                 }
                 $sql[] = $category . ' ' . $sqlString;
-                if (
-                    !empty($attributesIndex) &&
-                    in_array($column['category'], ['ADD', 'DROP'])
-                ) {
+
+                if (!empty($attributesIndex) && in_array($column['category'], ['ADD', 'DROP'])) {
                     $sql[] = $column['category'] . $attributesIndexString;
+                }
+
+                if (!empty($attributesForeignKey) && in_array($column['category'], ['ADD', 'DROP'])) {
+                    $sql[] = $column['category'] . $attributesForeignKeyString;
                 }
             }
         }
@@ -98,7 +108,16 @@ class Table extends DataType {
 
     private function reloveAtributes($values = [])
     {
-        $not_get = ['index', 'value', 'category', 'new_name'];
+        $not_get = [
+            'index',
+            'value',
+            'category',
+            'new_name',
+            'foreign_key',
+            'references',
+            'on_delete',
+            'on_update',
+        ];
         $attributes = array_filter($values, function ($value, $key) use ($not_get) {
             return !in_array($key, $not_get);
         }, ARRAY_FILTER_USE_BOTH);
@@ -109,6 +128,20 @@ class Table extends DataType {
     {
         $attributes = array_filter($values, function ($value, $key) {
             return  $key === 'index';
+        }, ARRAY_FILTER_USE_BOTH);
+        return empty($attributes) ? [] : $attributes;
+    }
+
+    private function reloveAtributesForeignKey($values = [])
+    {
+        $get = [
+            'foreign_key',
+            'references',
+            'on_delete',
+            'on_update',
+        ];
+        $attributes = array_filter($values, function ($value, $key) use ($get) {
+            return in_array($key, $get);
         }, ARRAY_FILTER_USE_BOTH);
         return empty($attributes) ? [] : $attributes;
     }
