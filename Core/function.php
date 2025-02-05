@@ -204,7 +204,7 @@ if(!function_exists('__')){
      */
     function __($key, $data_key = [], $lang = null)
     {
-        $language = $lang ?? config_env('LANGUAGE', 'vi');
+        $language = $lang ?? conval('LANGUAGE', 'vi');
         $data = require(path_root("language/$language.php"));
         $convert = $data[$key] ?? $key;
         foreach ($data_key as $k=>$value) {
@@ -221,7 +221,7 @@ if(!function_exists('translate')){
      */
     function translate($key, $data_key = [], $lang = null)
     {
-        $language = $lang ?? config_env('LANGUAGE', 'vi');
+        $language = $lang ?? conval('LANGUAGE', 'vi');
         $data = config()->get($language) ?? [];
         $convert = $data[$key] ?? $key;
         foreach ($data_key as $k=>$value) {
@@ -238,7 +238,7 @@ if(!function_exists('lang_has')){
      */
     function lang_has($key)
     {
-        $language = config_env('LANGUAGE', 'vi');
+        $language = conval('LANGUAGE', 'vi');
         $data = config()->get($language) ?? [];
         return isset($data[$key]);
     }

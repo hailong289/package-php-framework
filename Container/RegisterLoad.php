@@ -92,7 +92,7 @@ class RegisterLoad
      */
     public function loadTimeZone($timezone = null)
     {
-        $timezone = $timezone ?? config_env('TIMEZONE', 'Asia/Ho_Chi_Minh');
+        $timezone = $timezone ?? conval('TIMEZONE', 'Asia/Ho_Chi_Minh');
         date_default_timezone_set($timezone);
         return $this;
     }

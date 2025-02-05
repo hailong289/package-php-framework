@@ -36,6 +36,11 @@ class Mailer {
         return $this;
     }
 
+    public function reConfigDefault() {
+        $this->isConfig = false;
+        return $this;
+    }
+
     public function getMail()
     {
         return $this->mail instanceof PHPMailer ? $this->mail:false;

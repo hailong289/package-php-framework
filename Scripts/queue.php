@@ -34,8 +34,8 @@ class QueueScript extends \Hola\Core\Command
     public function handle()
     {
         $this->listenQueue = ListenQueue::instance();
-        $this->connection_type = config_env('QUEUE_WORK', 'database');
-        $this->connection = config_env('QUEUE_CONNECTION', 'database');
+        $this->connection_type = conval('QUEUE_WORK', 'database');
+        $this->connection = conval('QUEUE_CONNECTION', 'database');
         $queue_name = $this->getOption('queue');
         $connection = $this->getOption('connection');
         $timeout_options = $this->getOption('timeout');
@@ -214,7 +214,7 @@ class QueueScript extends \Hola\Core\Command
                 ->delete();
 
             $taskName = $queue['class'] . '_' . uid();
-            if ($queue['timeout'] !== config_env('QUEUE_TIMEOUT', 600)) {
+            if ($queue['timeout'] !== conval('QUEUE_TIMEOUT', 600)) {
                 $this->timeoutManager->setTimeOut($queue['timeout']);
             }
             $this->timeoutManager->execute($taskName, function () use ($queue) {
@@ -253,7 +253,7 @@ class QueueScript extends \Hola\Core\Command
             }
             $queue = $this->data(json_decode($queue, true));
             $taskName = $queue['class'] . '_' . uid();
-            if ($queue['timeout'] !== config_env('QUEUE_TIMEOUT', 600)) {
+            if ($queue['timeout'] !== conval('QUEUE_TIMEOUT', 600)) {
                 $this->timeoutManager->setTimeOut($queue['timeout']);
             }
             $this->timeoutManager->execute($taskName, function () use ($queue) {
@@ -305,7 +305,7 @@ class QueueScript extends \Hola\Core\Command
             $queue = json_decode($msg->body, true);
             $queue = $this->data($queue);
             $taskName = $queue['class'] . '_' . uid();
-            if ($queue['timeout'] !== config_env('QUEUE_TIMEOUT', 600)) {
+            if ($queue['timeout'] !== conval('QUEUE_TIMEOUT', 600)) {
                 $this->timeoutManager->setTimeOut($queue['timeout']);
             }
             $this->timeoutManager->execute($taskName, function () use ($queue, $msg) {

@@ -35,6 +35,14 @@ class Application extends Container
         });
     }
 
+    public function testRun() {
+        try {
+            $this->run();
+        } catch (\Throwable $e) {
+            echo $e;
+        }
+    }
+
     public function run()
     {
         try {
@@ -160,7 +168,7 @@ class Application extends Container
 
     private function handleErrorLogs(\Throwable $e)
     {
-        $enable_db = config_env('DEBUG_LOG', false);
+        $enable_db = conval('DEBUG_LOG', false);
         if (!$enable_db) return;
         $date = "[" . date('Y-m-d H:i:s') . "][{$e->getCode()}]: ";
         if (!file_exists(__DIR__ROOT . '/storage')) {
