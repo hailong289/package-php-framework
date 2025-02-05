@@ -24,13 +24,15 @@ class Application extends Container
 
     public function registerDependencies()
     {
-        $this->set(Router::class, function () {
-            return new Router();
-        });
         $this->set(Request::class, function () {
             return new Request();
         });
-        $this->set(Middleware::class, function () {
+
+        $this->singleton(Router::class, function () {
+            return new Router();
+        });
+
+        $this->singleton(Middleware::class, function () {
             return new Middleware();
         });
     }

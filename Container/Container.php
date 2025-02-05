@@ -17,6 +17,11 @@ class Container
     protected $bindings = [];
 
     /**
+     * @var array
+     */
+    protected $singletons = []; // store singleton instance
+
+    /**
      * @return static
      */
     public static function instance()
@@ -64,6 +69,23 @@ class Container
     /**
      * @param $abstract
      * @param $factory
+     * @return $this
+     */
+    public function singleton($abstract, $factory = null)
+    {
+        if (is_null($factory)) {
+            $factory = $abstract;
+        }
+        if (!$factory instanceof Closure) {
+            $factory = $this->getClosure($factory);
+        }
+        $this->singletons[$abstract] = $factory();
+        return $this;
+    }
+
+    /**
+     * @param $abstract
+     * @param $factory
      * @return void
      */
     public function replace($abstract, $factory): void
@@ -80,6 +102,9 @@ class Container
      * @return T The instantiated object of the class.
      */
     public function make($abstract, $factory = null) {
+        if (isset($this->singletons[$abstract])) {
+            return $this->singletons[$abstract];
+        }
         return $this->build($abstract);
     }
 
@@ -115,7 +140,7 @@ class Container
         if (empty($this->callbackClass)) {
             throw new \TypeError(self::class . '::call(): Class must not be empty');
         }
-        $bindingClass = $this->get($this->callbackClass);
+        $bindingClass = $this->callbackClass;
         $methodReflection = new \ReflectionMethod($bindingClass, $this->callbackMethod);
         $methodParams = $methodReflection->getParameters();
         $dependencies = [];
@@ -125,9 +150,9 @@ class Container
             $type = $param->getType(); // check type
             if ($type && $type instanceof \ReflectionNamedType) { /// if parameter is a class
                 $className = $type->getName();
-                $bindingClassMethod = $this->get($className);
+                $bindingClassMethod = $this->bindings[$className] ?? $className;
                 if (is_string($bindingClassMethod)) {
-                    $bindingClassMethod = $this->build($bindingClassMethod);
+                    $bindingClassMethod = $this->make($bindingClassMethod);
                 }
                 array_push($dependencies, $bindingClassMethod); // push  to $dependencies array
             }
@@ -136,7 +161,7 @@ class Container
             array_push($dependencies, $value);
         }
         // make class instance
-        $initClass = $this->build($bindingClass);
+        $initClass = $this->make($bindingClass);
         // call method with $dependencies/parameters
         return $methodReflection->invoke($initClass, ...$dependencies);
     }
@@ -174,7 +199,6 @@ class Container
         }
     }
 
-
     /**
      * Build an instance of the given class, resolving dependencies as needed.
      *
@@ -186,9 +210,12 @@ class Container
      */
     private function build($class, $params = [])
     {
+        if ($class instanceof \Closure) {
+            return $class($this);
+        }
+
         try {
-            $bindingClass = $this->get($class);
-            $classReflection = new \ReflectionClass($bindingClass);
+            $classReflection = new \ReflectionClass($class);
         } catch (\ReflectionException $e) {
             throw new \ReflectionException($e->getMessage(), 500);
         }
@@ -227,7 +254,7 @@ class Container
             $class = $this->getReflectionClassFromParameter($dependency);
             if ($class instanceof \ReflectionClass) {
                 $abstract = $class->getName();
-                $array[$dependency->getName()] = $this->build($this->get($abstract));
+                $array[$dependency->getName()] = $this->make($abstract);
             }
         }
         return $array;
