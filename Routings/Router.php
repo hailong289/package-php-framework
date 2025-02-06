@@ -79,7 +79,7 @@ class Router {
         $urlParts = parse_url($url);
         $requestUri = rtrim($urlParts['path'], '/') ?: '/';
         $queryString = isset($urlParts['query']) ? $urlParts['query'] : '';
-        $routers = cache()->file()->getOrStore('routers', self::list());
+        $routers = cache()->file()->setPath('storage/cache')->getOrStore('routers', self::list());
         $result = [];
         $matches = [];
         foreach($routers as $route) {

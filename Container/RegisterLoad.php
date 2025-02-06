@@ -4,7 +4,9 @@ use Hola\Core\ConfigApp;
 
 class RegisterLoad
 {
-
+    private $bind = [
+        'config' => [],
+    ];
     /**
      * Register file
      *
@@ -56,12 +58,13 @@ class RegisterLoad
     {
         require_once __DIR__ROOT ."/config/constant.php";
         $config = rglob(__DIR__ROOT ."/config/*.php") ?? [];
+        $config_arr = [];
         foreach ($config as $item) {
             if (file_exists($item) && $item !== __DIR__ROOT ."/config/constant.php") {
                 $items = explode("/", $item);
                 $end = end($items);
                 $end = str_replace('.php', '', $end);
-                ConfigApp::init()->create($end, require($item));
+                $this->bind['config'][$end] = require($item);
             }
         }
     }
@@ -79,7 +82,7 @@ class RegisterLoad
                 $items = explode("/", $item);
                 $end = end($items);
                 $end = str_replace('.php', '', $end);
-                ConfigApp::init()->create($end, require($item));
+                $this->bind['config'][$end] = require($item);
             }
         }
     }
@@ -107,6 +110,10 @@ class RegisterLoad
         $pathName = __DIR__ROOT . "/App/App.php";
         if (file_exists($pathName)) {
             require_once $pathName;
+        }
+        $data = cache()->file()->setPath('storage/cache')->getOrStore('configs', $this->bind['config']);
+        foreach ($data as $key => $item) {
+            ConfigApp::init()->create($key, $item);
         }
         return $this;
     }

@@ -19,7 +19,7 @@ class CacheScript extends \Hola\Core\Command
                 $this->output()->info("=== Clear cache router successfully ===");
                 break;
             case 'config':
-                $item = __DIR__ROOT."/storage/cache/{$prefix}_config.cache";
+                $item = __DIR__ROOT."/storage/cache/{$prefix}_configs.cache";
                 if(file_exists($item)){
                     unlink($item);
                 }

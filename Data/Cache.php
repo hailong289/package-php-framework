@@ -3,6 +3,7 @@
 namespace Hola\Data;
 
 use Hola\Connection\Redis;
+use Hola\Exceptions\AppException;
 
 class Cache {
     public static Cache|null $instance = null;
@@ -31,6 +32,24 @@ class Cache {
         return $this;
     }
 
+    public function apc() {
+        if (!function_exists('apcu_store')) {
+            throw new AppException('APCu is not enabled.');
+        }
+        $this->bind = 'apc';
+        return $this;
+    }
+    
+    public function setPath($path) {
+        $this->path = __DIR__ROOT . '/' . $path;
+        return $this;
+    }
+    
+    public function setPrefix($prefix) {
+        $this->prefix = $prefix;
+        return $this;
+    }
+
     public function get($name) {
         $name = $this->prefix . $name;
         switch ($this->bind) {
@@ -39,6 +58,9 @@ class Cache {
                 break;
             case 'redis':
                 return $this->getDataRedis($name, $callback);
+                break;
+           case 'apc':
+                return $this->getDataApc($name, $callback);
                 break;
             default:
                 throw new \Exception('Cache driver do not support');
@@ -54,6 +76,9 @@ class Cache {
                 break;
             case 'redis':
                 $this->storeRedis($name, $data, $time);
+                break;
+            case 'apc':
+                $this->storeApc($name, $data, $time);
                 break;
             default:
                 throw new \Exception('Cache driver do not support');
@@ -87,6 +112,14 @@ class Cache {
         return [];
     }
 
+    private function getDataApc($name) {
+        $data_cache = apc_fetch($name);
+        if (!empty($data_cache)) {
+            return unserialize($data_cache);
+        }
+        return [];
+    }
+
     private function storeRedis($tags, $data = [], $time = null) {
         if (is_null($time)) {
             $time = config("cache.stores.{$this->bind}.expire");
@@ -110,6 +143,13 @@ class Cache {
         }
     }
 
+    private function storeApc($name, $data = [], $time = null) {
+        if (is_null($time)) {
+            $time = config("cache.stores.{$this->bind}.expire");
+        }
+        apc_store($name, serialize($data), $time);
+    }
+
     public function clear($name)
     {
         $name = $this->prefix . $name;
@@ -119,6 +159,9 @@ class Cache {
                 break;
             case 'redis':
                 $this->clearRedis($name);
+                break;
+            case 'apc':
+                $this->clearApc($name);
                 break;
             default:
                 throw new \Exception('Cache driver do not support');
@@ -137,6 +180,11 @@ class Cache {
     private function clearRedis($name)
     {
         $this->getRedis()->del($name);
+    }
+
+    private function clearApc($name)
+    {
+        apc_delete($name);
     }
 
     private function getLinkFile($name) {
