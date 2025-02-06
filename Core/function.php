@@ -270,15 +270,22 @@ if(!function_exists('convert_to_array')){
      */
     function convert_to_array($value)
     {
-        if (!is_array($value) || !is_object($value)) {
-            throw new \Hola\Exceptions\AppException('The convert_to_array function parameter is not array or object');
-        }
-
         if (is_array($value)) {
             return $value;
         }
 
-        return json_decode(json_encode($value), true);
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                return $decoded;
+            }
+        }
+
+        if (is_object($value)) {
+            return json_decode(json_encode($value), true);
+        }
+
+        return [];
     }
 }
 
@@ -289,15 +296,22 @@ if(!function_exists('convert_to_object')){
      */
     function convert_to_object($value)
     {
-        if (!is_array($value) || !is_object($value)) {
-           throw new \Hola\Exceptions\AppException('The convert_to_object function parameter is not array or object');
-        }
-
         if (is_object($value)) {
             return $value;
         }
 
-        return json_decode(json_encode($value));
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                return $decoded;
+            }
+        }
+
+        if (is_array($value)) {
+            return json_decode(json_encode($value));
+        }
+
+        return [];
     }
 }
 

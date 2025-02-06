@@ -77,7 +77,10 @@ class Container
         if (is_null($factory)) {
             $factory = $abstract;
         }
-        if (!$factory instanceof Closure) {
+        if (!$factory instanceof \Closure) {
+            if (!is_string($factory)) {
+                throw new \TypeError(self::class.'::bind(): Argument #2 ($factory) must be of type Closure|string|null');
+            }
             $factory = $this->getClosure($factory);
         }
         $this->singletons[$abstract] = $factory();
