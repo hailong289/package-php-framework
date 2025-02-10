@@ -156,6 +156,7 @@ class DataType {
     {
         return $this->resloveColumn($name, 'TINYTEXT');
     }
+
     public function text($name): AttributeType
     {
         return $this->resloveColumn($name,'TEXT');

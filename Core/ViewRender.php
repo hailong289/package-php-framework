@@ -2,10 +2,12 @@
 
 namespace Hola\Core;
 
+use Hola\Exceptions\AppException;
+
 class ViewRender {
     private static ViewRender|null $instance = null;
     private static $directive = [];
-    private static $fileHtml = [];
+    private static $file_html = [];
 
     public static function instance(): ViewRender
     {
@@ -17,13 +19,13 @@ class ViewRender {
 
     public static function cacheFileHtml(array $names)
     {
-        self::$fileHtml = $names;
+        self::$file_html = $names;
         return self::instance();
     }
 
     public static function hasCacheFileHtml($name)
     {
-        return in_array($name, self::$fileHtml) && file_exists(self::viewRenderByName($name, '.html'));
+        return in_array($name, self::$file_html) && file_exists(self::viewRenderByName($name, '.html'));
     }
 
     private static function defaultDirective()
@@ -92,22 +94,32 @@ class ViewRender {
     }
 
     public static function render($view, $data = []) {
-        $fileView = self::resloveFileView($view);
-        if (file_exists(self::getViewRender($fileView, $view))) {
-            ob_start();
+        $path_view = self::resloveFileView($view);
+        $view_render = self::getViewRender($path_view, $view);
+        if (file_exists($view_render)) {
             extract($data, EXTR_SKIP);
-            $view_render = self::getViewRender($fileView, $view);
-            if (in_array($view, self::$fileHtml)) {
+            ob_start();
+            if (in_array($view, self::$file_html)) {
                 require_once $view_render;
                 return ob_get_clean();
             }
             require_once $view_render;
             return ob_get_clean();
         }
-        $output = self::resloveViewContent($fileView, $view);
-        $output = self::resloveIncludes($output, $data);
-        $output = self::resloveDirective($output);
-        return self::resloveRenderHtml($fileView, $view, $output, $data);
+
+        return self::resloveRenderHtml(
+            $path_view,
+            $view,
+            function () use ($path_view, $view, $data) {
+                return self::resloveDirective(
+                    self::resloveIncludes(
+                        self::resloveViewContent($path_view, $view),
+                        $data
+                    )
+                );
+            },
+            $data
+        );
     }
 
     public static function renderXml($data = [])
@@ -143,22 +155,18 @@ class ViewRender {
 
     private static function resloveFileView($view)
     {
-        $file_view = view_root($view);
-        if(!file_exists($file_view)){
+        if(!file_exists(view_root($view))){
             if ($view === 'error.index') {
-                $path = dirname(__DIR__, 1);
-                $file_view = "$path/view/error.view.php";
-                return $file_view;
+                return dirname(__DIR__, 1) . "/view/error.view.php";
             }
-            throw new \RuntimeException("File App/Views/$view.view.php does not exist", 500);
+            throw new AppException("File App/Views/$view.view.php does not exist", 500);
         }
-        return $file_view;
+        return view_root($view);
     }
 
     private static function resloveDirective($output)
     {
-        $list_directive = self::defaultDirective();
-        foreach ($list_directive as $directive) {
+        foreach (self::defaultDirective() as $directive) {
             $output = preg_replace($directive['regex'], $directive['render'], $output);
         }
         return $output;
@@ -166,60 +174,56 @@ class ViewRender {
 
     private static function resloveViewContent($view, $name)
     {
-        if (in_array($name, self::$fileHtml)) {
+        if (in_array($name, self::$file_html)) {
             ob_start();
             require($view);
-            $output = ob_get_clean();
-        } else {
-            $output = file_get_contents($view);
+            return ob_get_clean();
         }
-        return $output;
+        return file_get_contents($view);
     }
 
     private static function resloveIncludes($output)
     {
         $output = preg_replace('/<!--(.*?)-->/', '', $output);
         while (preg_match('/@include\(\s*[\'"](.+?)[\'"]\s*\)/', $output, $matches)) {
-            $includedView = view_root($matches[1]);
-            $includedContent = self::resloveViewContent($includedView, $matches[1]);
-            $includedContent = self::resloveIncludes($includedContent);
-            $output = str_replace($matches[0], $includedContent, $output);
+            $included_content = self::resloveIncludes(
+                self::resloveViewContent(
+                    view_root($matches[1]),
+                    $matches[1]
+                )
+            );
+            $output = str_replace($matches[0], $included_content, $output);
         }
         return $output;
     }
 
-    private static function resloveRenderHtml($viewCurrent, $name, $output, $data = [])
+    private static function resloveRenderHtml($view_current, $name, $callback, $data = [])
     {
         ob_start();
         extract($data, EXTR_SKIP);
-        $view_render = self::getViewRender($viewCurrent, $name);
         if ($name === 'error.index') {
-            require($viewCurrent);
+            require($view_current);
             return ob_get_clean();
         }
+        $view_render = self::getViewRender($view_current, $name);
         createFolder(getFolder($view_render));
-        file_put_contents($view_render, $output);
+        file_put_contents($view_render, $callback());
         require_once $view_render;
         return ob_get_clean();
     }
 
-    private static function getViewRender($viewCurrent, $name)
+    private static function getViewRender($view_current, $name)
     {
-        $folder = __DIR__ROOT . '/storage/render';
-        $startPos = strpos($viewCurrent, 'Views');
-        $view = substr($viewCurrent, $startPos);
-        $view_render = "$folder/$view";
-        $extension = in_array($name, self::$fileHtml) ? '.html' : '.php';
-        $view_render = str_replace('.view.php', $extension, $view_render);
+        $view = substr($view_current, strpos($view_current, 'Views'));
+        $extension = in_array($name, self::$file_html) ? '.html' : '.php';
+        $view_render = str_replace('.view.php', $extension,  __DIR__ROOT . "/storage/render/$view");
         return $view_render;
     }
 
     private static function viewRenderByName($name, $ext = '.php')
     {
         $view = preg_replace('/([.]+)/', '/' , $name);
-        $folder = __DIR__ROOT . '/storage/render';
-        $view_render = "$folder/Views/{$view}{$ext}";
-        return $view_render;
+        return __DIR__ROOT . "/storage/render/Views/{$view}{$ext}";
     }
 
     private static function resloveArrayToXml($data, &$xml) {
