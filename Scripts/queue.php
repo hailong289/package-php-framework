@@ -291,7 +291,6 @@ class QueueScript extends \Hola\Core\Command
         \PhpAmqpLib\Connection\AMQPSSLConnection $db
     )
     {
-        ini_set('error_reporting', E_STRICT);
         $queue = $this->jobs_queue;
         $channel = $db->channel();
         $channel->queue_declare($queue, false, true, false, false);
