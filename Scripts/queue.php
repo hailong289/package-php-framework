@@ -60,7 +60,7 @@ class QueueScript extends \Hola\Core\Command
     public function handleListenTimeOut()
     {
         $this->timeoutManager = new TimeoutManager();
-        $this->timeoutManager->setTimeOut($this->timeout);
+        $this->timeoutManager->setTimeOut((int)$this->timeout);
         $this->timeoutManager->eventTimeOut(function ($payload) {
             $taskName = $payload['taskName'];
             $data = $payload['data'];
@@ -214,8 +214,8 @@ class QueueScript extends \Hola\Core\Command
                 ->delete();
 
             $taskName = $queue['class'] . '_' . uid();
-            if ($queue['timeout'] !== conval('QUEUE_TIMEOUT', 600)) {
-                $this->timeoutManager->setTimeOut($queue['timeout']);
+            if ((int)$queue['timeout'] !== (int)conval('QUEUE_TIMEOUT', 600)) {
+                $this->timeoutManager->setTimeOut((int)$queue['timeout']);
             }
             $this->timeoutManager->execute($taskName, function () use ($queue) {
                 $start = new \DateTime();
@@ -253,8 +253,8 @@ class QueueScript extends \Hola\Core\Command
             }
             $queue = $this->data(json_decode($queue, true));
             $taskName = $queue['class'] . '_' . uid();
-            if ($queue['timeout'] !== conval('QUEUE_TIMEOUT', 600)) {
-                $this->timeoutManager->setTimeOut($queue['timeout']);
+            if ((int)$queue['timeout'] !== (int)conval('QUEUE_TIMEOUT', 600)) {
+                $this->timeoutManager->setTimeOut((int)$queue['timeout']);
             }
             $this->timeoutManager->execute($taskName, function () use ($queue) {
                 $start = new \DateTime();
@@ -305,8 +305,8 @@ class QueueScript extends \Hola\Core\Command
             $queue = json_decode($msg->body, true);
             $queue = $this->data($queue);
             $taskName = $queue['class'] . '_' . uid();
-            if ($queue['timeout'] !== conval('QUEUE_TIMEOUT', 600)) {
-                $this->timeoutManager->setTimeOut($queue['timeout']);
+            if ((int)$queue['timeout'] !== (int)conval('QUEUE_TIMEOUT', 600)) {
+                $this->timeoutManager->setTimeOut((int)$queue['timeout']);
             }
             $this->timeoutManager->execute($taskName, function () use ($queue, $msg) {
                 $start = new \DateTime();

@@ -6,6 +6,7 @@ class RegisterLoad
 {
     private $bind = [
         'config' => [],
+        'include' => []
     ];
     /**
      * Register file
@@ -17,7 +18,7 @@ class RegisterLoad
     {
         $pathName = __DIR__ROOT . "/$name.php";
         if (file_exists($pathName)) {
-            require_once $pathName;
+            $this->bind['include'][] = $pathName;
         }
         return $this;
     }
@@ -44,7 +45,7 @@ class RegisterLoad
     {
         $pathName = __DIR__ROOT . "/router/index.php";
         if (file_exists($pathName)) {
-            require_once $pathName;
+            $this->bind['include'][] = $pathName;
         }
         return $this;
     }
@@ -109,12 +110,25 @@ class RegisterLoad
     {
         $pathName = __DIR__ROOT . "/App/App.php";
         if (file_exists($pathName)) {
-            require_once $pathName;
+            $this->bind['include'][] = $pathName;
         }
-        $data = cache()->file()->setPath('storage/cache')->getOrStore('configs', $this->bind['config']);
-        foreach ($data as $key => $item) {
-            ConfigApp::init()->create($key, $item);
-        }
+        $this->resloveInclude();
+        $this->resloveConfig();
+        return $this;
+    }
+
+    /**
+     * init CLI
+     *
+     * @return void
+     */
+    public function initCLI()
+    {
+        $this->loadConfig();
+        $this->loadTimeZone();
+        $this->registerFolder(['database']);
+        $this->resloveInclude();
+        $this->resloveConfig();
         return $this;
     }
 
@@ -150,12 +164,27 @@ class RegisterLoad
     {
         foreach ($files as $item) {
             if (file_exists($item)) {
-                require_once $item;
+                $this->bind['include'][] = $item;
             } else {
                 throw new \Exception("File $item does not exist");
             }
         }
     }
 
+
+    private function resloveInclude()
+    {
+        foreach ($this->bind['include'] as $item) {
+            require_once $item;
+        }
+    }
+
+    private function resloveConfig()
+    {
+        $data = cache()->file()->setPath('storage/cache')->getOrStore('configs', $this->bind['config']);
+        foreach ($data as $key => $item) {
+            ConfigApp::init()->create($key, $item);
+        }
+    }
 
 }

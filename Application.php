@@ -13,6 +13,7 @@ class Application extends Container
 {
     private $control;
     private $middlewares;
+    private $cli;
 
     public function __construct(){
         if ($this->isJson()) {
@@ -62,6 +63,15 @@ class Application extends Container
         }
     }
 
+    public function runCLI()
+    {
+        if (empty($this->cli)) {
+            $this->registerCommand();
+        }
+        $this->cli->run();
+        return $this;
+    }
+
     public function setHeaderJson()
     {
         header('Content-Type: application/json; charset=utf-8');
@@ -69,7 +79,7 @@ class Application extends Container
     
     public function registerCommand()
     {
-        $app = new \Symfony\Component\Console\Application();
+        $this->cli = new \Symfony\Component\Console\Application();
         $command_dir = scandir(__DIR__ROOT .'/commands');
         $command_dir = array_diff($command_dir, array('.', '..'));
 
@@ -96,10 +106,11 @@ class Application extends Container
             $this->make(\Hola\Scripts\SchemaRunScript::class),
         ]);
         foreach ($array_command as $item) {
-            $app->add($item);
+            $this->cli->add($item);
         }
-        $app->run();
     }
+
+
 
     private function work()
     {
