@@ -54,7 +54,7 @@ class Mailer {
 
     public function setBody($body)
     {
-        $this->mail->Body = $body;
+        $this->mail->Body = mb_convert_encoding($body, $this->mail->CharSet, 'auto');
         return $this;
     }
 
