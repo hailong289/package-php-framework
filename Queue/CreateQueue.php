@@ -3,6 +3,10 @@ namespace Hola\Queue;
 use Hola\Connection\PdoSql;
 use Hola\Connection\RabbitMQ;
 use Hola\Exceptions\QueueException;
+use Hola\Queue\Driver\DatabaseQueueDriver;
+use Hola\Queue\Driver\RabbitMQQueueDriver;
+use Hola\Queue\Driver\RedisQueueDriver;
+use Hola\Queue\Interface\QueueDriverInterface;
 use Hola\Transport\Request;
 use Hola\Transport\Response;
 use Hola\Connection\Redis;
@@ -13,68 +17,67 @@ class CreateQueue
     private $queue;
     private $timeout = 0;
     private $connection;
-    private $connect_type;
-    private static CreateQueue|null $instance = null;
-    function __construct() {
-        $this->connect_type = config('queue.default');
-        $this->connection = config('queue.default_connection');
+    private QueueDriverInterface $driver;
+    private static ?CreateQueue $instance = null;
+
+    public function __construct(QueueDriverInterface $driver) {
+        $this->driver = $driver;
         $this->queue = config('queue.queue_default');
         $this->timeout = config('queue.timeout');
+        $this->connection = config('queue.default_connections');
     }
     
     public static function instance(): CreateQueue {
         if (is_null(self::$instance)) {
-            self::$instance = new CreateQueue();
+            $connectType = config('queue.default');
+            $driver = self::getDriver($connectType);
+            self::$instance = new CreateQueue($driver);
         }
+
         return self::$instance;
     }
     
     //create a function to add new element
     public function enQueue($class) {
-        if (!method_exists($class,'handle')) {
-            $class = get_class($class);
-            throw new QueueException("Function handle in class $class does not exit", 500);
+        if (!is_object($class)) {
+            throw new QueueException("Invalid class type for enQueue", 500);
         }
+
+        if (!method_exists($class, 'handle')) {
+            $className = get_class($class);
+            throw new QueueException("Function handle does not exist in class $className", 500);
+        }
+
+        $dataQueue = [
+            'uid' => uid(),
+            'payload' => get_object_vars($class),
+            'class' => addslashes($class::class),
+            'queue' => $this->queue,
+            'connection' => $this->connection,
+            'timeout' => $this->timeout
+        ];
+
+        $data = json_encode($dataQueue, JSON_UNESCAPED_UNICODE);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new QueueException("Failed to encode queue data: " . json_last_error_msg(), 500);
+        }
+
         try {
-            $tag_queue = "queue:{$this->queue}";
-            $reflectionClass = new \ReflectionClass($class);
-            $data_queue = [
-                'uid' => uid(),
-                'payload' => get_object_vars($class),
-                'class' => addslashes($reflectionClass->getName()),
-                'queue' => $this->queue,
-                'connection' => $this->connection,
-                'timeout' => $this->timeout
-            ];
-            $data = json_encode($data_queue, JSON_UNESCAPED_UNICODE);
-            if($this->connect_type === 'redis') {
-                $redis = Redis::queueConnect($this->connection);
-                $redis->rPush($tag_queue, $data);
-            } elseif ($this->connect_type === 'database') {
-                DBO::connection($this->connection,'queue')->from('jobs')->insert([
-                    'data' => $data,
-                    'queue' => $this->queue,
-                    'created_at' => date('Y-m-d H:i:s')
-                ]);
-            } else if ($this->connect_type === 'rabbitmq') {
-                $rabbitMQ = RabbitMQ::instance($this->connection);
-                $channel = $rabbitMQ->channel();
-                $channel->queue_declare($this->queue, false, true, false, false);
-                $attributes = [
-                    'delivery_mode' => \PhpAmqpLib\Message\AMQPMessage::DELIVERY_MODE_PERSISTENT,
-                    'content_type' => 'application/json',
-                ];
-                $msg = new \PhpAmqpLib\Message\AMQPMessage(
-                    $data,
-                    $attributes
-                );
-                $channel->basic_publish($msg, '', $this->queue);
-                // close connection
-                $channel->close();
-                $rabbitMQ->close();
-            }
+            $this->driver->enqueue($this->connection, $this->queue, $data);
         } catch (\Throwable $e) {
             throw new QueueException($e->getMessage(), 500, $e);
+        }
+
+    }
+
+    public function driver($name)
+    {
+        if (!in_array($name, ['redis','database','rabbitmq'])) {
+            throw new QueueException('Driver is support redis, database, rabbitmq');
+        }
+        if ($this->driver->name !== $name) {
+            $this->driver = self::getDriver($name);
         }
     }
 
@@ -93,5 +96,24 @@ class CreateQueue
     {
         $this->timeout = $timeout;
         return $this;
+    }
+
+    private static function getDriver($type)
+    {
+        $driver = null;
+        switch ($type) {
+            case 'redis':
+                $driver = new RedisQueueDriver();
+                break;
+            case 'database':
+                $driver = new DatabaseQueueDriver();
+                break;
+            case 'rabbitmq':
+                $driver = new RabbitMQQueueDriver();
+                break;
+            default:
+                throw new QueueException("Invalid queue connection type: $type", 500);
+        }
+        return $driver;
     }
 }
