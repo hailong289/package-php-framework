@@ -97,13 +97,13 @@ class ViewRender {
         $path_view = self::resloveFileView($view);
         $view_render = self::getViewRender($path_view, $view);
         if (file_exists($view_render)) {
-            extract($data, EXTR_SKIP);
             ob_start();
+            extract($data, EXTR_SKIP);
             if (in_array($view, self::$file_html)) {
-                require_once $view_render;
+                require $view_render;
                 return ob_get_clean();
             }
-            require_once $view_render;
+            require $view_render;
             return ob_get_clean();
         }
 
