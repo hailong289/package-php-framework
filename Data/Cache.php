@@ -99,7 +99,7 @@ class Cache {
     private function getDataRedis($name) {
         $data_cache = $this->getRedis()->get($name);
         if (!empty($data_cache)) {
-            return unserialize($data_cache);
+            return json_decode($data_cache, true);
         }
         return [];
     }
@@ -124,7 +124,7 @@ class Cache {
         if (is_null($time)) {
             $time = config("cache.stores.{$this->bind}.expire");
         }
-        $this->getRedis()->setex($tags, $time, serialize($data));
+        $this->getRedis()->setex($tags, $time, json_encode($data));
     }
 
     private function storeFile($name, $data = [], $time = null) {
