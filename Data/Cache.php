@@ -63,7 +63,7 @@ class Cache {
                 return $this->getDataApc($name, $callback);
                 break;
             default:
-                throw new \Exception('Cache driver do not support');
+                throw new AppException('Cache driver do not support');
                 break;
         }
     }
@@ -81,7 +81,7 @@ class Cache {
                 $this->storeApc($name, $data, $time);
                 break;
             default:
-                throw new \Exception('Cache driver do not support');
+                throw new AppException('Cache driver do not support');
                 break;
         }
         return $this;
@@ -164,7 +164,7 @@ class Cache {
                 $this->clearApc($name);
                 break;
             default:
-                throw new \Exception('Cache driver do not support');
+                throw new AppException('Cache driver do not support');
                 break;
         }
     }
