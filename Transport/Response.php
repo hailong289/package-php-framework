@@ -37,7 +37,7 @@ class Response {
         return self::build()->next($request);
     }
 
-    public static function close($string = '', $code = 0){
+    public static function close($string = '', $code = 200){
         return self::build()->close($string, $code);
     }
 

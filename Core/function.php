@@ -613,5 +613,17 @@ if (!function_exists('isXml')) {
         }
         return true;
     }
+}
 
+if (!function_exists('csrfToken')) {
+    /**
+     * Get CSRF token
+     * @return string
+     */
+    function csrfToken() {
+        if (!isset($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+        echo '<input type="hidden" name="csrf_token" value="' . $_SESSION['csrf_token'] . '">';
+    }
 }

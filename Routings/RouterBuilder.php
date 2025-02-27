@@ -2,6 +2,9 @@
 
 namespace Hola\Routings;
 
+use App\Middleware\Kernel;
+use Hola\Exceptions\AppException;
+
 class RouterBuilder {
     private array $router = [];
     private $prefix = '';
@@ -74,6 +77,7 @@ class RouterBuilder {
 
     public function middleware($middleware)
     {
+        $this->resloveMiddlware($middleware);
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
         $callerClass = $backtrace[1]['class'] ?? null;
         if ($this->uid != 0 && is_null($callerClass)) {
@@ -111,5 +115,21 @@ class RouterBuilder {
         $path = preg_replace('#//+#', '/', $path);
         $path = rtrim($path, '/') ?: '/';
         return $path;
+    }
+
+    private function resloveMiddlware(&$middleware)
+    {
+        $contract = app()->make(Kernel::class);
+        if (is_array($middleware)) {
+            foreach ($middleware as &$item) {
+                if (isset($contract->routerMiddleware[$item])) {
+                    $item = $contract->routerMiddleware[$item];
+                }
+            }
+        } else {
+            if (isset($contract->routerMiddleware[$middleware])) {
+                $middleware = $contract->routerMiddleware[$middleware];
+            }
+        }
     }
 }

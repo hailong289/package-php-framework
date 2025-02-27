@@ -54,17 +54,20 @@ class ResponseBuilder {
     }
 
     public function next(Request $request, $code = 0){
-        if ($code !== 0) http_response_code($code);
         $data = [
             "pass_middleware" => 1,
-            'request' => $request
+            'request' => $request,
+            'code' => $code
         ];
         return $data;
     }
 
-    public function close($string = '', $code = 0){
-        if ($code !== 0) http_response_code($code);
-        return ["message" => $string];
+    public function close($string = '', $code = 200){
+        return [
+            "pass_middleware" => false,
+            "message" => $string,
+            "code" => $code
+        ];
     }
 
     private function setHeaders($headers = [], $status = 200)

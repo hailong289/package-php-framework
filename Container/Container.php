@@ -145,7 +145,11 @@ class Container
             throw new \TypeError(self::class . '::call(): Class must not be empty');
         }
         $bindingClass = $this->callbackClass;
-        $methodReflection = new \ReflectionMethod($bindingClass, $this->callbackMethod);
+        try {
+            $methodReflection = new \ReflectionMethod($bindingClass, $this->callbackMethod);
+        } catch (\ReflectionException $e) {
+            throw new \ReflectionException($e->getMessage(), 500);
+        }
         $methodParams = $methodReflection->getParameters();
         $dependencies = [];
 

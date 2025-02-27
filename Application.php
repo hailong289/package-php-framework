@@ -2,6 +2,7 @@
 
 namespace Hola;
 
+use App\Middleware\Kernel;
 use Hola\Container\Container;
 use Hola\Core\Middleware;
 use Hola\Exceptions\AppException;
@@ -33,9 +34,6 @@ class Application extends Container
             return new Router();
         });
 
-        $this->singleton(Middleware::class, function () {
-            return new Middleware();
-        });
     }
 
     public function testRun() {
@@ -206,14 +204,34 @@ class Application extends Container
         if (empty($this->middlewares)) {
             return false;
         }
-        $contract = $this->make(Middleware::class);
-        $result = $contract->set($this->middlewares)->work();
+        $result = null;
+        foreach ($this->middlewares as $middleware) {
+            if (!class_exists($middleware)) {
+                throw new AppException("Middleware '$middleware' does not exit", 500);
+            }
+            $result = $this->make($middleware)->run();
+            if (empty($result['pass_middleware'])) {
+                break;
+            }
+        }
         if (!empty($result['pass_middleware'])) {
             $this->replace(Request::class, function () use ($result) {
                return $result['request'];
             });
             return false;
         }
+        // if middleware return default method
+        if (isset($result['pass_middleware'])) {
+            unset($result['pass_middleware']);
+            if ($result['code'] >= 200 && $result['code'] < 300) {
+                $this->responseSuccess($result);
+                exit();
+            } else {
+                $this->responseError($result);
+                exit();
+            }
+        }
+        // if middleware return response
         $this->responseSuccess($result);
         exit();
     }
