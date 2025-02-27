@@ -1,10 +1,7 @@
 <?php
 
 namespace Hola;
-
-use App\Middleware\Kernel;
 use Hola\Container\Container;
-use Hola\Core\Middleware;
 use Hola\Exceptions\AppException;
 use Hola\Transport\Request;
 use Hola\Transport\Response;
@@ -78,14 +75,14 @@ class Application extends Container
     public function registerCommand()
     {
         $this->cli = new \Symfony\Component\Console\Application();
-        $command_dir = scandir(__DIR__ROOT .'/commands');
+        $command_dir = scandir(__DIR__ROOT .'/App/Commands');
         $command_dir = array_diff($command_dir, array('.', '..'));
 
         $array_command = [];
         if (!empty($command_dir)) {
             foreach($command_dir as $item){
                 $item = str_replace('.php','',$item);
-                $array_command[] = $this->make("Commands\\$item");
+                $array_command[] = $this->make("App\\Commands\\$item");
             }
         }
         $array_command = array_merge($array_command, [

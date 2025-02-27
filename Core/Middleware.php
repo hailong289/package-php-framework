@@ -5,7 +5,6 @@ use Hola\Container\Container;
 use Hola\Exceptions\AppException;
 use Hola\Transport\Request;
 use Hola\Transport\Response;
-use App\Middleware\Kernel;
 
 abstract class Middleware {
     private $bindings = [];

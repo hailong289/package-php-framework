@@ -1,8 +1,6 @@
 <?php
 
 namespace Hola\Routings;
-
-use App\Middleware\Kernel;
 use Hola\Exceptions\AppException;
 
 class RouterBuilder {
@@ -119,7 +117,7 @@ class RouterBuilder {
 
     private function resloveMiddlware(&$middleware)
     {
-        $contract = app()->make(Kernel::class);
+        $contract = app()->make(\App\Http\Middleware\Kernel::class);
         if (is_array($middleware)) {
             foreach ($middleware as &$item) {
                 if (isset($contract->routerMiddleware[$item])) {
