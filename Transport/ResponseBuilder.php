@@ -55,7 +55,7 @@ class ResponseBuilder {
 
     public function next(Request $request, $code = 0){
         $data = [
-            "pass_middleware" => 1,
+            "status" => true,
             'request' => $request,
             'code' => $code
         ];
@@ -64,7 +64,7 @@ class ResponseBuilder {
 
     public function close($string = '', $code = 200){
         return [
-            "pass_middleware" => false,
+            "status" => false,
             "message" => $string,
             "code" => $code
         ];

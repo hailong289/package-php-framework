@@ -119,20 +119,20 @@ class Request extends RequestBuilder {
         return $data;
     }
 
-    public function session($key = '')
+    public function session($key = '', $default = null)
     {
-        return $_SESSION[$key] ?? null;
+        return $_SESSION[$key] ?? $default;
     }
 
-    public function cookie($key = '')
+    public function cookie($key = '', $default = null)
     {
-        return $_COOKIE[$key] ?? null;
+        return $_COOKIE[$key] ?? $default;
     }
 
-    public function headers($key)
+    public function headers($key, $default = null)
     {
         $headers = !function_exists('getallheaders') ? [] : getallheaders();
-        return $headers[$key] ?? null;
+        return $headers[$key] ?? $default;
     }
 
     public function isJson()
@@ -234,6 +234,14 @@ class Request extends RequestBuilder {
 
     public function isMultipartRequest() {
         return $this->headers('Content-Type') === 'multipart/form-data';
+    }
+
+    public function isJsonRequest() {
+        return $this->headers('Content-Type') === 'application/json';
+    }
+
+    public function isTextRequest() {
+        return $this->headers('Content-Type') === 'text/plain';
     }
 
 }

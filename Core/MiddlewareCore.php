@@ -6,7 +6,7 @@ use Hola\Exceptions\AppException;
 use Hola\Transport\Request;
 use Hola\Transport\Response;
 
-abstract class Middleware {
+abstract class MiddlewareCore {
     private $bindings = [];
 
     abstract public function handle(Request $request, Response $response);
@@ -20,9 +20,9 @@ abstract class Middleware {
                 return $this->failed($e);
             }
             return [
-                "pass_middleware" => false,
+                "status" => false,
                 "message" => $e->getMessage(),
-                "code" => $e->getCode(),
+                "code" => $e->getCode() ? $e->getCode() : 500,
                 "file" => $e->getFile(),
                 "line" => $e->getLine(),
                 "trace" => $e->getTraceAsString(),
