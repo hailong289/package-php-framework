@@ -13,7 +13,15 @@ class MiddlewareBuilder {
                 throw new AppException("Middleware '$middleware' does not exit", 500);
             }
 
-            $result = $container->make($middleware)->run();
+            $app = $container->make($middleware);
+            if (!method_exists($app, 'run')) {
+                $result = $app->handle(
+                    $container->make(Request::class),
+                    $container->make(Response::class)
+                );
+            } else {
+                $result = $app->run();
+            }
             if (isset($result['status'])) {
                 if (!empty($result['status'])) {
                     $container->replace(Request::class, function () use ($result) {
