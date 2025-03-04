@@ -1,30 +1,25 @@
 <?php
 
 namespace Hola\Transport;
-
-use Hola\Container\Container;
+use App\Http\Middleware\Kernel;
+use Hola\Application;
 use Hola\Exceptions\AppException;
 
 class MiddlewareBuilder {
 
-    public function handle($params, Container $container) {
+    public function handle($params, Application $app) {
+        $params = $this->resolveRequiredMiddleware($params);
+        if (empty($params)) {
+            return [concat('', 'passable', PROJECT_KEY) => false];
+        }
         foreach ($params as $middleware) {
             if (!class_exists($middleware)) {
                 throw new AppException("Middleware '$middleware' does not exit", 500);
             }
-
-            $app = $container->make($middleware);
-            if (!method_exists($app, 'run')) {
-                $result = $app->handle(
-                    $container->make(Request::class),
-                    $container->make(Response::class)
-                );
-            } else {
-                $result = $app->run();
-            }
+            $result = $app->make($middleware)->run();
             if (isset($result['status'])) {
                 if (!empty($result['status'])) {
-                    $container->replace(Request::class, function () use ($result) {
+                    $app->replace(Request::class, function () use ($result) {
                         return $result['request'];
                     });
                     continue;
@@ -33,6 +28,15 @@ class MiddlewareBuilder {
             }
             return $result;
         }
-        return ["passable" => true];
+        return [concat('', 'passable', PROJECT_KEY) => true];
+    }
+
+    public function resolveRequiredMiddleware($params)
+    {
+        $kernel = app(Kernel::class);
+        foreach ($kernel->getRequireMiddleware() as $middleware) {
+            $params[] = $middleware;
+        }
+        return $params;
     }
 }

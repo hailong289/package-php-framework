@@ -6,14 +6,18 @@ use Hola\Exceptions\AppException;
 use Hola\Transport\Request;
 use Hola\Transport\Response;
 
-abstract class MiddlewareCore {
+class MiddlewareCore {
     private $bindings = [];
-
-    abstract public function handle(Request $request, Response $response);
 
     public function run()
     {
         try {
+            if (!method_exists($this, 'handle')) {
+                if ($this instanceof \App\Http\Middleware\VerifyCsrfToken) {
+                    return $this->resloveVerifyCsrfToken();
+                }
+                throw new AppException("Method 'handle' does not exit", 500);
+            }
             return $this->handle(app(Request::class), app(Response::class));
         } catch (\Throwable $e) {
             if (method_exists($this, 'failed')) {
@@ -30,4 +34,44 @@ abstract class MiddlewareCore {
             ];
         }
     }
+
+    public function resloveVerifyCsrfToken()
+    {
+        $request = app(Request::class);
+        if ($request->isGet()) {
+            return Response::next($request);
+        }
+        /* Do not check CSRF token with these paths */
+        if (!empty($this->except) && !$this->exceptPaths($request->path(), $this->except)) {
+            return Response::next($request);
+        }
+
+        $crsfToken = $request->headers('X-CSRF-TOKEN') || $request->csrf_token;
+        if (empty($crsfToken)) {
+            return Response::view('error.index', [
+                "message" => "CSRF token not found",
+                "code" => 500
+            ], 500);
+        }
+
+        if ($crsfToken !== $request->session()->get('csrf_token')) {
+            return Response::view('error.index', [
+                "message" => "CSRF token not match",
+                "code" => 401
+            ], 401);
+        }
+
+        return Response::next($request);
+    }
+
+    public function exceptPaths($path, $except) {
+        foreach ($except as $pattern) {
+            $pattern = str_replace('*', '.*', preg_quote($pattern, '/'));
+            if (preg_match("/^$pattern$/i", $path)) {
+                return false; // Loại trừ
+            }
+        }
+        return true; // Giữ lại
+    }
+
 }

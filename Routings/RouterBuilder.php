@@ -75,21 +75,13 @@ class RouterBuilder {
 
     public function middleware($middleware)
     {
-        $this->resloveMiddlware($middleware);
+        $middleware = $this->resloveMiddlware($middleware);
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
         $callerClass = $backtrace[1]['class'] ?? null;
         if ($this->uid != 0 && is_null($callerClass)) {
-            if (is_array($middleware)) {
-                $this->router[$this->uid]['middlewares'] = array_merge($this->router[$this->uid]['middlewares'], $middleware);
-            } else {
-                $this->router[$this->uid]['middlewares'][] = $middleware;
-            }
+            $this->router[$this->uid]['middlewares'] = array_merge($this->router[$this->uid]['middlewares'], $middleware);
         } else {
-            if (is_array($middleware)) {
-                $this->middlewares = array_merge($this->middlewares, $middleware);
-            } else {
-                $this->middlewares[] = $middleware;
-            }
+            $this->middlewares = array_merge($this->middlewares, $middleware);
         }
         return $this;
     }
@@ -115,19 +107,15 @@ class RouterBuilder {
         return $path;
     }
 
-    private function resloveMiddlware(&$middleware)
+    private function resloveMiddlware($middleware)
     {
+        $middleArray = is_array($middleware) ? $middleware: [$middleware];
         $contract = app()->make(\App\Http\Middleware\Kernel::class);
-        if (is_array($middleware)) {
-            foreach ($middleware as &$item) {
-                if (isset($contract->routerMiddleware[$item])) {
-                    $item = $contract->routerMiddleware[$item];
-                }
-            }
-        } else {
-            if (isset($contract->routerMiddleware[$middleware])) {
-                $middleware = $contract->routerMiddleware[$middleware];
+        foreach ($middleArray as $k => &$item) {
+            if (isset($contract->routerMiddleware[$item])) {
+                $item = $contract->routerMiddleware[$item];
             }
         }
+        return $middleArray;
     }
 }

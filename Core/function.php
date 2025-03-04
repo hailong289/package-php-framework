@@ -627,3 +627,15 @@ if (!function_exists('csrfToken')) {
         echo '<input type="hidden" name="csrf_token" value="' . $_SESSION['csrf_token'] . '">';
     }
 }
+
+if (!function_exists('concat')) {
+    /**
+     * Concatenate strings
+     * @param string $glue
+     * @param string ...$strings
+     * @return string
+     */
+    function concat($glue = '', ...$strings) {
+        return implode($glue, array_filter($strings, 'strlen'));
+    }
+}

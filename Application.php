@@ -198,11 +198,8 @@ class Application extends Container
 
     private function registerMiddleware()
     {
-        if (empty($this->middlewares)) {
-            return false;
-        }
         $result = $this->make(\Hola\Transport\MiddlewareBuilder::class)->handle($this->middlewares, $this);
-        if (!empty($result['passable'])) {
+        if (!empty($result[concat('', 'passable', PROJECT_KEY)])) {
             return false;
         }
         $this->responseSuccess($result);
