@@ -13,13 +13,13 @@ class RequestScript extends \Hola\Core\Command
     {
         $name_request = $this->getArgument('name_request');
         if (strpos($name_request, 'Request') === false) $name_request = $name_request . 'Request';
-        $concurrentDirectory = __DIR__ROOT . "/request/$name_request.php";
+        $concurrentDirectory = __DIR__ROOT . "/App/Http/Request/$name_request.php";
         if (!file_exists($concurrentDirectory)) {
-            if (!is_dir(__DIR__ROOT . "/request")) {
-                mkdir(__DIR__ROOT . "/request");
+            if (!is_dir(__DIR__ROOT . "/App/Http/Request")) {
+                mkdir(__DIR__ROOT . "/App/Http/Request");
             }
             file_put_contents($concurrentDirectory, '<?php
-namespace Request;
+namespace App\Http\Request;
 use Hola\Core\FormRequest;
 
 class '.$name_request.' extends FormRequest

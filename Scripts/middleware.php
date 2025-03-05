@@ -20,13 +20,13 @@ class MiddlewareScript extends \Hola\Core\Command
     {
         $name_middleware = $this->getArgument('name_middleware');
         if (strpos($name_middleware, 'Middleware') === false) $name_middleware = $name_middleware . 'Middleware';
-        $concurrentDirectory = __DIR__ROOT . "/middleware/$name_middleware.php";
+        $concurrentDirectory = __DIR__ROOT . "/App/Http/Middleware/$name_middleware.php";
         if (!file_exists($concurrentDirectory)) {
-            if (!is_dir(__DIR__ROOT . "/middleware")) {
-                mkdir(__DIR__ROOT . "/middleware");
+            if (!is_dir(__DIR__ROOT . "/App/Http/Middleware")) {
+                mkdir(__DIR__ROOT . "/App/Http/Middleware");
             }
             file_put_contents($concurrentDirectory, '<?php
-namespace Middleware;
+namespace App\Http\Middleware;
 use Hola\Transport\Request;
 use Hola\Transport\Response;
 

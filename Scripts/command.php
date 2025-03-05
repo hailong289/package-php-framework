@@ -21,13 +21,13 @@ class CommandScript extends \Hola\Core\Command
     {
         $name_command = $this->getArgument('name_command');
         if (strpos($name_command, 'Command') === false) $name_command = $name_command . 'Command';
-        $concurrentDirectory = __DIR__ROOT . "/commands/$name_command.php";
+        $concurrentDirectory = __DIR__ROOT . "/App/Commands/$name_command.php";
         if (!file_exists($concurrentDirectory)) {
-            if (!is_dir(__DIR__ROOT . "/commands")) {
-                mkdir(__DIR__ROOT . "/commands");
+            if (!is_dir(__DIR__ROOT . "/App/Commands")) {
+                mkdir(__DIR__ROOT . "/App/Commands");
             }
             file_put_contents($concurrentDirectory, '<?php
-namespace Commands;
+namespace App\Commands;
 use Hola\Core\Command;
 class '.$name_command.' extends Command {
     public function __construct()

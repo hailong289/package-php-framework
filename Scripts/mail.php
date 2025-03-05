@@ -21,13 +21,13 @@ class MailScript extends Command
     {
         $name_mail = $this->getArgument('name_mail');
         if (strpos($name_mail, 'Mail') === false) $name_mail = $name_mail . 'Mail';
-        $concurrentDirectory = __DIR__ROOT . "/mails/$name_mail.php";
+        $concurrentDirectory = __DIR__ROOT . "/App/Mails/$name_mail.php";
         if (!file_exists($concurrentDirectory)) {
-            if (!is_dir(__DIR__ROOT . "/mails")) {
-                mkdir(__DIR__ROOT . "/mails");
+            if (!is_dir(__DIR__ROOT . "/App/Mails")) {
+                mkdir(__DIR__ROOT . "/App/Mails");
             }
             file_put_contents($concurrentDirectory, '<?php
-namespace Mails;
+namespace App\Mails;
 use Hola\Core\Mail;
 class '.$name_mail.' extends Mail {
     protected $useQueue = false;

@@ -12,13 +12,13 @@ class JobsScript extends \Hola\Core\Command
     public function handle()
     {
         $name_job = $this->getArgument('name_job');
-        $concurrentDirectory = __DIR__ROOT . "/queue/$name_job.php";
+        $concurrentDirectory = __DIR__ROOT . "/App/QueueJobs/$name_job.php";
         if (!file_exists($concurrentDirectory)) {
-            if (!is_dir(__DIR__ROOT . "/queue")) {
-                mkdir(__DIR__ROOT . "/queue");
+            if (!is_dir(__DIR__ROOT . "/App/QueueJobs")) {
+                mkdir(__DIR__ROOT . "/App/QueueJobs");
             }
             file_put_contents($concurrentDirectory, '<?php
-namespace Queue\Jobs;
+namespace App\QueueJobs;
 class '.$name_job. ' {
    public function __construct(){}
    public function handle(){
