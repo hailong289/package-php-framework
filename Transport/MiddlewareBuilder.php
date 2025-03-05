@@ -7,7 +7,9 @@ use Hola\Exceptions\AppException;
 
 class MiddlewareBuilder {
 
-    public function handle($params, Application $app) {
+    public function handle($callback) {
+        /** @var Application $app */
+        [$params, $app] = $callback();
         $params = $this->resolveRequiredMiddleware($params);
         if (empty($params)) {
             return [concat('', 'passable', PROJECT_KEY) => false];
@@ -34,9 +36,10 @@ class MiddlewareBuilder {
     public function resolveRequiredMiddleware($params)
     {
         $kernel = app(Kernel::class);
-        foreach ($kernel->getRequireMiddleware() as $middleware) {
+        foreach ($kernel->getRequiredMiddleWares() as $middleware) {
             $params[] = $middleware;
         }
         return $params;
     }
+
 }
