@@ -121,14 +121,12 @@ class QueueScript extends \Hola\Core\Command
     private function failed($data, $e)
     {
         try {
-            if ($this->listenQueue->isFailed()) {
-                $this->listenQueue->trigger('failed', $queue, $e);
-                if ($this->listenQueue->isBindingConnection()) {
-                    $this->connection = $this->listenQueue->bindings['connection'];
-                }
-                if ($this->listenQueue->isBindingConnectionType()) {
-                    $this->connection_type = $this->listenQueue->bindings['connection_type'];
-                }
+            $this->listenQueue->trigger('failed', $queue, $e);
+            if ($this->listenQueue->isBindingConnection()) {
+                $this->connection = $this->listenQueue->bindings['connection'];
+            }
+            if ($this->listenQueue->isBindingConnectionType()) {
+                $this->connection_type = $this->listenQueue->bindings['connection_type'];
             }
             $conn = $this->switchDB($this->connection_type, true);
             $class = str_replace('Queue\\Jobs\\','', $data['class']);
@@ -214,7 +212,7 @@ class QueueScript extends \Hola\Core\Command
                 ->delete();
 
             $taskName = $queue['class'] . '_' . uid();
-            if ((int)$queue['timeout'] !== (int)conval('QUEUE_TIMEOUT', 600)) {
+            if (!empty($queue['timeout'])) {
                 $this->timeoutManager->setTimeOut((int)$queue['timeout']);
             }
             $this->timeoutManager->execute($taskName, function () use ($queue) {
@@ -227,9 +225,7 @@ class QueueScript extends \Hola\Core\Command
                     app()->callWithParams($queue['class'], $queue['payload'])->handle();
                     $time = $this->endTimeJob($start);
                     $this->output()->writeln(PHP_EOL."<info>{$queue['class']} work success ---- Time: $time</info>");
-                    if ($this->listenQueue->isDone()) {
-                        $this->listenQueue->trigger('success', $queue);
-                    }
+                    $this->listenQueue->trigger('success', $queue);
                 } catch (\Throwable $exception) {
                     $time = $this->endTimeJob($start);
                     $this->output()->writeln(PHP_EOL."<error>{$queue['class']} failed ---- Time: $time</error>");
@@ -253,7 +249,7 @@ class QueueScript extends \Hola\Core\Command
             }
             $queue = $this->data(json_decode($queue, true));
             $taskName = $queue['class'] . '_' . uid();
-            if ((int)$queue['timeout'] !== (int)conval('QUEUE_TIMEOUT', 600)) {
+            if (!empty($queue['timeout'])) {
                 $this->timeoutManager->setTimeOut((int)$queue['timeout']);
             }
             $this->timeoutManager->execute($taskName, function () use ($queue) {
@@ -264,9 +260,7 @@ class QueueScript extends \Hola\Core\Command
                         throw new QueueException("function handle does not exits in {$queue['class']}");
                     }
                     app()->callWithParams($queue['class'], $queue['payload'])->handle();
-                    if ($this->listenQueue->isDone()) {
-                        $this->listenQueue->trigger('success', $queue);
-                    }
+                    $this->listenQueue->trigger('success', $queue);
                     $time = $this->endTimeJob($start);
                     $this->output()->writeln(PHP_EOL."<info>{$queue['class']} work success ---- Time: $time</info>");
                 } catch (\Throwable $exception) {
@@ -304,7 +298,7 @@ class QueueScript extends \Hola\Core\Command
             $queue = json_decode($msg->body, true);
             $queue = $this->data($queue);
             $taskName = $queue['class'] . '_' . uid();
-            if ((int)$queue['timeout'] !== (int)conval('QUEUE_TIMEOUT', 600)) {
+            if (!empty($queue['timeout'])) {
                 $this->timeoutManager->setTimeOut((int)$queue['timeout']);
             }
             $this->timeoutManager->execute($taskName, function () use ($queue, $msg) {
@@ -316,9 +310,7 @@ class QueueScript extends \Hola\Core\Command
                         throw new QueueException("function handle does not exits in {$queue['class']}");
                     }
                     app()->callWithParams($queue['class'], $queue['payload'])->handle();
-                    if ($this->listenQueue->isDone()) {
-                        $this->listenQueue->trigger('success', $queue);
-                    }
+                    $this->listenQueue->trigger('success', $queue);
                     $time = $this->endTimeJob($start);
                     $this->output()->writeln(PHP_EOL."<info>{$queue['class']} work success ---- Time: $time</info>");
                 } catch (\Throwable $e) {

@@ -15,7 +15,7 @@ use Hola\Database\DBO;
 class CreateQueue
 {
     private $queue;
-    private $timeout = 0;
+    private $timeout = null;
     private $connection;
     private QueueDriverInterface $driver;
     private static ?CreateQueue $instance = null;
@@ -23,7 +23,6 @@ class CreateQueue
     public function __construct(QueueDriverInterface $driver) {
         $this->driver = $driver;
         $this->queue = config('queue.queue_default');
-        $this->timeout = config('queue.timeout');
         $this->connection = config('queue.default_connections');
     }
     
@@ -53,9 +52,12 @@ class CreateQueue
             'payload' => get_object_vars($class),
             'class' => addslashes($class::class),
             'queue' => $this->queue,
-            'connection' => $this->connection,
-            'timeout' => $this->timeout
+            'connection' => $this->connection
         ];
+        
+        if (!is_null($this->timeout)) {
+            $dataQueue['timeout'] = $this->timeout;
+        }
 
         $data = json_encode($dataQueue, JSON_UNESCAPED_UNICODE);
 
@@ -65,10 +67,10 @@ class CreateQueue
 
         try {
             $this->driver->enqueue($this->connection, $this->queue, $data);
+            $this->resetDriverDefault();
         } catch (\Throwable $e) {
             throw new QueueException($e->getMessage(), 500, $e);
         }
-
     }
 
     public function driver($name)
@@ -92,7 +94,7 @@ class CreateQueue
         return $this;
     }
 
-    public function setTimeOut($timeout = 0)
+    public function setTimeOut(int $timeout)
     {
         $this->timeout = $timeout;
         return $this;
@@ -115,5 +117,12 @@ class CreateQueue
                 throw new QueueException("Invalid queue connection type: $type", 500);
         }
         return $driver;
+    }
+
+    private function resetDriverDefault()
+    {
+        if ($this->driver->name !== config('queue.default')) {
+            $this->driver = self::getDriver(config('queue.default'));
+        }
     }
 }
