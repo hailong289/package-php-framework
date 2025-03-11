@@ -10,6 +10,7 @@ class CacheScript extends \Hola\Core\Command
     public function handle()
     {
         $prefix = config('cache.prefix') ?? 'cache_';
+        $type = $this->getArgument('type') ?? '';
         switch ($type) {
             case 'router':
                 $item = __DIR__ROOT."/storage/cache/{$prefix}_routers.cache";
