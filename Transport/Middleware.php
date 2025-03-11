@@ -40,19 +40,31 @@ class Middleware {
             return Response::next($request);
         }
         /* Do not check CSRF token with these paths */
-        if (!empty($this->except) && !$this->exceptPaths($request->path(), $this->except)) {
+        if (!empty($this->except) && $this->exceptPaths($request->path(), $this->except)) {
             return Response::next($request);
         }
 
         $crsfToken = $request->headers('X-CSRF-TOKEN') || $request->csrf_token;
         if (empty($crsfToken)) {
+            if ($request->isJson()) {
+                return Response::json([
+                    "message" => "CSRF token not found",
+                    "code" => 500
+                ], 500);
+            }
             return Response::view('error.index', [
                 "message" => "CSRF token not found",
                 "code" => 500
             ], 500);
         }
 
-        if ($crsfToken !== $request->session()->get('csrf_token')) {
+        if ($crsfToken !== $request->session('csrf_token')) {
+            if ($request->isJson()) {
+                return Response::json([
+                    "message" => "CSRF token not match",
+                    "code" => 401
+                ], 401);
+            }
             return Response::view('error.index', [
                 "message" => "CSRF token not match",
                 "code" => 401
@@ -64,12 +76,15 @@ class Middleware {
 
     public function exceptPaths($path, $except) {
         foreach ($except as $pattern) {
-            $pattern = str_replace('*', '.*', preg_quote($pattern, '/'));
-            if (preg_match("/^$pattern$/i", $path)) {
-                return false; // Loại trừ
+            if ($pattern === '*') {
+                return true;
+            }
+            $pattern = str_replace('\*', '.*', preg_quote($pattern, '/'));
+            if (preg_match("#^$pattern$#i", $path)) {
+                return true;
             }
         }
-        return true; // Giữ lại
+        return false;
     }
 
 }
