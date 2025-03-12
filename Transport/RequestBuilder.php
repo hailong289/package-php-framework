@@ -71,7 +71,7 @@ class RequestBuilder {
         }
     }
     
-    public function requestGtHeader($key = '', $default = null)
+    public function requestGetHeader($key = '', $default = null)
     {
         $this->headers = !function_exists('getallheaders') ? [] : getallheaders();
         if (!empty($key)) {
