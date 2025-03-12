@@ -6,6 +6,7 @@ use Hola\Exceptions\AppException;
 use Hola\Transport\Request;
 use Hola\Transport\Response;
 use Hola\Routings\Router;
+use Hola\Transport\ResponseBuilder;
 
 class Application extends Container
 {
@@ -124,11 +125,11 @@ class Application extends Container
     }
 
     private function responseCore($return) {
-        if ($return instanceof \SimpleXMLElement) {
-            echo $return->asXML();
+        if ($return instanceof ResponseBuilder) {
+            $return->responseWork();
         } else if (is_array($return) || is_object($return)) {
             echo json_encode($return);
-        } else if (is_file($return)) {
+        } else if (is_string($filename) && is_file($return)) {
             echo file_get_contents($return);
         } else {
             echo $return;
@@ -198,11 +199,12 @@ class Application extends Container
 
     private function registerMiddleware()
     {
+        $key = concat('', 'passable', PROJECT_KEY);
         $result = $this->make(\Hola\Transport\MiddlewareBuilder::class)->handle(fn() => [$this->middlewares, $this]);
-        if (!empty($result[concat('', 'passable', PROJECT_KEY)])) {
+        if (!empty($result[$key])) {
             return false;
         }
-        $this->responseSuccess($result);
+        $this->responseSuccess($result['return'] ?? $result);
         exit();
     }
 }

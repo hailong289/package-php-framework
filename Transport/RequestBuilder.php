@@ -2,7 +2,10 @@
 
 namespace Hola\Transport;
 
+use Hola\Transport\Interface\IHeaders;
+
 class RequestBuilder {
+    protected $headers = [];
 
     public function requestDataGet() {
         if (!empty($_GET)) {
@@ -66,5 +69,41 @@ class RequestBuilder {
             default:
                 return [];
         }
+    }
+    
+    public function requestGtHeader($key = '', $default = null)
+    {
+        $this->headers = !function_exists('getallheaders') ? [] : getallheaders();
+        if (!empty($key)) {
+            return $this->headers[$key] ?? $default;
+        }
+        return new class implements IHeaders {
+             public function set($key, $value) {
+                 $this->headers[$key] = $value;
+                 return $this;
+             }
+             
+             public function get($key, $default = null) {
+                return $this->headers[$key] ?? $default;
+             }
+             
+             public function has($key) {
+                return isset($this->headers[$key]);
+             }
+             
+             public function remove($key) {
+                unset($this->headers[$key]);
+                return $this;
+             }
+             
+             public function all() {
+                return $this->headers;
+             }
+             
+             public function clear() {
+                $this->headers = [];
+                return $this;
+             }
+        };
     }
 }

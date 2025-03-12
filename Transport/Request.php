@@ -1,6 +1,8 @@
 <?php
 namespace Hola\Transport;
 
+use Hola\Data\Cookie;
+use Hola\Data\Session;
 use Hola\Exceptions\AppException;
 
 class Request extends RequestBuilder {
@@ -121,18 +123,23 @@ class Request extends RequestBuilder {
 
     public function session($key = '', $default = null)
     {
+        if (empty($key)) {
+            return new Session();
+        }
         return $_SESSION[$key] ?? $default;
     }
 
     public function cookie($key = '', $default = null)
     {
+        if (empty($key)) {
+            return new Cookie();
+        }
         return $_COOKIE[$key] ?? $default;
     }
 
-    public function headers($key, $default = null)
+    public function headers($key = '', $default = null)
     {
-        $headers = !function_exists('getallheaders') ? [] : getallheaders();
-        return $headers[$key] ?? $default;
+        return $this->requestGetHeader($key, $default);
     }
 
     public function isJson()

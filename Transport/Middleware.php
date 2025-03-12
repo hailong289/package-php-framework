@@ -16,7 +16,8 @@ class Middleware {
                 }
                 throw new AppException("Method 'handle' does not exit", 500);
             }
-            return $this->handle(app(Request::class), app(Response::class));
+            $response = $this->handle(app(Request::class), app(Response::class));
+            return $response;
         } catch (\Throwable $e) {
             if (method_exists($this, 'failed')) {
                 return $this->failed($e);
@@ -44,7 +45,7 @@ class Middleware {
             return Response::next($request);
         }
 
-        $crsfToken = $request->headers('X-CSRF-TOKEN') || $request->csrf_token;
+        $crsfToken = $request->headers('X-CSRF-TOKEN', $request->csrf_token);
         if (empty($crsfToken)) {
             if ($request->isJson()) {
                 return Response::json([
@@ -70,6 +71,8 @@ class Middleware {
                 "code" => 401
             ], 401);
         }
+        
+        $request->session()->remove('csrf_token');
 
         return Response::next($request);
     }

@@ -418,10 +418,13 @@ if (!function_exists('sendJobs')) {
      * @return void
      * @throws Throwable
      */
-    function sendJobs($job, $queue_name = null, $connection = null, $timeout = null) {
+    function sendJobs($job, $queue_name = null, $drive = null, $connection = null, $timeout = null) {
         $queue = \Hola\Queue\CreateQueue::instance();
         if (!is_null($queue_name)) {
             $queue->setQueue($queue_name);
+        }
+        if (!is_null($drive)) {
+            $queue->driver($drive);
         }
         if (!is_null($connection)) {
             $queue->connection($connection);

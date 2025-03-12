@@ -112,6 +112,9 @@ class RegisterLoad
         if (file_exists($pathName)) {
             $this->bind['include'][] = $pathName;
         }
+        if (empty(defined('PROJECT_KEY') && constant('PROJECT_KEY'))) {
+            die('PROJECT_KEY is not defined');
+        }
         $this->resloveInclude();
         $this->resloveConfig();
         return $this;

@@ -11,9 +11,6 @@ class ConfigApp {
      * ConfigApp constructor.
      */
     public static function init() {
-        if (empty(defined('PROJECT_KEY') && constant('PROJECT_KEY'))) {
-            die('PROJECT_KEY is not defined');
-        }
         if (self::$instance == null) {
             self::$instance = new ConfigApp();
         }

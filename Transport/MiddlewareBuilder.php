@@ -14,23 +14,30 @@ class MiddlewareBuilder {
         if (empty($params)) {
             return [concat('', 'passable', PROJECT_KEY) => false];
         }
+        $key = concat('', 'passable', PROJECT_KEY);
         foreach ($params as $middleware) {
             if (!class_exists($middleware)) {
                 throw new AppException("Middleware '$middleware' does not exit", 500);
             }
             $result = $app->make($middleware)->run();
-            if (isset($result['status'])) {
-                if (!empty($result['status'])) {
-                    $app->replace(Request::class, function () use ($result) {
-                        return $result['request'];
+            if ($result instanceof ResponseBuilder) {
+                $data = $result->responseWork();
+                if (!empty($data[concat('', 'passable', PROJECT_KEY)])) {
+                    $app->replace(Request::class, function () use ($data) {
+                        return $data['request'];
                     });
                     continue;
                 }
-                return Response::json($result, $result['code']);
+                return [$key => false, 'return' => Response::json($data)->setHeaders($result->bindings['headers'])->setStatus($result->bindings['status'])];
+            } else if (is_bool($result)) {
+                if (!$result) {
+                    return [$key => false];
+                }
+                continue;
             }
-            return $result;
+            return [$key => false, 'return' => $result];
         }
-        return [concat('', 'passable', PROJECT_KEY) => true];
+        return [$key => true];
     }
 
     public function resolveRequiredMiddleware($params)

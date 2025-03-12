@@ -13,19 +13,19 @@ class Response {
         return self::$instance;
     }
 
-    public static function json($data = [], $status = 200, $headers = []){
+    public static function json($data = []){
         return self::build()->json($data, $status, $headers);
     }
 
-    public static function view($view, $data = [], $status = 200, $headers = []){
+    public static function view($view, $data = []){
         return self::build()->view($view, $data, $status, $headers);
     }
 
-    public static function redirect($url, $status = 302, $headers = []){
+    public static function redirect($url){
         return self::build()->redirectTo($url, $status, $headers);
     }
 
-    public static function xml($data = [], $status = 200, $headers = []){
+    public static function xml($data = []){
         return self::build()->xmlFromData($data, $status, $headers);
     }
 
@@ -37,8 +37,17 @@ class Response {
         return self::build()->next($request);
     }
 
-    public static function close($string = '', $code = 200){
-        return self::build()->close($string, $code);
+    public static function close($string = ''){
+        return self::build()->close($string);
+    }
+
+    public static function setStatus($code)
+    {
+        return self::build()->setStatus($code);
+    }
+
+    public static function setHeaders(array $headers) {
+        return self::build()->setHeaders($headers);
     }
 
 }

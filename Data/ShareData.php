@@ -6,9 +6,6 @@ class ShareData {
     public static $bindings = [];
     
     public static function init(): ShareData {
-        if (empty(defined('PROJECT_KEY') && constant('PROJECT_KEY'))) {
-            die('PROJECT_KEY is not defined');
-        }
         if (self::$instance == null) {
             self::$instance = new ShareData();
         }
