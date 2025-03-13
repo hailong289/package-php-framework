@@ -155,7 +155,7 @@ class ResponseBuilder {
                 echo $return->asXML();
                 break;
             case 'middleware':
-                echo json_encode($this->bindings['data'], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                return $this->bindings['data'];
                 break;
             default:
                 break;
