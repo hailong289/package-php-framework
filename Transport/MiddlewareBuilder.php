@@ -21,12 +21,15 @@ class MiddlewareBuilder {
             }
             $result = $app->make($middleware)->run();
             if ($result instanceof ResponseBuilder) {
-                $data = $result->callback();
-                if (!empty($data[concat('', 'passable', PROJECT_KEY)])) {
-                    $app->replace(Request::class, function () use ($data) {
-                        return $data['request'];
-                    });
-                    continue;
+                if ($result->bindings['action'] === 'middleware') {
+                    $data = $result->callback();
+                    if (!empty($data[concat('', 'passable', PROJECT_KEY)])) {
+                        $app->replace(Request::class, function () use ($data) {
+                            return $data['request'];
+                        });
+                        continue;
+                    }
+                    return [$key => false, 'return' => $data];
                 }
                 return [$key => false, 'return' => $result];
             } else if (is_bool($result)) {
