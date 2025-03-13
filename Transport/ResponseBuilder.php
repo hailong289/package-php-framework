@@ -139,6 +139,7 @@ class ResponseBuilder {
         switch ($this->bindings['action']) {
             case 'redirect':
                 header('Location: ' . $this->bindings['path'], true, $this->bindings['status'] ?? 302);
+                exit();
                 break;
             case 'json':
                 $this->resloveDataCollect($this->bindings['data']);
