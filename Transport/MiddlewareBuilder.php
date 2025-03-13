@@ -28,10 +28,23 @@ class MiddlewareBuilder {
                     });
                     continue;
                 }
-                return [$key => false, 'return' => Response::json($data)->setHeaders($result->bindings['headers'])->setStatus($result->bindings['status'])];
+                return [$key => false, 'return' => $result];
             } else if (is_bool($result)) {
                 if (!$result) {
-                    return [$key => false, 'return' => Response::close("Middleware $middleware not passable")->setStatus(403)];
+                    $data = [
+                        "message" => "Middleware $middleware not passable",
+                        "code" => 403
+                    ];
+                    if ($app->make(Request::class)->isJson()) {
+                        return [
+                            $key => false,
+                            'return' => Response::json($data)->setStatus(403)
+                        ];
+                    }
+                    return [
+                        $key => false,
+                        'return' => Response::view("error.index", $data)->setStatus(403)
+                    ];
                 }
                 continue;
             }
