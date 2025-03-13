@@ -94,9 +94,6 @@ class Router {
                 break;
             }
         }
-        if (empty($result)){
-            throw new AppException('Router not found', 404);
-        }
         return $result;
     }
 

@@ -21,7 +21,7 @@ class MiddlewareBuilder {
             }
             $result = $app->make($middleware)->run();
             if ($result instanceof ResponseBuilder) {
-                $data = $result->responseWork();
+                $data = $result->callback();
                 if (!empty($data[concat('', 'passable', PROJECT_KEY)])) {
                     $app->replace(Request::class, function () use ($data) {
                         return $data['request'];
@@ -31,7 +31,7 @@ class MiddlewareBuilder {
                 return [$key => false, 'return' => Response::json($data)->setHeaders($result->bindings['headers'])->setStatus($result->bindings['status'])];
             } else if (is_bool($result)) {
                 if (!$result) {
-                    return [$key => false];
+                    return [$key => false, 'return' => Response::close("Middleware $middleware not passable")->setStatus(403)];
                 }
                 continue;
             }

@@ -78,7 +78,7 @@ class ResponseBuilder {
         return $this;
     }
 
-    public function close($string = '', $code = 200){
+    public function close($string = ''){
         $this->bindings['action'] = 'middleware';
         $this->bindings['data'] = [
             concat('', 'passable', PROJECT_KEY) => false,
@@ -110,6 +110,14 @@ class ResponseBuilder {
         }
     }
 
+    private function resloveStatus()
+    {
+        if (is_null($this->bindings['status'])) {
+            http_response_code(200);
+        }
+        http_response_code($this->bindings['status']);
+    }
+
     private function resloveDataCollect(&$data){
         if ($data instanceof Collection) {
             $data = $data->data;
@@ -125,8 +133,9 @@ class ResponseBuilder {
         return $this;
     }
     
-    public function responseWork() {
+    public function callback() {
         $this->resloveHeaders();
+        $this->resloveStatus();
         switch ($this->bindings['action']) {
             case 'redirect':
                 header('Location: ' . $this->bindings['path'], true, $this->bindings['status'] ?? 302);
@@ -134,7 +143,7 @@ class ResponseBuilder {
             case 'json':
                 $this->resloveDataCollect($this->bindings['data']);
                 ShareData::init()->create('data', $this->bindings['data']);
-                echo json_encode($this->bindings['data']);
+                echo json_encode($this->bindings['data'], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 break;
             case 'view':
                 $this->resloveDataCollect($this->bindings['data']);
@@ -146,7 +155,7 @@ class ResponseBuilder {
                 echo $return->asXML();
                 break;
             case 'middleware':
-                return $this->bindings['data'];
+                echo json_encode($this->bindings['data'], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 break;
             default:
                 break;

@@ -29,15 +29,15 @@ class Collection
         return $this->data;
     }
 
-    public function value($key = null) {
+    public function value($key = null, $default = null) {
         $data = $this->count() ? $this->data[0] : $this->data;
         if (is_null($key)) {
             return $data;
         }
         if (is_array($data)) {
-            return isset($data[$key]) ? $data[$key] : null;
+            return isset($data[$key]) ? ($data[$key] ?? $default) : $default;
         } elseif (is_object($data)) {
-            return isset($data->{$key}) ? $data->{$key} : null;
+            return isset($data->{$key}) ? ($data->{$key} ?? $default) : $default;
         } else {
             return null;
         }

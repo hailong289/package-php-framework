@@ -185,6 +185,11 @@ class Model {
         return self::build()->get();
     }
 
+    public static function find($id)
+    {
+        return self::build()->find($id);
+    }
+
     public static function first()
     {
         return self::build()->first();

@@ -10,18 +10,24 @@ use Hola\Transport\ResponseBuilder;
 
 class Application extends Container
 {
+    /** @var array|null */
     private $control;
-    private $middlewares;
-    private $cli;
 
-    public function __construct(){
-        if ($this->isJson()) {
-            $this->setHeaderJson();
-        }
-    }
+    /** @var array|null */
+    private $middlewares;
+
+    /** @var \Symfony\Component\Console\Application|null */
+    private ?\Symfony\Component\Console\Application $cli = null;
+
+    public function __construct(){}
     
     public function register(){}
 
+    /**
+     * Registers application dependencies.
+     *
+     * @throws AppException
+     */
     public function registerDependencies()
     {
         $this->set(Request::class, function () {
@@ -34,6 +40,11 @@ class Application extends Container
 
     }
 
+    /**
+     * Registers the application router.
+     *
+     * @throws AppException
+     */
     public function testRun() {
         try {
             $this->run();
@@ -42,23 +53,28 @@ class Application extends Container
         }
     }
 
+    /**
+     * Run the application.
+     * @return $this
+     */
     public function run()
     {
+        register_shutdown_function([$this, 'handleShutdown']);
         try {
             $this->register();
             $this->registerDependencies();
             $this->registerRouter();
             $this->registerMiddleware();
-            $this->work();
+            return $this->work();
         } catch (\Throwable $e) {
-            $this->handleErrorLogs($e);
-            $code = (int)$e->getCode();
-            $code = $code ? $code : 500;
-            $errors = $this->errorDefault($e);
-            return $this->responseError($errors, $code);
+            return $this->responseError($e);
         }
     }
 
+    /**
+     * Run the application in CLI mode.
+     * @return $this
+     */
     public function runCLI()
     {
         if (empty($this->cli)) {
@@ -68,11 +84,19 @@ class Application extends Container
         return $this;
     }
 
+    /**
+     * Set the header to JSON.
+     */
     public function setHeaderJson()
     {
         header('Content-Type: application/json; charset=utf-8');
     }
-    
+
+    /**
+     * Register the application commands.
+     * @throws AppException
+     * @return void
+     */
     public function registerCommand()
     {
         $this->cli = new \Symfony\Component\Console\Application();
@@ -106,8 +130,10 @@ class Application extends Container
         }
     }
 
-
-
+    /**
+     * Run the application.
+     * @return $this
+     */
     private function work()
     {
         try {
@@ -118,54 +144,66 @@ class Application extends Container
             $result = $this->call($control_array);
             return $this->responseSuccess($result);
         } catch (\Throwable $e) {
-            $this->handleErrorLogs($e);
-            $errors = $this->errorDefault($e);
-            return $this->responseError($errors);
+            return $this->responseError($e);
         }
     }
 
+    /**
+     * Handle the response core.
+     * @param mixed $return
+     * @return $this
+     */
     private function responseCore($return) {
         if ($return instanceof ResponseBuilder) {
-            $return->responseWork();
+            return $return->callback();
         } else if (is_array($return) || is_object($return)) {
-            echo json_encode($return);
-        } else if (is_string($filename) && is_file($return)) {
-            echo file_get_contents($return);
+            echo json_encode($return, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        } else if (is_string($return) && is_file($return)) {
+            readfile($return);
         } else {
             echo $return;
         }
         return $this;
     }
 
+    /**
+     * Handle the response success.
+     * @param mixed $return
+     * @return $this
+     */
     private function responseSuccess($return)
     {
         return $this->responseCore($return);
     }
 
-    private function responseError($return)
+    /**
+     * Handle the response error.
+     * @param \Throwable $e
+     * @return $this
+     */
+    private function responseError(\Throwable $e)
     {
-        if ($this->isJson()) {
-            $res = Response::json($return, $return['code']);
-        } else {
-            $res = Response::view('error.index', $return, $return['code']);
-        }
-        return $this->responseCore($res);
-    }
-
-    private function errorDefault($e) {
-        $code = (int)$e->getCode();
-        $code = $code ? $code : 500;
+        $this->handleErrorLogs($e);
         $errors = [
             "message" => $e->getMessage(),
-            "code" => $code,
+            "code" => $this->getStatusCode($e->getCode()),
             "line" => $e->getLine(),
             "file" => $e->getFile(),
             "trace" => $e->getTraceAsString(),
             "previous" => $e->getPrevious()
         ];
-        return $errors;
+        if ($this->isJson()) {
+            $res = Response::json($errors)->setStatus($errors['code']);
+            return $this->responseCore($res);
+        }
+        $res = Response::view('error.index', $errors)->setStatus($errors['code']);
+        return $this->responseCore($res);
     }
 
+    /**
+     * Check if the request is JSON.
+     * @return bool
+     */
     private function isJson()
     {
         try {
@@ -175,28 +213,54 @@ class Application extends Container
         }
     }
 
+    /**
+     * Write the error logs.
+     * @param \Throwable $e
+     * @return void
+     */
     private function handleErrorLogs(\Throwable $e)
     {
-        $enable_db = conval('DEBUG_LOG', false);
-        if (!$enable_db) return;
-        $date = "[" . date('Y-m-d H:i:s') . "][{$e->getCode()}]: ";
-        if (!file_exists(__DIR__ROOT . '/storage')) {
-            if (!mkdir($concurrentDirectory = __DIR__ROOT . '/storage', 0777, true) && !is_dir($concurrentDirectory)) {
-                echo sprintf('Directory "%s" was not created', $concurrentDirectory);
-            }
+
+        $storagePath = __DIR__ROOT . '/storage';
+        if (!file_exists($storagePath) && !mkdir($storagePath, 0777, true) && !is_dir($storagePath)) {
+            echo sprintf('Directory "%s" was not created', $storagePath);
+            return;
         }
-        $stringError = "$date{$e->getMessage()} in {$e->getFile()} on line {$e->getLine()}". PHP_EOL;
-        $stringError .= $e->getTraceAsString() . PHP_EOL . PHP_EOL;
-        file_put_contents(__DIR__ROOT . '/storage/debug.log', $stringError, FILE_APPEND);
+
+        $storagePath = __DIR__ROOT . '/storage';
+        $logFile = "$storagePath/application.log";
+
+        $errorMessage = sprintf(
+            "[%s][%d]: %s in %s on line %d\n%s\n\n",
+            date('Y-m-d H:i:s'),
+            $this->getStatusCode($e->getCode()),
+            $e->getMessage(),
+            $e->getFile(),
+            $e->getLine(),
+            $e->getTraceAsString()
+        );
+
+        file_put_contents($logFile, $errorMessage, FILE_APPEND | LOCK_EX);
     }
 
+    /**
+     * Register the application router.
+     * @throws AppException
+     */
     private function registerRouter()
     {
         $router = $this->make(Router::class)->handle();
+        if (empty($router)) {
+            throw new AppException("No route found!", 404);
+        }
         $this->control = $router['controls'];
         $this->middlewares = $router['middlewares'];
     }
 
+    /**
+     * Register the application middleware.
+     * @throws AppException
+     */
     private function registerMiddleware()
     {
         $key = concat('', 'passable', PROJECT_KEY);
@@ -204,7 +268,37 @@ class Application extends Container
         if (!empty($result[$key])) {
             return false;
         }
-        $this->responseSuccess($result['return'] ?? $result);
+        // Handle the response if the middleware is not passable.
+        $this->responseCore($result['return']);
         exit();
+    }
+
+    /**
+     * Get the status code.
+     * @param int $code
+     * @return int
+     */
+    private function getStatusCode($code)
+    {
+        $code = (int)$code;
+        return $code ? $code : 500;
+    }
+
+    /**
+     * Handle the shutdown.
+     * @return void
+     */
+    private function handleShutdown()
+    {
+        $error = error_get_last();
+        if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+            $this->handleErrorLogs(new \ErrorException(
+                $error['message'],
+                $error['type'],
+                0,
+                $error['file'],
+                $error['line']
+            ));
+        }
     }
 }
