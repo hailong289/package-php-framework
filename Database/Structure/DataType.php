@@ -15,7 +15,7 @@ class DataType {
     public function integer($name, $autoIncrement = false): AttributeType 
     {
         /* @var AttributeType $attributes */
-        $attributes = $this->resloveColumn($name,'INT');
+        $attributes = $this->resolveColumn($name,'INT');
         if ($autoIncrement) {
             $attributes->autoIncrement()->primaryKey();
         }
@@ -25,7 +25,7 @@ class DataType {
     public function bigInteger($name, $autoIncrement = false): AttributeType 
     {
         /* @var AttributeType $attributes */
-        $attributes = $this->resloveColumn($name,'BIGINT');
+        $attributes = $this->resolveColumn($name,'BIGINT');
         if ($autoIncrement) {
             $attributes->autoIncrement()->primaryKey();
         }
@@ -35,7 +35,7 @@ class DataType {
     public function smallInteger($name, $length = 6): AttributeType 
     {
         /* @var AttributeType $attributes */
-        $attributes = $this->resloveColumn($name,'SMALLINT');
+        $attributes = $this->resolveColumn($name,'SMALLINT');
         $attributes->length($length);
         return $attributes;
     }
@@ -43,7 +43,7 @@ class DataType {
     public function mediumInteger($name, $length = 8): AttributeType 
     {
         /* @var AttributeType $attributes */
-        $attributes = $this->resloveColumn($name,'MEDIUMINT');
+        $attributes = $this->resolveColumn($name,'MEDIUMINT');
         $attributes->length($length);
         return $attributes;
     }
@@ -51,7 +51,7 @@ class DataType {
     public function tinyInteger($name, $length = 1): AttributeType 
     {
         /* @var AttributeType $attributes */
-        $attributes = $this->resloveColumn($name,'TINYINT');
+        $attributes = $this->resolveColumn($name,'TINYINT');
         $attributes->length($length);
         return $attributes;
     }
@@ -59,7 +59,7 @@ class DataType {
     public function decimal($name, $total = 8, $places = 2): AttributeType 
     {
         /* @var AttributeType $attributes */
-        $attributes = $this->resloveColumn($name,'DECIMAL');
+        $attributes = $this->resolveColumn($name,'DECIMAL');
         $attributes->length("$total,$places");
         return $attributes;
     }
@@ -67,7 +67,7 @@ class DataType {
     public function float($name, $total = 8, $places = 2): AttributeType 
     {
         /* @var AttributeType $attributes */
-        $attributes = $this->resloveColumn($name,'FLOAT');
+        $attributes = $this->resolveColumn($name,'FLOAT');
         $attributes->length("$total,$places");
         return $attributes;
     }
@@ -75,7 +75,7 @@ class DataType {
     public function double($name, $total = 8, $places = 2): AttributeType 
     {
         /* @var AttributeType $attributes */
-        $attributes = $this->resloveColumn($name,'DOUBLE');
+        $attributes = $this->resolveColumn($name,'DOUBLE');
         $attributes->length("$total,$places");
         return $attributes;
     }
@@ -83,7 +83,7 @@ class DataType {
     public function real($name, $total = 8, $places = 2): AttributeType
     {
         /* @var AttributeType $attributes */
-        $attributes = $this->resloveColumn($name,'REAL');
+        $attributes = $this->resolveColumn($name,'REAL');
         $attributes->length("$total,$places");
         return $attributes;
     }
@@ -91,21 +91,21 @@ class DataType {
     public function bit($name): AttributeType
     {
         /* @var AttributeType $attributes */
-        $attributes = $this->resloveColumn($name,'BIT');
+        $attributes = $this->resolveColumn($name,'BIT');
         return $attributes;
     }
 
     public function boolean($name): AttributeType
     {
         /* @var AttributeType $attributes */
-        $attributes = $this->resloveColumn($name,'BOOLEAN');
+        $attributes = $this->resolveColumn($name,'BOOLEAN');
         return $attributes;
     }
 
     public function serial($name): AttributeType
     {
         /* @var AttributeType $attributes */
-        $attributes = $this->resloveColumn($name,'SERIAL');
+        $attributes = $this->resolveColumn($name,'SERIAL');
         return $attributes;
     }
     /* end numberic type */
@@ -113,30 +113,30 @@ class DataType {
     /* date time type */
     public function date($name): AttributeType
     {
-        $attributes = $this->resloveColumn($name,'DATE');
+        $attributes = $this->resolveColumn($name,'DATE');
         return $attributes;
     }
 
     public function dateTime($name): AttributeType {
-        $attributes = $this->resloveColumn($name,'DATETIME');
+        $attributes = $this->resolveColumn($name,'DATETIME');
         return $attributes;
     }
 
     public function time($name): AttributeType
     {
-        $attributes = $this->resloveColumn($name,'TIME');
+        $attributes = $this->resolveColumn($name,'TIME');
         return $attributes;
     }
 
     public function timestamp($name): AttributeType
     {
-        $attributes = $this->resloveColumn($name,'TIMESTAMP');
+        $attributes = $this->resolveColumn($name,'TIMESTAMP');
         return $attributes;
     }
     
     public function year($name): AttributeType
     {
-        $attributes = $this->resloveColumn($name,'YEAR');
+        $attributes = $this->resolveColumn($name,'YEAR');
         return $attributes;
     }
     /* end date time type */
@@ -144,171 +144,171 @@ class DataType {
     /* string type */
     public function char($name, $length = 255): AttributeType
     {
-        return $this->resloveColumn($name, 'CHAR')->length($length);
+        return $this->resolveColumn($name, 'CHAR')->length($length);
     }
     
     public function varchar($name, $length = 255): AttributeType
     {
-        return $this->resloveColumn($name, 'VARCHAR')->length($length);
+        return $this->resolveColumn($name, 'VARCHAR')->length($length);
     }
     
     public function tinyText($name): AttributeType
     {
-        return $this->resloveColumn($name, 'TINYTEXT');
+        return $this->resolveColumn($name, 'TINYTEXT');
     }
 
     public function text($name): AttributeType
     {
-        return $this->resloveColumn($name,'TEXT');
+        return $this->resolveColumn($name,'TEXT');
     }
     
     public function mediumText($name): AttributeType
     {
-        return $this->resloveColumn($name,'MEDIUMTEXT');
+        return $this->resolveColumn($name,'MEDIUMTEXT');
     }
     
     public function longText($name): AttributeType
     {
-        return $this->resloveColumn($name,'LONGTEXT');
+        return $this->resolveColumn($name,'LONGTEXT');
     }
 
     public function binary($name): AttributeType
     {
-        return $this->resloveColumn($name,'BINARY');
+        return $this->resolveColumn($name,'BINARY');
     }
     
     public function varbinary($name, $length = 255): AttributeType
     {
-        return $this->resloveColumn($name, 'VARBINARY')->length($length);
+        return $this->resolveColumn($name, 'VARBINARY')->length($length);
     }
 
     public function tinyBlob($name): AttributeType
     {
-        return $this->resloveColumn($name,'TINYBLOB');
+        return $this->resolveColumn($name,'TINYBLOB');
     }
     
     public function blob($name): AttributeType
     {
-        return $this->resloveColumn($name,'BLOB');
+        return $this->resolveColumn($name,'BLOB');
     }
     
     public function mediumBlob($name): AttributeType
     {
-        return $this->resloveColumn($name,'MEDIUMBLOB');
+        return $this->resolveColumn($name,'MEDIUMBLOB');
     }
     
     public function longBlob($name): AttributeType
     {
-        return $this->resloveColumn($name,'LONGBLOB');
+        return $this->resolveColumn($name,'LONGBLOB');
     }
 
     public function enum($name, $values): AttributeType
     {
-        return $this->resloveColumn($name,'ENUM')->values($values);
+        return $this->resolveColumn($name,'ENUM')->values($values);
     }
     
     public function set($name, $values): AttributeType
     {
-        return $this->resloveColumn($name,'SET')->values($values);
+        return $this->resolveColumn($name,'SET')->values($values);
     }
     /* end string type */
 
     /* spatial */
     public function geometry($name): AttributeType
     {
-        return $this->resloveColumn($name,'GEOMETRY');
+        return $this->resolveColumn($name,'GEOMETRY');
     }
     
     public function point($name): AttributeType
     {
-        return $this->resloveColumn($name,'POINT');
+        return $this->resolveColumn($name,'POINT');
     }
     
     public function linestring($name): AttributeType
     {
-        return $this->resloveColumn($name,'LINESTRING');
+        return $this->resolveColumn($name,'LINESTRING');
     }
     
     public function polygon($name): AttributeType
     {
-        return $this->resloveColumn($name,'POLYGON');
+        return $this->resolveColumn($name,'POLYGON');
     }
     
     public function multipoint($name): AttributeType
     {
-        return $this->resloveColumn($name,'MULTIPOINT');
+        return $this->resolveColumn($name,'MULTIPOINT');
     }
     
     public function multilinestring($name): AttributeType
     {
-        return $this->resloveColumn($name,'MULTILINESTRING');
+        return $this->resolveColumn($name,'MULTILINESTRING');
     }
     
     public function multipolygon($name): AttributeType
     {
-        return $this->resloveColumn($name,'MULTIPOLYGON');
+        return $this->resolveColumn($name,'MULTIPOLYGON');
     }
     
     public function geometrycollection($name): AttributeType
     {
-        return $this->resloveColumn($name,'GEOMETRYCOLLECTION');
+        return $this->resolveColumn($name,'GEOMETRYCOLLECTION');
     }
     /* end spatial */
 
     /* json type */
     public function json($name): AttributeType
     {
-        return $this->resloveColumn($name,'JSON');
+        return $this->resolveColumn($name,'JSON');
     }
     
     public function jsonb($name): AttributeType
     {
-        return $this->resloveColumn($name,'JSONB');
+        return $this->resolveColumn($name,'JSONB');
     }
     /* end json type */
     
     /* other type */
     public function unsignedBigInteger($name): AttributeType
     {
-        return $this->resloveColumn($name,'UNSIGNED BIGINT');
+        return $this->resolveColumn($name,'UNSIGNED BIGINT');
     }
     
     public function unsignedInteger($name): AttributeType
     {
-        return $this->resloveColumn($name,'UNSIGNED INT');
+        return $this->resolveColumn($name,'UNSIGNED INT');
     }
     
     public function unsignedMediumInteger($name): AttributeType
     {
-        return $this->resloveColumn($name,'UNSIGNED MEDIUMINT');
+        return $this->resolveColumn($name,'UNSIGNED MEDIUMINT');
     }
 
     public function unsignedSmallInteger($name): AttributeType
     {
-        return $this->resloveColumn($name,'UNSIGNED SMALLINT');
+        return $this->resolveColumn($name,'UNSIGNED SMALLINT');
     }
 
     public function unsignedTinyInteger($name): AttributeType
     {
-        return $this->resloveColumn($name,'UNSIGNED TINYINT');
+        return $this->resolveColumn($name,'UNSIGNED TINYINT');
     }
 
     public function unsignedDecimal($name, $total = 8, $places = 2): AttributeType
     {
-        return $this->resloveColumn($name,'UNSIGNED DECIMAL')->length("$total,$places");
+        return $this->resolveColumn($name,'UNSIGNED DECIMAL')->length("$total,$places");
     }
 
     public function unsignedFloat($name, $total = 8, $places = 2): AttributeType
     {
-        return $this->resloveColumn($name,'UNSIGNED FLOAT')->length("$total,$places");
+        return $this->resolveColumn($name,'UNSIGNED FLOAT')->length("$total,$places");
     }
 
     public function unsignedDouble($name, $total = 8, $places = 2): AttributeType {
-        return $this->resloveColumn($name,'UNSIGNED DOUBLE')->length("$total,$places");
+        return $this->resolveColumn($name,'UNSIGNED DOUBLE')->length("$total,$places");
     }
     
     public function dropColumn($name)
     {
-        return $this->resloveColumn($name,'')->drop();
+        return $this->resolveColumn($name,'')->drop();
     }
 }

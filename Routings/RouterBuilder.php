@@ -18,7 +18,7 @@ class RouterBuilder {
         $this->callback = $actions;
         $this->router[$this->uid] = [
             'method' => $this->method,
-            'path' => $this->reslovePath($this->path),
+            'path' => $this->resolvePath($this->path),
             'callback' => $this->callback,
             'middlewares' => $this->middlewares
         ];
@@ -75,7 +75,7 @@ class RouterBuilder {
 
     public function middleware($middleware)
     {
-        $middleware = $this->resloveMiddlware($middleware);
+        $middleware = $this->resolveMiddlware($middleware);
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
         $callerClass = $backtrace[1]['class'] ?? null;
         if ($this->uid != 0 && is_null($callerClass)) {
@@ -100,14 +100,14 @@ class RouterBuilder {
         return $path;
     }
 
-    private function reslovePath($path) {
+    private function resolvePath($path) {
         $path = preg_replace('/^\/?/', '/', $path);
         $path = preg_replace('#//+#', '/', $path);
         $path = rtrim($path, '/') ?: '/';
         return $path;
     }
 
-    private function resloveMiddlware($middleware)
+    private function resolveMiddlware($middleware)
     {
         $middleArray = is_array($middleware) ? $middleware: [$middleware];
         $contract = app()->make(\App\Http\Middleware\Kernel::class);

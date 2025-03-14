@@ -21,49 +21,49 @@ class Connection {
 
     public function select($sql, $binnding = [])
     {
-        return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
+        return $this->resolveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $statement->fetchAll(\PDO::FETCH_OBJ);
         }, $binnding);
     }
 
     public function selectOne($sql, $binnding = [])
     {
-        return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
+        return $this->resolveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $statement->fetch(\PDO::FETCH_OBJ);
         }, $binnding);
     }
 
     public function insert($sql, $binnding = [])
     {
-        return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
+        return $this->resolveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $status;
         }, $binnding);
     }
 
     public function update($sql, $binnding = [])
     {
-        return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
+        return $this->resolveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $status;
         }, $binnding);
     }
 
     public function insertLastId($sql, $binnding = [])
     {
-        return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
+        return $this->resolveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $this->pdo->lastInsertId();
         }, $binnding);
     }
 
     public function delete($sql, $binnding = [])
     {
-        return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
+        return $this->resolveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $status;
         }, $binnding);
     }
 
     public function query($sql)
     {
-        return $this->resloveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
+        return $this->resolveQuery($sql, function (false|\PDOStatement $statement, bool $status) {
             return $statement;
         });
     }
@@ -94,12 +94,12 @@ class Connection {
         $this->pdo->rollBack();
     }
 
-    public function resloveQuery($sql, callable $callback, $bindings = [])
+    public function resolveQuery($sql, callable $callback, $bindings = [])
     {
-        $logs = $this->resloveLog();
+        $logs = $this->resolveLog();
         try {
             $statement = $this->pdo->prepare($sql);
-            $status = $statement->execute($this->resloveBindings($bindings));
+            $status = $statement->execute($this->resolveBindings($bindings));
             if ($logs instanceof \Closure) {
                 $logs($sql, $bindings);
             }
@@ -113,7 +113,7 @@ class Connection {
         return $callback($statement, $status);
     }
 
-    public function resloveBindings($bindings = []){
+    public function resolveBindings($bindings = []){
         foreach ($bindings as $key => $value) {
             if (is_array($value)) {
                 foreach ($value as $k => $v) {
@@ -147,7 +147,7 @@ class Connection {
         return $this->pdo;
     }
 
-    private function resloveLog()
+    private function resolveLog()
     {
         if (!$this->binndingLog['enable']) {
             return false;

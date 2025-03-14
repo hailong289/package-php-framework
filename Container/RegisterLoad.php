@@ -115,8 +115,8 @@ class RegisterLoad
         if (empty(defined('PROJECT_KEY') && constant('PROJECT_KEY'))) {
             die('PROJECT_KEY is not defined');
         }
-        $this->resloveInclude();
-        $this->resloveConfig();
+        $this->resolveInclude();
+        $this->resolveConfig();
         return $this;
     }
 
@@ -130,8 +130,8 @@ class RegisterLoad
         $this->loadConfig();
         $this->loadTimeZone();
         $this->registerFolder(['database']);
-        $this->resloveInclude();
-        $this->resloveConfig();
+        $this->resolveInclude();
+        $this->resolveConfig();
         return $this;
     }
 
@@ -175,14 +175,14 @@ class RegisterLoad
     }
 
 
-    private function resloveInclude()
+    private function resolveInclude()
     {
         foreach ($this->bind['include'] as $item) {
             require_once $item;
         }
     }
 
-    private function resloveConfig()
+    private function resolveConfig()
     {
         $data = cache()->file()->setPath('storage/cache')->getOrStore('configs', $this->bind['config']);
         foreach ($data as $key => $item) {

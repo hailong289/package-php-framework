@@ -4,6 +4,7 @@ namespace Hola\Transport;
 use Hola\Core\ViewRender;
 use Hola\Data\Collection;
 use Hola\Data\ShareData;
+use Hola\Exceptions\AppException;
 
 class ResponseBuilder {
     
@@ -99,26 +100,27 @@ class ResponseBuilder {
         return $this;
     }
 
-    private function resloveHeaders()
+    private function resolveHeaders()
     {
-        foreach($this->bindings['headers'] as $key => $value){
+        foreach ($this->bindings['headers'] as $key => $value) {
             if (is_numeric($key)) {
-                header($value, true, $this->bindings['status'] ?? 200);
+                header($value);
             } else {
-                header($key . ': ' . $value, true, $this->bindings['status'] ?? 200);
+                header("$key: $value");
             }
         }
     }
 
-    private function resloveStatus()
+    private function resolveStatus()
     {
-        if (is_null($this->bindings['status'])) {
+        if ($this->bindings['status'] !== null) {
+            http_response_code($this->bindings['status']);
+        } else {
             http_response_code(200);
         }
-        http_response_code($this->bindings['status']);
     }
 
-    private function resloveDataCollect(&$data){
+    private function resolveDataCollect(&$data){
         if ($data instanceof Collection) {
             $data = $data->data;
             return $this;
@@ -127,27 +129,37 @@ class ResponseBuilder {
             if ($value instanceof Collection) {
                 $data[$key] = $value->data;
             } else if (is_array($value)) {
-                $this->resloveDataCollect($value);
+                $this->resolveDataCollect($value);
             }
         }
         return $this;
     }
     
     public function callback() {
-        $this->resloveHeaders();
-        $this->resloveStatus();
+        $this->resolveHeaders();
+        if ($this->bindings['action'] !== 'redirect') {
+            $this->resolveStatus();
+        }
         switch ($this->bindings['action']) {
             case 'redirect':
-                header('Location: ' . $this->bindings['path'], true, $this->bindings['status'] ?? 302);
+                if (ob_get_length()) {
+                    ob_end_clean();
+                }
+                $status = is_null($this->bindings['status']) ? 302 : $this->bindings['status'];
+                header('Location: ' . $this->bindings['path'], true, $status);
                 exit();
                 break;
             case 'json':
-                $this->resloveDataCollect($this->bindings['data']);
+                $this->resolveDataCollect($this->bindings['data']);
                 ShareData::init()->create('data', $this->bindings['data']);
-                echo json_encode($this->bindings['data'], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                $json = json_encode($this->bindings['data'], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    throw new AppException("JSON response encoding error: " . json_last_error_msg());
+                }
+                echo $json;
                 break;
             case 'view':
-                $this->resloveDataCollect($this->bindings['data']);
+                $this->resolveDataCollect($this->bindings['data']);
                 ShareData::init()->create('data', $this->bindings['data']);
                 echo ViewRender::render($this->bindings['path'], $this->bindings['data']);
                 break;

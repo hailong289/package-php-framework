@@ -94,7 +94,7 @@ class ViewRender {
     }
 
     public static function render($view, $data = []) {
-        $path_view = self::resloveFileView($view);
+        $path_view = self::resolveFileView($view);
         $view_render = self::getViewRender($path_view, $view);
         if (file_exists($view_render)) {
             ob_start();
@@ -107,13 +107,13 @@ class ViewRender {
             return ob_get_clean();
         }
 
-        return self::resloveRenderHtml(
+        return self::resolveRenderHtml(
             $path_view,
             $view,
             function () use ($path_view, $view, $data) {
-                return self::resloveDirective(
-                    self::resloveIncludes(
-                        self::resloveViewContent($path_view, $view),
+                return self::resolveDirective(
+                    self::resolveIncludes(
+                        self::resolveViewContent($path_view, $view),
                         $data
                     )
                 );
@@ -125,7 +125,7 @@ class ViewRender {
     public static function renderXml($data = [])
     {
         $xml = new \SimpleXMLElement('<root/>');
-        self::resloveArrayToXml($data, $xml);
+        self::resolveArrayToXml($data, $xml);
         return $xml;
     }
 
@@ -153,7 +153,7 @@ class ViewRender {
         return self::instance();
     }
 
-    private static function resloveFileView($view)
+    private static function resolveFileView($view)
     {
         if(!file_exists(view_root($view))){
             if ($view === 'error.index') {
@@ -164,7 +164,7 @@ class ViewRender {
         return view_root($view);
     }
 
-    private static function resloveDirective($output)
+    private static function resolveDirective($output)
     {
         foreach (self::defaultDirective() as $directive) {
             $output = preg_replace($directive['regex'], $directive['render'], $output);
@@ -172,7 +172,7 @@ class ViewRender {
         return $output;
     }
 
-    private static function resloveViewContent($view, $name)
+    private static function resolveViewContent($view, $name)
     {
         if (in_array($name, self::$file_html)) {
             ob_start();
@@ -182,12 +182,12 @@ class ViewRender {
         return file_get_contents($view);
     }
 
-    private static function resloveIncludes($output)
+    private static function resolveIncludes($output)
     {
         $output = preg_replace('/<!--(.*?)-->/', '', $output);
         while (preg_match('/@include\(\s*[\'"](.+?)[\'"]\s*\)/', $output, $matches)) {
-            $included_content = self::resloveIncludes(
-                self::resloveViewContent(
+            $included_content = self::resolveIncludes(
+                self::resolveViewContent(
                     view_root($matches[1]),
                     $matches[1]
                 )
@@ -197,7 +197,7 @@ class ViewRender {
         return $output;
     }
 
-    private static function resloveRenderHtml($view_current, $name, $callback, $data = [])
+    private static function resolveRenderHtml($view_current, $name, $callback, $data = [])
     {
         ob_start();
         extract($data, EXTR_SKIP);
@@ -226,11 +226,11 @@ class ViewRender {
         return __DIR__ROOT . "/storage/render/Views/{$view}{$ext}";
     }
 
-    private static function resloveArrayToXml($data, &$xml) {
+    private static function resolveArrayToXml($data, &$xml) {
         foreach ($data as $key => $value) {
             if (is_array($value)) {
                 $subnode = $xml->addChild($key);
-                self::resloveArrayToXml($value, $subnode);
+                self::resolveArrayToXml($value, $subnode);
             } else {
                 $xml->addChild($key, htmlspecialchars($value));
             }

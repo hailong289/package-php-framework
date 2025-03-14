@@ -14,7 +14,7 @@ class MiddlewareCore {
         try {
             if (!method_exists($this, 'handle')) {
                 if ($this instanceof \App\Http\Middleware\VerifyCsrfToken) {
-                    return $this->resloveVerifyCsrfToken();
+                    return $this->resolveVerifyCsrfToken();
                 }
                 throw new AppException("Method 'handle' does not exit", 500);
             }
@@ -35,7 +35,7 @@ class MiddlewareCore {
         }
     }
 
-    public function resloveVerifyCsrfToken()
+    public function resolveVerifyCsrfToken()
     {
         $request = app(Request::class);
         if ($request->isGet()) {

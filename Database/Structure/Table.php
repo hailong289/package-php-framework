@@ -20,7 +20,7 @@ class Table extends DataType {
      * @param string $type
      * @return AttributeType
      */
-    public function resloveColumn($name, $type)
+    public function resolveColumn($name, $type)
     {
         $this->columns[$name] = [
             'name' => $name,

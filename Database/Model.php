@@ -11,10 +11,10 @@ class Model {
         if ($modelCalled === "Hola\Database\DBO") {
             return self::$builder;
         }
-        return self::resloveModel(self::$builder, $modelCalled);
+        return self::resolveModel(self::$builder, $modelCalled);
     }
 
-    private static function resloveModel(QueryBuilder $builder, $modelCalled) {
+    private static function resolveModel(QueryBuilder $builder, $modelCalled) {
         $variables = get_class_vars($modelCalled);
         $variable = str_replace('App\\Models\\','', $modelCalled);
         $tableName = strtolower($variable);
