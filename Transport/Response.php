@@ -29,8 +29,8 @@ class Response {
         return self::build()->xmlFromData($data, $status, $headers);
     }
 
-    public static function withExit($type, \Closure $callback){
-        return self::build()->withExit($type, $callback);
+    public static function exit() {
+        return self::build()->exit();
     }
 
     public static function next($request){

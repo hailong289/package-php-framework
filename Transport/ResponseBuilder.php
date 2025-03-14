@@ -51,21 +51,7 @@ class ResponseBuilder {
         return $this;
     }
 
-    public function withExit($type, \Closure $callback){
-        $data = $callback();
-        if ($type === 'json') {
-            echo self::json(...$data);
-        } else if ($type === 'view') {
-            self::view(...$data);
-        } else if ($type === 'require_once') {
-            require_once($data);
-        } else if ($type === 'include') {
-            include($data);
-        } else if ($type === 'readfile') {
-            readfile($data);
-        } else {
-            echo $data;
-        }
+    public function exit() {
         exit();
     }
 
@@ -147,7 +133,7 @@ class ResponseBuilder {
                 }
                 $status = is_null($this->bindings['status']) ? 302 : $this->bindings['status'];
                 header('Location: ' . $this->bindings['path'], true, $status);
-                exit();
+                $this->exit();
                 break;
             case 'json':
                 $this->resolveDataCollect($this->bindings['data']);
