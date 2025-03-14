@@ -9,6 +9,11 @@ class Connection {
     private $enableQueryLog = false;
     private $queryLog = [];
     private $swithConnect = false;
+    private $binndingLog = [
+        'enable' => false,
+        'log' => [],
+        'time' => 0
+    ];
 
     public function __construct($conn = null, $type = null) {
         $this->connect($conn, $type);
@@ -65,13 +70,13 @@ class Connection {
 
     public function enableQueryLog()
     {
-        $this->enableQueryLog = true;
-        return $this->enableQueryLog;
+        $this->binndingLog['enable'] = true;
+        return true;
     }
 
     public function getQueryLog()
     {
-        return $this->queryLog;
+        return $this->binndingLog['log'];
     }
 
     public function beginTransaction()
@@ -91,19 +96,19 @@ class Connection {
 
     public function resloveQuery($sql, callable $callback, $bindings = [])
     {
-        $statement = $this->pdo->prepare($sql);
-        if ($this->enableQueryLog) {
-            $startTime = microtime(true); // Start time
-        }
-        $status = $statement->execute($this->resloveBindings($bindings));
-        if ($this->enableQueryLog) {
-            $endTime = microtime(true); // End time
-            $queryTime = $endTime - $startTime; // Query time
-            $this->queryLog[] = [
-                'query' => $sql,
-                'params' => $bindings,
-                'time' => "Query took $queryTime seconds to execute."
-            ];
+        $logs = $this->resloveLog();
+        try {
+            $statement = $this->pdo->prepare($sql);
+            $status = $statement->execute($this->resloveBindings($bindings));
+            if ($logs instanceof \Closure) {
+                $logs($sql, $bindings);
+            }
+        } catch (\Throwable $e) {
+            if ($logs instanceof \Closure) {
+                $logs($sql, $bindings);
+            }
+            log_write($e, 'application');
+            throw $e;
         }
         return $callback($statement, $status);
     }
@@ -140,5 +145,34 @@ class Connection {
             $this->pdo = (new PdoSql())->connect($con, 'database');
         }
         return $this->pdo;
+    }
+
+    private function resloveLog()
+    {
+        if (!$this->binndingLog['enable']) {
+            return false;
+        }
+        $this->binndingLog['time'] = microtime(true);
+        $callback = function ($sql, $bindings) use ($startTime) {
+            $endTime = microtime(true); // End time
+            $queryTime = $endTime - $startTime; // Query time
+            $sqlRaw = $sql;
+            foreach ($bindings as $key => $value) {
+                if (is_array($value)) {
+                    foreach ($value as $val) {
+                        $sqlRaw = preg_replace('/\?/', $val, $sqlRaw);
+                    }
+                } else {
+                    $sqlRaw = preg_replace('/\?/', $value, $sqlRaw);
+                }
+            }
+            $this->queryLog[] = [
+                'query' => $sql,
+                'params' => $bindings,
+                'query_raw' => $sqlRaw,
+                'time' => "Query took $queryTime seconds to execute."
+            ];
+        };
+        return $callback;
     }
 }

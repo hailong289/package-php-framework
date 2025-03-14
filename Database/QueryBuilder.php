@@ -424,7 +424,7 @@ class QueryBuilder {
         return $this;
     }
 
-    public function get(): Collection|null
+    public function get(): Collection
     {
         return $this->resloveData($this->toSql(), 'select', function ($selectData) {
             $this->clearBindings(true);
@@ -432,12 +432,12 @@ class QueryBuilder {
         }, $this->bindings['params']);
     }
 
-    public function find($id): Collection|null
+    public function find($id): Collection
     {
         return $this->where('id', $id)->first();
     }
 
-    public function first(): Collection|null
+    public function first(): Collection
     {
         return $this->resloveData($this->toSql(), 'selectOne', function ($selectData) {
             $this->clearBindings(true);
@@ -445,27 +445,27 @@ class QueryBuilder {
         }, $this->bindings['params']);
     }
 
-    public function create($data): Collection|null
+    public function create($data): Collection
     {
         $table = $this->bindings['from']['table'];
         return $this->resloveData($this->toSql('INSERT', $data), 'insertLastId', function ($id) use ($table) {
             $this->clearBindings(true);
-            $selectData = $this->from($table)->find($id);
+            $selectData = $this->when(empty($this->bindings['from']['table']), fn($q) => $q->from($table))->find($id);
             return $selectData;
         }, $this->bindings['params']);
     }
     
-    public function updateOrInsert($data, $id = null)
+    public function updateOrInsert($data, $id = null) : bool
     {
         $table = $this->bindings['from']['table'];
         $selectData = $this->from($table)->find($id);
         if ($selectData->isEmpty()) {
-            return $this->create($data);
+            return $this->when(empty($this->bindings['from']['table']), fn($q) => $q->from($table))->insert($data);
         }
-        return $this->update($data, $id);
+        return $this->when(empty($this->bindings['from']['table']), fn($q) => $q->from($table))->update($data, $id);
     }
     
-    public function insert($data)
+    public function insert($data) : bool
     {
         return $this->resloveData($this->toSql('INSERT', $data), 'insert', function ($selectData, $status) {
             $this->clearBindings(true);
@@ -473,7 +473,7 @@ class QueryBuilder {
         }, $this->bindings['params']);
     }
 
-    public function insertLastId($data)
+    public function insertLastId($data) : int
     {
         return $this->resloveData($this->toSql('INSERT', $data), 'insertLastId', function ($id) {
             $this->clearBindings(true);
@@ -481,7 +481,7 @@ class QueryBuilder {
         }, $this->bindings['params']);
     }
 
-    public function update($data, $id = null)
+    public function update($data, $id = null) : bool
     {
         if (!is_null($id)) {
             if (is_array($id)) {
@@ -498,7 +498,7 @@ class QueryBuilder {
         },$this->bindings['params']);
     }
 
-    public function delete($id = null)
+    public function delete($id = null): bool
     {
         if (!is_null($id)) {
             $this->where('id', $id);
@@ -509,7 +509,7 @@ class QueryBuilder {
         }, $this->bindings['params']);
     }
 
-    public function softDelete($id = null)
+    public function softDelete($id = null): bool
     {
         $data = $this->resloveSoftDelete();
         return $this->update($data, $id);
@@ -570,7 +570,7 @@ class QueryBuilder {
             case 'select':
                 $select = collection(self::$connection->select($sql, $bindings));
                 if ($select->isEmpty()) {
-                    return $callback(null, $status);
+                    return $callback(collection([]), $status);
                 }
                 $selectData = $this->resloveRelations($select);
                 $selectData = $selectData->map(fn ($item) => $this->resloveAttribute($item, 'GET'));
@@ -578,7 +578,7 @@ class QueryBuilder {
             case 'selectOne':
                 $select = collection(self::$connection->selectOne($sql, $bindings));
                 if ($select->isEmpty()) {
-                    return $callback(null, $status);
+                    return $callback(collection([]), $status);
                 }
                 $selectData = $this->resloveRelations($select, 'FIRST');
                 $selectData = $selectData->mapFirst(fn ($item) => $this->resloveAttribute($item, 'GET'));

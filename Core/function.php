@@ -170,12 +170,27 @@ if(!function_exists('log_write')){
      * @param $e
      * @param string $name
      */
-    function log_write($e, $name = 'debug') {
-        $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
-        if (!file_exists(__DIR__ROOT .'/storage')) {
-            mkdir(__DIR__ROOT .'/storage', 0777, true);
+    function log_write($e, $name = 'application') {
+        $storagePath = __DIR__ROOT . '/storage';
+        if (!file_exists($storagePath) && !mkdir($storagePath, 0777, true) && !is_dir($storagePath)) {
+            echo sprintf('Directory "%s" was not created', $storagePath);
+            return;
         }
-        file_put_contents(__DIR__ROOT ."/storage/$name.log",$date . $e, FILE_APPEND);
+
+        $storagePath = __DIR__ROOT . '/storage';
+        $logFile = "$storagePath/$name.log";
+
+        $errorMessage = sprintf(
+            "[%s][%d]: %s in %s on line %d\n%s\n\n",
+            date('Y-m-d H:i:s'),
+            $e->getCode(),
+            $e->getMessage(),
+            $e->getFile(),
+            $e->getLine(),
+            $e->getTraceAsString()
+        );
+
+        file_put_contents($logFile, $errorMessage, FILE_APPEND | LOCK_EX);
     }
 }
 
