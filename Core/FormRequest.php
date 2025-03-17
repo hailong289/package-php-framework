@@ -59,7 +59,6 @@ class FormRequest extends Request {
 
     public function data()
     {
-        $data = $this->data;
-        return collection()->set($data)->toObject();
+        return $this->data;
     }
 }
