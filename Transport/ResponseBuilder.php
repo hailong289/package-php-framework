@@ -41,6 +41,63 @@ class ResponseBuilder {
         return $this;
     }
 
+    public function metaTag($data = []) {
+        $metaTags = [];
+        if (!empty($data['title'])) {
+            $metaTags[] = "<title>{$data['title']}</title>";
+        }
+        // Title
+        if (!empty($data['title'])) {
+            $metaTags[] = "<title>{$data['title']}</title>";
+        }
+
+        // Meta Description
+        if (!empty($data['description'])) {
+            $metaTags[] = "<meta name=\"description\" content=\"{$data['description']}\">";
+        }
+
+        // Meta Robots
+        if (!empty($data['robots'])) {
+            $metaTags[] = "<meta name=\"robots\" content=\"{$data['robots']}\">";
+        }
+
+        // Canonical
+        if (!empty($data['canonical'])) {
+            $metaTags[] = "<link rel=\"canonical\" href=\"{$data['canonical']}\">";
+        }
+
+        // Open Graph (Facebook, Zalo)
+        if (!empty($data['og'])) {
+            foreach ($data['og'] as $property => $content) {
+                $metaTags[] = "<meta property=\"og:{$property}\" content=\"{$content}\">";
+            }
+        }
+
+        // Twitter Card
+        if (!empty($data['twitter'])) {
+            foreach ($data['twitter'] as $name => $content) {
+                $metaTags[] = "<meta name=\"twitter:{$name}\" content=\"{$content}\">";
+            }
+        }
+
+        // Viewport (Mobile)
+        $metaTags[] = "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">";
+
+        // Favicon
+        if (!empty($data['favicon'])) {
+            $metaTags[] = "<link rel=\"icon\" href=\"{$data['favicon']}\" type=\"image/x-icon\">";
+        }
+
+        // Structured Data (Schema.org)
+        if (!empty($data['schema'])) {
+            $jsonLD = json_encode($data['schema'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            $metaTags[] = "<script type=\"application/ld+json\">{$jsonLD}</script>";
+        }
+
+        $this->bindings['data']['metaTags'] = implode("\n", $metaTags);
+        return $this;
+    }
+
     public function xmlFromData($data = [])
     {
         $this->bindings['data'] = $data;

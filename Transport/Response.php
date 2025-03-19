@@ -50,4 +50,8 @@ class Response {
         return self::build()->setHeaders($headers);
     }
 
+    public static function metaTag(array $data = []) {
+        return self::build()->metaTag($data);
+    }
+
 }
