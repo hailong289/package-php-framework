@@ -13,6 +13,7 @@ class ResponseBuilder {
         "status" => null,
         "action" => null,
         "data" => [],
+        "metaTags" => null,
         "path" => null
     ];
 
@@ -94,7 +95,7 @@ class ResponseBuilder {
             $metaTags[] = "<script type=\"application/ld+json\">{$jsonLD}</script>";
         }
 
-        $this->bindings['data']['metaTags'] = implode("\n", $metaTags);
+        $this->bindings['metaTags'] = implode("\n", $metaTags);
         return $this;
     }
 
@@ -181,6 +182,13 @@ class ResponseBuilder {
         }
         return $this;
     }
+
+    private function resolveMetaTags()
+    {
+        if (!is_null($this->bindings['metaTags'])) {
+            $this->bindings['data']['metaTags'] = $this->bindings['metaTags'];
+        }
+    }
     
     public function callback() {
         $this->resolveHeaders();
@@ -206,6 +214,7 @@ class ResponseBuilder {
                 echo $json;
                 break;
             case 'view':
+                $this->resolveMetaTags();
                 $this->resolveDataCollect($this->bindings['data']);
                 ShareData::init()->create('data', $this->bindings['data']);
                 $html = ViewRender::render($this->bindings['path'], $this->bindings['data']);
