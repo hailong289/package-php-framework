@@ -50,7 +50,13 @@ class QueryBuilder {
     public function setModel($modelCalled, $variables = [])
     {
         $this->model = new $modelCalled();
+        $this->setVariables($variables);
+    }
+
+    private function setVariables($variables)
+    {
         $this->bindings['variables'] = $variables;
+        return $this;
     }
 
     public function reconnectDefault()
@@ -447,22 +453,28 @@ class QueryBuilder {
 
     public function create($data): Collection
     {
-        $table = $this->bindings['from']['table'];
-        return $this->resolveData($this->toSql('INSERT', $data), 'insertLastId', function ($id) use ($table) {
+        $object = $this->clone();
+        return $this->resolveData($this->toSql('INSERT', $data), 'insertLastId', function ($id) use ($object) {
             $this->clearBindings(true);
-            $selectData = $this->when(empty($this->bindings['from']['table']), fn($q) => $q->from($table))->find($id);
+            $selectData = $this->resolveCloneObject($object, ['from','variables'])->find($id);
             return $selectData;
         }, $this->bindings['params']);
     }
     
     public function updateOrInsert($data, $id = null) : bool
     {
-        $table = $this->bindings['from']['table'];
-        $selectData = $this->from($table)->find($id);
-        if ($selectData->isEmpty()) {
-            return $this->when(empty($this->bindings['from']['table']), fn($q) => $q->from($table))->insert($data);
-        }
-        return $this->when(empty($this->bindings['from']['table']), fn($q) => $q->from($table))->update($data, $id);
+        $object = $this->clone();
+        $selectData = $this->find($id);
+        $callback = function (QueryBuilder $query) use ($object, $selectData, $data, $id) {
+            $status = false;
+            if ($selectData->isEmpty()) {
+                $status = $query->resolveCloneObject($object, ['from','variables'])->insert($data);
+            } else {
+                $status = $query->resolveCloneObject($object, ['from','variables'])->update($data, $id);
+            }
+            return $status;
+        };
+        return $callback($this);
     }
     
     public function insert($data) : bool
@@ -496,6 +508,17 @@ class QueryBuilder {
             $this->clearBindings(true);
             return $status;
         },$this->bindings['params']);
+    }
+    
+    public function save($data = [])
+    {
+        if (isset($data['id'])) {
+            $id = $data['id'];
+            unset($data['id']);
+            return $this->update($data, $id);
+        } else {
+            return $this->insert($data);
+        }
     }
 
     public function delete($id = null): bool
@@ -1058,6 +1081,18 @@ class QueryBuilder {
                }
            }
         }
+    }
+
+    private function resolveCloneObject($object, $keys = [])
+    {
+        foreach ($object->bindings as $key => $value) {
+             if (in_array($key, $keys)) {
+                 $this->bindings[$key] = $value;
+             }
+        }
+        // destroy object clone
+        unset($object);
+        return $this;
     }
 
 }

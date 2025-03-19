@@ -107,8 +107,7 @@ class Connection {
             if ($logs instanceof \Closure) {
                 $logs($sql, $bindings);
             }
-            log_write($e, 'application');
-            throw $e;
+            throw new \PDOException($e->getMessage(), 500);
         }
         return $callback($statement, $status);
     }

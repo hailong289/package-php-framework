@@ -279,4 +279,10 @@ class Model {
         $parent_function = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'];
         return self::build()->relations($related, $table_3rd, $parent_function, $foreign_key, $foreign_key2, $key, 'MANY_TO_MANY');
     }
+    
+    public function save()
+    {
+        $data = get_object_vars($this);
+        return self::build()->save($data);
+    }
 }

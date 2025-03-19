@@ -99,10 +99,14 @@ class ResponseBuilder {
 
     private function resolveStatus()
     {
-        if ($this->bindings['status'] !== null) {
-            http_response_code($this->bindings['status']);
-        } else {
-            http_response_code(200);
+        try {
+            if ($this->bindings['status'] !== null) {
+                http_response_code($this->bindings['status']);
+            } else {
+                http_response_code(200);
+            }
+        } catch (\Throwable $e) {
+            http_response_code(500);
         }
     }
 
@@ -147,7 +151,8 @@ class ResponseBuilder {
             case 'view':
                 $this->resolveDataCollect($this->bindings['data']);
                 ShareData::init()->create('data', $this->bindings['data']);
-                echo ViewRender::render($this->bindings['path'], $this->bindings['data']);
+                $html = ViewRender::render($this->bindings['path'], $this->bindings['data']);
+                echo $html;
                 break;
             case 'xml':
                 $return = ViewRender::renderXml($this->bindings['data']);
