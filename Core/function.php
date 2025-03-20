@@ -558,6 +558,29 @@ if(!function_exists('isTwoDimensionalArray')) {
     }
 }
 
+if(!function_exists('isTwoDimensionalObject')) {
+    /**
+     * Check if the object is two-dimensional
+     * @param object $array
+     * @return bool
+     */
+    function isTwoDimensionalObject($data) {
+        if (!is_object($data)) return false;
+
+        $arrayData = (array) $data;
+
+        foreach ($arrayData as $value) {
+            if (!is_object($value)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
+
+
+
 if(!function_exists('generateKey')) {
     /**
      * Generate random key

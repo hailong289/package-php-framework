@@ -120,10 +120,17 @@ class Collection
         return $this;
     }
 
-    public function add($item)
+    public function add($item, $key = null)
     {
-        $this->data[] = $item;
-
+        if (is_null($key)) {
+            $this->data[] = $item;
+        } else {
+            if (is_array($this->data)) {
+            	$this->data[$key] = $item;
+            } else {
+            	$this->data->{$key} = $item;
+            }
+        }
         return $this;
     }
 

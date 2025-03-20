@@ -44,9 +44,7 @@ class ResponseBuilder {
 
     public function metaTag($data = []) {
         $metaTags = [];
-        if (!empty($data['title'])) {
-            $metaTags[] = "<title>{$data['title']}</title>";
-        }
+
         // Title
         if (!empty($data['title'])) {
             $metaTags[] = "<title>{$data['title']}</title>";
@@ -55,6 +53,11 @@ class ResponseBuilder {
         // Meta Description
         if (!empty($data['description'])) {
             $metaTags[] = "<meta name=\"description\" content=\"{$data['description']}\">";
+        }
+
+        // Meta Keywords
+        if (!empty($data['keywords'])) {
+            $metaTags[] = '<meta name="keywords" content="' . htmlspecialchars(implode(", ", $data['keywords'])) . '">';
         }
 
         // Meta Robots
@@ -67,7 +70,7 @@ class ResponseBuilder {
             $metaTags[] = "<link rel=\"canonical\" href=\"{$data['canonical']}\">";
         }
 
-        // Open Graph (Facebook, Zalo)
+        // Open Graph
         if (!empty($data['og'])) {
             foreach ($data['og'] as $property => $content) {
                 $metaTags[] = "<meta property=\"og:{$property}\" content=\"{$content}\">";
@@ -81,8 +84,9 @@ class ResponseBuilder {
             }
         }
 
-        // Viewport (Mobile)
-        $metaTags[] = "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">";
+        if (!empty($data['viewport'])) {
+            $metaTags[] = "<meta name=\"viewport\" content=\"{$data['viewport']}\">";
+        }
 
         // Favicon
         if (!empty($data['favicon'])) {
@@ -168,29 +172,63 @@ class ResponseBuilder {
         }
     }
 
-    private function resolveDataCollect(&$data){
+    private function resolveDataCollect(&$data, $retry = false) {
         if ($data instanceof Collection) {
-            $data = $data->data;
-            return $this;
+            return $retry ? $data->data : ['items' => $data->data];
         }
-        foreach ($data as $key => $value) {
-            if ($value instanceof Collection) {
-                $data[$key] = $value->data;
-            } else if (is_array($value)) {
-                $this->resolveDataCollect($value);
+
+        if (is_array($data)) {
+            foreach ($data as &$value) {
+                $value = $this->resolveDataCollect($value, true);
+            }
+        } elseif (is_object($data) && !($data instanceof Collection)) {
+            foreach ($data as $key => &$value) {
+                $value = $this->resolveDataCollect($value, true);
             }
         }
-        return $this;
+
+        return $data;
     }
 
     private function resolveMetaTags()
     {
         if (!is_null($this->bindings['metaTags'])) {
-            $this->bindings['data']['metaTags'] = $this->bindings['metaTags'];
+            if ($this->bindings['data'] instanceof Collection) {
+                $this->bindings['data']->add($this->bindings['metaTags'], 'metaTags');
+            } else if (is_array($this->bindings['data'])) {
+                $this->bindings['data'] = array_merge($this->bindings['data'], [
+                    "metaTags" => $this->bindings['metaTags']
+                ]);
+            }
         }
     }
+
+    private function getData($share = false, $onlyData = false)
+    {
+        if ($onlyData) {
+            return $this->bindings['data'];
+        }
+        $data = $this->resolveDataCollect($this->bindings['data']);
+        if ($share) {
+            ShareData::init()->create('data', $data);
+        }
+        return $data;
+    }
+
+    private function clearBindings()
+    {
+        $this->bindings = [
+            "headers" => [],
+            "status" => null,
+            "action" => null,
+            "data" => [],
+            "metaTags" => null,
+            "path" => null
+        ];
+        return $this;
+    }
     
-    public function callback() {
+    public function callback($output = null) {
         $this->resolveHeaders();
         if ($this->bindings['action'] !== 'redirect') {
             $this->resolveStatus();
@@ -205,31 +243,36 @@ class ResponseBuilder {
                 $this->exit();
                 break;
             case 'json':
-                $this->resolveDataCollect($this->bindings['data']);
-                ShareData::init()->create('data', $this->bindings['data']);
-                $json = json_encode($this->bindings['data'], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                $json = json_encode($this->getData(true), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 if (json_last_error() !== JSON_ERROR_NONE) {
                     throw new AppException("JSON response encoding error: " . json_last_error_msg());
+                }
+                if ($output) {
+                    return $json;
                 }
                 echo $json;
                 break;
             case 'view':
                 $this->resolveMetaTags();
-                $this->resolveDataCollect($this->bindings['data']);
-                ShareData::init()->create('data', $this->bindings['data']);
-                $html = ViewRender::render($this->bindings['path'], $this->bindings['data']);
+                $html = ViewRender::render($this->bindings['path'], $this->getData(true));
+                if ($output) {
+                    return $html;
+                }
                 echo $html;
                 break;
             case 'xml':
-                $return = ViewRender::renderXml($this->bindings['data']);
+                $return = ViewRender::renderXml($this->getData(false, true));
+                if ($output) {
+                    return $return->asXML();
+                }
                 echo $return->asXML();
                 break;
             case 'middleware':
-                return $this->bindings['data'];
+                return $this->getData(false, true);
                 break;
             default:
                 break;
         }
-        return $this;
+        return $this->clearBindings();
     }
 }

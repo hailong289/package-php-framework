@@ -2,6 +2,8 @@
 
 namespace Hola\Mailing;
 
+use Hola\Transport\ResponseBuilder;
+
 class MailerBuilder extends Mailer {
 
     public function __construct() {
@@ -23,7 +25,11 @@ class MailerBuilder extends Mailer {
 
             if (method_exists($this,'view')) {
                 $this->withHtml();
-                $this->setBody($this->view());
+                if ($this->view() instanceof ResponseBuilder) {
+                    $this->setBody($this->view()->callback(true));
+                } else {
+                    $this->setBody($this->view());
+                }
             }
 
             if (method_exists($this,'mailFrom')) {
