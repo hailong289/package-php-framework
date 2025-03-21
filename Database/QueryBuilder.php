@@ -419,9 +419,9 @@ class QueryBuilder {
         $sql = $this->toSql();
         foreach ($this->bindings['params'] as $key => $value) {
             if (is_array($value)) {
-               foreach ($value as $val) {
-                   $sql = preg_replace('/\?/', $val, $sql);
-               }
+                foreach ($value as $val) {
+                    $sql = preg_replace('/\?/', $val, $sql);
+                }
             } else {
                 $sql = preg_replace('/\?/', $value, $sql);
             }
@@ -454,13 +454,14 @@ class QueryBuilder {
     public function create($data): Collection
     {
         $object = $this->clone();
+        $this->resolveAttribute($data);
         return $this->resolveData($this->toSql('INSERT', $data), 'insertLastId', function ($id) use ($object) {
             $this->clearBindings(true);
             $selectData = $this->resolveCloneObject($object, ['from','variables'])->find($id);
             return $selectData;
         }, $this->bindings['params']);
     }
-    
+
     public function updateOrInsert($data, $id = null) : bool
     {
         $object = $this->clone();
@@ -476,9 +477,10 @@ class QueryBuilder {
         };
         return $callback($this);
     }
-    
+
     public function insert($data) : bool
     {
+        $this->resolveAttribute($data, 'SET');
         return $this->resolveData($this->toSql('INSERT', $data), 'insert', function ($selectData, $status) {
             $this->clearBindings(true);
             return $status;
@@ -487,6 +489,7 @@ class QueryBuilder {
 
     public function insertLastId($data) : int
     {
+        $this->resolveAttribute($data, 'SET');
         return $this->resolveData($this->toSql('INSERT', $data), 'insertLastId', function ($id) {
             $this->clearBindings(true);
             return $id;
@@ -504,12 +507,13 @@ class QueryBuilder {
                 $this->where('id', $id);
             }
         }
+        $this->resolveAttribute($data, 'UPDATE');
         return $this->resolveData($this->toSql('UPDATE', $data), 'update', function ($selectData, $status) {
             $this->clearBindings(true);
             return $status;
         },$this->bindings['params']);
     }
-    
+
     public function save($data = [])
     {
         if (isset($data['id'])) {
@@ -612,15 +616,12 @@ class QueryBuilder {
                 $selectData = $selectData->mapFirst(fn ($item) => $this->resolveAttribute($item, 'GET'));
                 break;
             case 'insert':
-                $this->resolveAttribute($bindings);
                 $status = self::$connection->insert($sql, $bindings);
                 break;
             case 'insertLastId':
-                $this->resolveAttribute($bindings);
                 $selectData = self::$connection->insertLastId($sql, $bindings);
                 break;
             case 'update':
-                $this->resolveAttribute($bindings);
                 $status = self::$connection->update($sql, $bindings);
                 break;
             case 'delete':
@@ -1027,7 +1028,7 @@ class QueryBuilder {
         } else if ($type === 'SET') {
             if (
                 !empty($this->bindings['variables']['time_auto']) &&
-                !empty($this->bindings['variables']['date_updated'])
+                !empty($this->bindings['variables']['date_created'])
             ) {
                 $date_created = $this->bindings['variables']['date_created'];
                 if ($is_array) {
@@ -1074,26 +1075,26 @@ class QueryBuilder {
     private function clearBindings($clearAll = false)
     {
         foreach ($this->bindings as $key => $value) {
-           if(!empty($this->bindings[$key])) {
-               if ($clearAll) {
-                   $this->bindings[$key] = [];
-               } else if (
-                   $key !== 'variables' &&
-                   $key !== 'relations' &&
-                   $key !== 'params'
-               ) {
-                   $this->bindings[$key] = [];
-               }
-           }
+            if(!empty($this->bindings[$key])) {
+                if ($clearAll) {
+                    $this->bindings[$key] = [];
+                } else if (
+                    $key !== 'variables' &&
+                    $key !== 'relations' &&
+                    $key !== 'params'
+                ) {
+                    $this->bindings[$key] = [];
+                }
+            }
         }
     }
 
     private function resolveCloneObject($object, $keys = [])
     {
         foreach ($object->bindings as $key => $value) {
-             if (in_array($key, $keys)) {
-                 $this->bindings[$key] = $value;
-             }
+            if (in_array($key, $keys)) {
+                $this->bindings[$key] = $value;
+            }
         }
         // destroy object clone
         unset($object);

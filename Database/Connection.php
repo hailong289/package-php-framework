@@ -99,9 +99,10 @@ class Connection {
     public function resolveQuery($sql, callable $callback, $bindings = [])
     {
         $logs = $this->resolveLog();
+        $bindings = $this->resolveBindings($bindings);
         try {
             $statement = $this->pdo->prepare($sql);
-            $status = $statement->execute($this->resolveBindings($bindings));
+            $status = $statement->execute($bindings);
             if ($logs instanceof \Closure) {
                 $logs($sql, $bindings);
             }
@@ -157,21 +158,26 @@ class Connection {
         $callback = function ($sql, $bindings) use ($startTime) {
             $endTime = microtime(true); // End time
             $queryTime = $endTime - $startTime; // Query time
-            foreach ($bindings as $key => $value) {
-                if (is_array($value)) {
-                    foreach ($value as $val) {
-                        $sql = preg_replace('/\?/', $val, $sql);
-                    }
-                } else {
-                    $sql = preg_replace('/\?/', $value, $sql);
-                }
-            }
             $this->binndingLog['log'][] = [
                 'params' => $bindings,
-                'query' => $sql,
+                'query' => $this->getRawSql($sql, $bindings),
                 'time' => "Query took $queryTime seconds to execute."
             ];
         };
         return $callback;
+    }
+
+    private function getRawSql($sql, $bindings)
+    {
+        foreach ($bindings as $key => $value) {
+            if (is_array($value)) {
+                foreach ($value as $val) {
+                    $sql = preg_replace('/\?/', $val, $sql);
+                }
+            } else {
+                $sql = preg_replace('/\?/', $value, $sql);
+            }
+        }
+        return $sql;
     }
 }
