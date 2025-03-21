@@ -420,10 +420,10 @@ class QueryBuilder {
         foreach ($this->bindings['params'] as $key => $value) {
             if (is_array($value)) {
                 foreach ($value as $val) {
-                    $sql = preg_replace('/\?/', $val, $sql);
+                    $sql = preg_replace('/\?/', $val, $sql, 1);
                 }
             } else {
-                $sql = preg_replace('/\?/', $value, $sql);
+                $sql = preg_replace('/\?/', $value, $sql, 1);
             }
         }
         logs()->dump($sql);
