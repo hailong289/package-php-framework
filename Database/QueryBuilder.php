@@ -543,6 +543,11 @@ class QueryBuilder {
         return self::$connection->query($sql);
     }
 
+    public function getPdo()
+    {
+        return self::$connection->getPdo();
+    }
+
     public function count($name = null, $alias = null){
         $this->bindings['function']['count'] = [
             'name' => $name ?? '*',

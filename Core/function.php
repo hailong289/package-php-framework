@@ -458,7 +458,7 @@ if(!function_exists('cache')) {
      * @return \Hola\Data\Cache
      */
     function cache() {
-        $cache = new \Hola\Data\Cache();
+        $cache = new \Hola\Data\Cache\CacheManager();
         return $cache;
     }
 }

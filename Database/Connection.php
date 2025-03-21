@@ -6,8 +6,6 @@ use Hola\Connection\PdoSql;
 class Connection {
 
     private null|\PDO $pdo = null;
-    private $enableQueryLog = false;
-    private $queryLog = [];
     private $swithConnect = false;
     private $binndingLog = [
         'enable' => false,
@@ -17,6 +15,10 @@ class Connection {
 
     public function __construct($conn = null, $type = null) {
         $this->connect($conn, $type);
+    }
+
+    public function getPdo() {
+        return $this->pdo;
     }
 
     public function select($sql, $binnding = [])
@@ -81,17 +83,17 @@ class Connection {
 
     public function beginTransaction()
     {
-        $this->pdo->beginTransaction();
+        return $this->pdo->beginTransaction();
     }
 
     public function commit()
     {
-        $this->pdo->commit();
+        return $this->pdo->commit();
     }
 
     public function rollBack()
     {
-        $this->pdo->rollBack();
+        return $this->pdo->rollBack();
     }
 
     public function resolveQuery($sql, callable $callback, $bindings = [])
@@ -155,20 +157,18 @@ class Connection {
         $callback = function ($sql, $bindings) use ($startTime) {
             $endTime = microtime(true); // End time
             $queryTime = $endTime - $startTime; // Query time
-            $sqlRaw = $sql;
             foreach ($bindings as $key => $value) {
                 if (is_array($value)) {
                     foreach ($value as $val) {
-                        $sqlRaw = preg_replace('/\?/', $val, $sqlRaw);
+                        $sql = preg_replace('/\?/', $val, $sql);
                     }
                 } else {
-                    $sqlRaw = preg_replace('/\?/', $value, $sqlRaw);
+                    $sql = preg_replace('/\?/', $value, $sql);
                 }
             }
-            $this->queryLog[] = [
-                'query' => $sql,
+            $this->binndingLog['log'][] = [
                 'params' => $bindings,
-                'query_raw' => $sqlRaw,
+                'query' => $sql,
                 'time' => "Query took $queryTime seconds to execute."
             ];
         };
