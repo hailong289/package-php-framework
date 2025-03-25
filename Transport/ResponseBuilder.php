@@ -17,7 +17,7 @@ class ResponseBuilder {
         "path" => null
     ];
 
-    public function redirectTo($path){
+    public function redirect($path){
         $this->bindings['path'] = $path;
         $this->bindings['action'] = 'redirect';
         return $this;
@@ -103,7 +103,7 @@ class ResponseBuilder {
         return $this;
     }
 
-    public function xmlFromData($data = [])
+    public function xml($data = [])
     {
         $this->bindings['data'] = $data;
         $this->bindings['action'] = 'xml';

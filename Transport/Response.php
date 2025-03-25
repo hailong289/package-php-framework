@@ -22,11 +22,11 @@ class Response {
     }
 
     public static function redirect($url){
-        return self::build()->redirectTo($url, $status, $headers);
+        return self::build()->redirect($url, $status, $headers);
     }
 
     public static function xml($data = []){
-        return self::build()->xmlFromData($data, $status, $headers);
+        return self::build()->xml($data, $status, $headers);
     }
 
     public static function exit() {
