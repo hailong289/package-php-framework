@@ -1,68 +1,31 @@
 <?php
 
 namespace Hola\Transport;
-use App\Http\Middleware\Kernel;
 use Hola\Application;
 use Hola\Exceptions\AppException;
 
 class MiddlewareBuilder {
 
     public function handle($callback) {
+        $key_middlware = concat('', 'passable', PROJECT_KEY);
         /** @var Application $app */
-        [$params, $app] = $callback();
-        $params = $this->resolveRequiredMiddleware($params);
-        if (empty($params)) {
-            return [concat('', 'passable', PROJECT_KEY) => false];
+        [$middlewares, $app] = $callback();
+        $pipeline = array_reduce(
+            array_reverse($middlewares),
+            function ($next, $middleware) {
+                return function ($request) use ($middleware, $next) {
+                    return app()->make($middleware)->run($request, $next);
+                };
+            },
+            function () {
+                return true;
+            } 
+        );
+        $closure = $pipeline($app->make(Request::class));
+        if ($closure instanceof ResponseBuilder) {
+            return [$key_middlware => false, 'return' => $closure];
         }
-        $key = concat('', 'passable', PROJECT_KEY);
-        foreach ($params as $middleware) {
-            if (!class_exists($middleware)) {
-                throw new AppException("Middleware '$middleware' does not exit", 500);
-            }
-            $result = $app->make($middleware)->run();
-            if ($result instanceof ResponseBuilder) {
-                if ($result->bindings['action'] === 'middleware') {
-                    $data = $result->callback();
-                    if (!empty($data[concat('', 'passable', PROJECT_KEY)])) {
-                        $app->replace(Request::class, function () use ($data) {
-                            return $data['request'];
-                        });
-                        continue;
-                    }
-                    return [$key => false, 'return' => $data];
-                }
-                return [$key => false, 'return' => $result];
-            } else if (is_bool($result)) {
-                if (!$result) {
-                    $data = [
-                        "message" => "Middleware $middleware not passable",
-                        "code" => 403
-                    ];
-                    if ($app->make(Request::class)->isJson()) {
-                        return [
-                            $key => false,
-                            'return' => Response::json($data)->setStatus(403)
-                        ];
-                    }
-                    return [
-                        $key => false,
-                        'return' => Response::view("error.index", $data)->setStatus(403)
-                    ];
-                }
-                continue;
-            }
-            return [$key => false, 'return' => $result];
-        }
-        return [$key => true];
-    }
-
-    public function resolveRequiredMiddleware($params)
-    {
-        $kernel = app(Kernel::class);
-        foreach ($kernel->getRequiredMiddleWares() as $middleware) {
-            $params[] = $middleware;
-        }
-        return $params;
+        return [$key_middlware => true];
     }
 
 }

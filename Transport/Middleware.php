@@ -5,44 +5,22 @@ use Hola\Container\Container;
 use Hola\Exceptions\AppException;
 
 class Middleware {
-    private $bindings = [];
 
-    public function run()
+    public function run(Request $request, \Closure $continue)
     {
-        try {
-            if (!method_exists($this, 'handle')) {
-                if ($this instanceof \App\Http\Middleware\VerifyCsrfToken) {
-                    return $this->resolveVerifyCsrfToken();
-                }
-                throw new AppException("Method 'handle' does not exit", 500);
-            }
-            $response = $this->handle(app(Request::class), app(Response::class));
-            return $response;
-        } catch (\Throwable $e) {
-            if (method_exists($this, 'failed')) {
-                return $this->failed($e);
-            }
-            return [
-                "status" => false,
-                "message" => $e->getMessage(),
-                "code" => $e->getCode() ? $e->getCode() : 500,
-                "file" => $e->getFile(),
-                "line" => $e->getLine(),
-                "trace" => $e->getTraceAsString(),
-                "previous" => $e->getPrevious()
-            ];
+        if ($this instanceof \App\Http\Middleware\VerifyCsrfToken) {
+            return $this->resolveVerifyCsrfToken($request, $continue);
         }
+        return $this->forward($request, $continue);
     }
 
-    public function resolveVerifyCsrfToken()
+    public function resolveVerifyCsrfToken(Request $request, \Closure $continue)
     {
-        $request = app(Request::class);
-        if ($request->isGet()) {
-            return Response::next($request);
-        }
-        /* Do not check CSRF token with these paths */
-        if (!empty($this->except) && $this->exceptPaths($request->path(), $this->except)) {
-            return Response::next($request);
+        if (
+            $request->isGet() ||
+            (!empty($this->except) && $this->exceptPaths($request->path(), $this->except))
+        ) {
+            return $continue($request);
         }
 
         $crsfToken = $request->headers('X-CSRF-TOKEN', $request->csrf_token);
@@ -74,7 +52,7 @@ class Middleware {
         
         $request->session()->remove('csrf_token');
 
-        return Response::next($request);
+        return $continue($request);
     }
 
     public function exceptPaths($path, $except) {

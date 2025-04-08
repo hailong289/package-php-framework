@@ -1,6 +1,7 @@
 <?php
 
 namespace Hola;
+use App\Http\Middleware\Kernel;
 use Hola\Container\Container;
 use Hola\Exceptions\AppException;
 use Hola\Transport\Request;
@@ -28,7 +29,7 @@ class Application extends Container
      *
      * @throws AppException
      */
-    public function registerDependencies()
+    private function registerDependencies()
     {
         $this->set(Request::class, function () {
             return new Request();
@@ -37,7 +38,8 @@ class Application extends Container
         $this->singleton(Router::class, function () {
             return new Router();
         });
-
+        
+        return $this;
     }
 
     /**
@@ -139,6 +141,10 @@ class Application extends Container
         try {
             if (empty($this->control)) {
                 throw new AppException("Class controller in router does not exit", 500);
+            }
+            $middleware = $this->resolveMiddleware();
+            if (!empty($middleware['return'])) {
+                return $this->responseSuccess($middleware['return']);
             }
             $control_array = array_values($this->control);
             $result = $this->call($control_array);
@@ -255,6 +261,7 @@ class Application extends Container
         }
         $this->control = $router['controls'];
         $this->middlewares = $router['middlewares'];
+        return $this;
     }
 
     /**
@@ -263,14 +270,29 @@ class Application extends Container
      */
     private function registerMiddleware()
     {
-        $key = concat('', 'passable', PROJECT_KEY);
-        $result = $this->make(\Hola\Transport\MiddlewareBuilder::class)->handle(fn() => [$this->middlewares, $this]);
-        if (!empty($result[$key])) {
-            return false;
+        $kernel = app(Kernel::class);
+        foreach ($kernel->getRequiredMiddleWares() as $middleware) {
+            if (empty($this->middlewares)) {
+                $this->middlewares = [$middleware];
+            } else {
+                $this->middlewares[] = $middleware;
+            }
         }
-        // Handle the response if the middleware is not passable.
-        $this->responseCore($result['return']);
-        exit();
+        return $this;
+    }
+
+    /**
+     * Resolve the middleware.
+     * @return array
+     */
+    private function resolveMiddleware()
+    {
+        if (empty($this->middlewares)) {
+            return [];
+        }
+        return $this
+            ->make(\Hola\Transport\MiddlewareBuilder::class)
+            ->handle(fn() => [$this->middlewares, $this]);
     }
 
     /**
