@@ -31,8 +31,8 @@ use Hola\Transport\Request;
 use Hola\Transport\Response;
 
 class ' . $name_middleware . ' {
-     public function handle(Request $request, Response $response){
-         return $response->next($request);
+     public function forward(Request $request, \Closure $continue){
+         return $continue($request);
      }
 }
 ', FILE_APPEND);
