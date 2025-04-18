@@ -94,6 +94,7 @@ class Router {
             }
         }
         app()->event()->trigger('app.request', [
+            'type' => 'event_request',
             'method' => $requestMethod,
             'uri' => $requestUri,
             'matches' => $matches

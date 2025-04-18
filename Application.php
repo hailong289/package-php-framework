@@ -254,6 +254,7 @@ class Application extends Container
         );
 
         app()->event()->trigger('app.exceptions', [
+            'type' => 'event_exceptions',
             'message' => $e->getMessage(),
             'code' => $this->getStatusCode($e->getCode()),
             'line' => $e->getLine(),

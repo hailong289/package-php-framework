@@ -107,6 +107,7 @@ class Connection {
                 $logs($sql, $bindings);
             }
             app()->event()->trigger('app.query', [
+                'type' => 'event_query',
                 'logs' => $this->resolveLog(true)($sql, $bindings),
                 'status' => $status
             ]);

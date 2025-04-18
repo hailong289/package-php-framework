@@ -244,7 +244,10 @@ class ResponseBuilder {
             default:
                 break;
         }
-        app()->event()->trigger('app.response', ['response' => $this->bindings]);
+        app()->event()->trigger('app.response', [
+            'type' => 'event_response',
+            'response' => $this->bindings
+        ]);
         return $this->clearBindings();
     }
 }
