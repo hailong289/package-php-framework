@@ -106,6 +106,10 @@ class Connection {
             if ($logs instanceof \Closure) {
                 $logs($sql, $bindings);
             }
+            app()->event()->trigger('app.query', [
+                'logs' => $this->resolveLog(true)($sql, $bindings),
+                'status' => $status
+            ]);
         } catch (\Throwable $e) {
             if ($logs instanceof \Closure) {
                 $logs($sql, $bindings);
@@ -149,15 +153,22 @@ class Connection {
         return $this->pdo;
     }
 
-    private function resolveLog()
+    private function resolveLog($return = false)
     {
-        if (!$this->binndingLog['enable']) {
+        if (!$this->binndingLog['enable'] && !$return) {
             return false;
         }
         $this->binndingLog['time'] = microtime(true);
-        $callback = function ($sql, $bindings) use ($startTime) {
+        $callback = function ($sql, $bindings) use ($startTime, $return) {
             $endTime = microtime(true); // End time
             $queryTime = $endTime - $startTime; // Query time
+            if ($return) {
+                return [
+                    'params' => $bindings,
+                    'query' => $this->getRawSql($sql, $bindings),
+                    'time' => $queryTime
+                ];
+            }
             $this->binndingLog['log'][] = [
                 'params' => $bindings,
                 'query' => $this->getRawSql($sql, $bindings),
