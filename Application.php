@@ -3,7 +3,9 @@
 namespace Hola;
 use App\Http\Middleware\Kernel;
 use Hola\Container\Container;
+use Hola\Events\AppEvents;
 use Hola\Exceptions\AppException;
+use Hola\Exceptions\RouterException;
 use Hola\Transport\Request;
 use Hola\Transport\Response;
 use Hola\Routings\Router;
@@ -23,6 +25,8 @@ class Application extends Container
     public function __construct(){}
     
     public function register(){}
+    
+    public function registerEvent() {}
 
     /**
      * Registers application dependencies.
@@ -31,12 +35,16 @@ class Application extends Container
      */
     private function registerDependencies()
     {
-        $this->set(Request::class, function () {
+        $this->singleton(Request::class, function () {
             return new Request();
         });
 
         $this->singleton(Router::class, function () {
             return new Router();
+        });
+        
+        $this->singleton(AppEvents::class, function () {
+            return AppEvents::start();
         });
         
         return $this;
@@ -213,7 +221,7 @@ class Application extends Container
     private function isJson()
     {
         try {
-            return $this->make(Request::class)->isJson();
+            return app()->request()->isJson();
         } catch (\Throwable $e) {
             return false;
         }
@@ -226,7 +234,6 @@ class Application extends Container
      */
     private function handleErrorLogs(\Throwable $e)
     {
-
         $storagePath = __DIR__ROOT . '/storage';
         if (!file_exists($storagePath) && !mkdir($storagePath, 0777, true) && !is_dir($storagePath)) {
             echo sprintf('Directory "%s" was not created', $storagePath);
@@ -246,6 +253,16 @@ class Application extends Container
             $e->getTraceAsString()
         );
 
+        app()->event()->trigger('app.exceptions', [
+            'message' => $e->getMessage(),
+            'code' => $this->getStatusCode($e->getCode()),
+            'line' => $e->getLine(),
+            'file' => $e->getFile(),
+            'trace' => $e->getTraceAsString(),
+            'class' => get_class($e),
+            'previous' => $e->getPrevious()
+        ]);
+
         file_put_contents($logFile, $errorMessage, FILE_APPEND | LOCK_EX);
     }
 
@@ -257,7 +274,7 @@ class Application extends Container
     {
         $router = $this->make(Router::class)->handle();
         if (empty($router)) {
-            throw new AppException("No route found!", 404);
+            throw new RouterException("No route found!", 404);
         }
         $this->control = $router['controls'];
         $this->middlewares = $router['middlewares'];

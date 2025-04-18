@@ -1,6 +1,5 @@
 <?php
 namespace Hola\Routings;
-
 use Hola\Exceptions\AppException;
 
 class Router {
@@ -94,6 +93,11 @@ class Router {
                 break;
             }
         }
+        app()->event()->trigger('app.request', [
+            'method' => $requestMethod,
+            'uri' => $requestUri,
+            'matches' => $matches
+        ]);
         return $result;
     }
 

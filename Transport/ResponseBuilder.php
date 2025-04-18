@@ -44,40 +44,33 @@ class ResponseBuilder {
 
     public function metaTag($data = []) {
         $metaTags = [];
-
-        // Title
+        
         if (!empty($data['title'])) {
             $metaTags[] = "<title>{$data['title']}</title>";
         }
-
-        // Meta Description
+        
         if (!empty($data['description'])) {
             $metaTags[] = "<meta name=\"description\" content=\"{$data['description']}\">";
         }
-
-        // Meta Keywords
+        
         if (!empty($data['keywords'])) {
             $metaTags[] = '<meta name="keywords" content="' . htmlspecialchars(implode(", ", $data['keywords'])) . '">';
         }
-
-        // Meta Robots
+        
         if (!empty($data['robots'])) {
             $metaTags[] = "<meta name=\"robots\" content=\"{$data['robots']}\">";
         }
-
-        // Canonical
+        
         if (!empty($data['canonical'])) {
             $metaTags[] = "<link rel=\"canonical\" href=\"{$data['canonical']}\">";
         }
-
-        // Open Graph
+        
         if (!empty($data['og'])) {
             foreach ($data['og'] as $property => $content) {
                 $metaTags[] = "<meta property=\"og:{$property}\" content=\"{$content}\">";
             }
         }
-
-        // Twitter Card
+        
         if (!empty($data['twitter'])) {
             foreach ($data['twitter'] as $name => $content) {
                 $metaTags[] = "<meta name=\"twitter:{$name}\" content=\"{$content}\">";
@@ -87,13 +80,11 @@ class ResponseBuilder {
         if (!empty($data['viewport'])) {
             $metaTags[] = "<meta name=\"viewport\" content=\"{$data['viewport']}\">";
         }
-
-        // Favicon
+        
         if (!empty($data['favicon'])) {
             $metaTags[] = "<link rel=\"icon\" href=\"{$data['favicon']}\" type=\"image/x-icon\">";
         }
-
-        // Structured Data (Schema.org)
+        
         if (!empty($data['schema'])) {
             $jsonLD = json_encode($data['schema'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             $metaTags[] = "<script type=\"application/ld+json\">{$jsonLD}</script>";
@@ -115,26 +106,6 @@ class ResponseBuilder {
 
     public function exit() {
         exit();
-    }
-
-    public function next(Request $request){
-        $this->bindings['action'] = 'middleware';
-        $this->bindings['data'] = [
-            concat('', 'passable', PROJECT_KEY) => true,
-            "string" => null,
-            "request" => $request
-        ];
-        return $this;
-    }
-
-    public function close($string = ''){
-        $this->bindings['action'] = 'middleware';
-        $this->bindings['data'] = [
-            concat('', 'passable', PROJECT_KEY) => false,
-            "string" => $string,
-            "request" => null
-        ];
-        return $this;
     }
 
     public function setStatus($code) {
@@ -165,10 +136,13 @@ class ResponseBuilder {
             if ($this->bindings['status'] !== null) {
                 http_response_code($this->bindings['status']);
             } else {
-                http_response_code(200);
+                $this->bindings['status'] = 200;
+                $this->resolveStatus();
+                return;
             }
         } catch (\Throwable $e) {
-            http_response_code(500);
+            $this->bindings['status'] = 500;
+            http_response_code($this->bindings['status']);
         }
     }
 
@@ -267,12 +241,10 @@ class ResponseBuilder {
                 }
                 echo $return->asXML();
                 break;
-            case 'middleware':
-                return $this->getData(false, true);
-                break;
             default:
                 break;
         }
+        app()->event()->trigger('app.response', ['response' => $this->bindings]);
         return $this->clearBindings();
     }
 }

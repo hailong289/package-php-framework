@@ -1,8 +1,8 @@
 <?php
 namespace Hola\Container;
-
-use Hola\Core\Request;
+use Hola\Events\AppEvents;
 use Hola\Exceptions\AppException;
+use Hola\Transport\Request;
 
 class Container
 {
@@ -32,17 +32,34 @@ class Container
         }
         return self::$instance;
     }
+    
+    public function event(): AppEvents
+    {
+        if (!empty($this->singletons[AppEvents::class])) {
+            return $this->singletons[AppEvents::class];
+        }
+        $this->singletons[AppEvents::class] = AppEvents::start();
+        return $this->singletons[AppEvents::class];
+    }
+
+    public function request()
+    {
+        if (!empty($this->singletons[Request::class])) {
+            return $this->singletons[Request::class];
+        }
+        $this->singletons[Request::class] = new Request();
+        return $this->singletons[Request::class];
+    }
 
     /**
      * get class binding
      */
-    private function get($abstract) {
-        if (is_string($abstract)) {
-            if (!isset($this->bindings[$abstract])) {
-                return $abstract;
-            } else {
-                return $this->bindings[$abstract];
-            }
+    private function getClass($abstract) {
+        if (isset($this->singletons[$abstract])) {
+            return $this->singletons[$abstract];
+        }
+        if (isset($this->bindings[$abstract])) {
+            return $this->bindings[$abstract];
         }
         return $abstract;
     }
@@ -158,7 +175,7 @@ class Container
             $type = $param->getType(); // check type
             if ($type && $type instanceof \ReflectionNamedType) { /// if parameter is a class
                 $className = $type->getName();
-                $bindingClassMethod = $this->bindings[$className] ?? $className;
+                $bindingClassMethod = $this->getClass($className);
                 if (is_string($bindingClassMethod)) {
                     $bindingClassMethod = $this->make($bindingClassMethod);
                 }

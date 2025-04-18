@@ -21,7 +21,7 @@ class MiddlewareBuilder {
                 return true;
             } 
         );
-        $closure = $pipeline($app->make(Request::class));
+        $closure = $pipeline($app->request());
         if ($closure instanceof ResponseBuilder) {
             return [$key_middlware => false, 'return' => $closure];
         }

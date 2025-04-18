@@ -32,15 +32,7 @@ class Response {
     public static function exit() {
         return self::build()->exit();
     }
-
-    public static function next($request){
-        return self::build()->next($request);
-    }
-
-    public static function close($string = ''){
-        return self::build()->close($string);
-    }
-
+    
     public static function setStatus($code)
     {
         return self::build()->setStatus($code);
