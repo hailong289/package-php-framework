@@ -51,6 +51,28 @@ class Application extends Container
     }
 
     /**
+     * Register the application shutdown function.
+     * @throws AppException
+     */
+    protected function registerShutdown(): void
+    {
+        register_shutdown_function([$this, 'handleShutdown']);
+    }
+
+    /**
+     * Initialize the core components of the application.
+     * @throws AppException
+     */
+    public function initializeCore()
+    {
+        $this->register();
+        $this->registerDependencies();
+        $this->registerRouter();
+        $this->registerMiddleware();
+        return $this;
+    }
+
+    /**
      * Registers the application router.
      *
      * @throws AppException
@@ -69,17 +91,16 @@ class Application extends Container
      */
     public function run()
     {
-        register_shutdown_function([$this, 'handleShutdown']);
+        $this->registerShutdown();
         try {
-            $this->register();
-            $this->registerDependencies();
-            $this->registerRouter();
-            $this->registerMiddleware();
-            return $this->work();
+            return $this->initializeCore()
+                ->handleHttpRequest();
         } catch (\Throwable $e) {
-            return $this->responseError($e);
+            return $this->handleException($e);
         }
     }
+
+
 
     /**
      * Run the application in CLI mode.
@@ -144,7 +165,7 @@ class Application extends Container
      * Run the application.
      * @return $this
      */
-    private function work()
+    private function handleHttpRequest()
     {
         try {
             if (empty($this->control)) {
@@ -160,6 +181,15 @@ class Application extends Container
         } catch (\Throwable $e) {
             return $this->responseError($e);
         }
+    }
+
+    /**
+     * Handle the exception.
+     * @return void
+     */
+    public function handleException(\Throwable $e)
+    {
+        return $this->responseError($e);
     }
 
     /**

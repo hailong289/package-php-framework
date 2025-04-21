@@ -44,7 +44,8 @@ class QueryBuilder {
         'insertOrUpdate' => [],
         'relations' => [],
         'variables' => [],
-        'params' => []
+        'params' => [],
+        'data' => [],
     ];
 
     public function setModel($modelCalled, $variables = [])
@@ -432,6 +433,7 @@ class QueryBuilder {
 
     public function get(): Collection
     {
+        app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'get']);
         return $this->resolveData($this->toSql(), 'select', function ($selectData) {
             $this->clearBindings(true);
             return $selectData;
@@ -445,6 +447,7 @@ class QueryBuilder {
 
     public function first(): Collection
     {
+        app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'get']);
         return $this->resolveData($this->toSql(), 'selectOne', function ($selectData) {
             $this->clearBindings(true);
             return $selectData;
@@ -453,9 +456,11 @@ class QueryBuilder {
 
     public function create($data): Collection
     {
+        app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'create']);
         $object = $this->clone();
         $this->resolveAttribute($data);
         return $this->resolveData($this->toSql('INSERT', $data), 'insertLastId', function ($id) use ($object) {
+            app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'created']);
             $this->clearBindings(true);
             $selectData = $this->resolveCloneObject($object, ['from','variables'])->find($id);
             return $selectData;
@@ -480,8 +485,10 @@ class QueryBuilder {
 
     public function insert($data) : bool
     {
+        app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'create']);
         $this->resolveAttribute($data, 'SET');
         return $this->resolveData($this->toSql('INSERT', $data), 'insert', function ($selectData, $status) {
+            app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'created']);
             $this->clearBindings(true);
             return $status;
         }, $this->bindings['params']);
@@ -489,8 +496,10 @@ class QueryBuilder {
 
     public function insertLastId($data) : int
     {
+        app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'create']);
         $this->resolveAttribute($data, 'SET');
         return $this->resolveData($this->toSql('INSERT', $data), 'insertLastId', function ($id) {
+            app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'created']);
             $this->clearBindings(true);
             return $id;
         }, $this->bindings['params']);
@@ -498,6 +507,7 @@ class QueryBuilder {
 
     public function update($data, $id = null) : bool
     {
+        app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'update']);
         if (!is_null($id)) {
             if (is_array($id)) {
                 foreach ($id as $key => $value) {
@@ -509,13 +519,15 @@ class QueryBuilder {
         }
         $this->resolveAttribute($data, 'UPDATE');
         return $this->resolveData($this->toSql('UPDATE', $data), 'update', function ($selectData, $status) {
+            app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'updated']);
             $this->clearBindings(true);
             return $status;
         },$this->bindings['params']);
     }
 
-    public function save($data = [])
+    public function save()
     {
+        $data = $this->bindings['data'];
         if (isset($data['id'])) {
             $id = $data['id'];
             unset($data['id']);
@@ -527,10 +539,12 @@ class QueryBuilder {
 
     public function delete($id = null): bool
     {
+        app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'delete']);
         if (!is_null($id)) {
             $this->where('id', $id);
         }
         return $this->resolveData($this->toSql('DELETE'), 'delete', function ($selectData, $status) {
+            app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'deleted']);
             $this->clearBindings(true);
             return $status;
         }, $this->bindings['params']);

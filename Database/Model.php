@@ -282,7 +282,9 @@ class Model {
     
     public function save()
     {
+        $builder = self::build();
         $data = get_object_vars($this);
-        return self::build()->save($data);
+        $builder->bindings['data'] = $data;
+        return self::build()->save();
     }
 }

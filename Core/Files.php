@@ -73,17 +73,17 @@ class Files {
     )
     {
         try {
-            $upload = $this->upload($files['file'], $files['path'], $files['filename'], $files['extension']);
+            $upload = $this->upload($file, $path, $filename, $extension);
             if(!$upload['uploaded']) {
                 throw new \Exception($upload['msg']);
             }
             $resize = $this->resizeImage(
                 $upload['url'],
-                $files['path'],
+                $path,
                 $upload['filename'] ?? time(),
-                $resize['width'],
-                $resize['height'],
-                $resize['quality']
+                $width,
+                $height,
+                $quality
             );
             if(!$resize) {
                 throw new \Exception('Resize image failed');

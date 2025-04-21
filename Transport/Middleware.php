@@ -26,28 +26,16 @@ class Middleware {
         $crsfToken = $request->headers('X-CSRF-TOKEN', $request->csrf_token);
         if (empty($crsfToken)) {
             if ($request->isJson()) {
-                return Response::json([
-                    "message" => "CSRF token not found",
-                    "code" => 500
-                ], 500);
+                return Response::json(["message" => "CSRF token not found"])->setStatus(419);
             }
-            return Response::view('error.index', [
-                "message" => "CSRF token not found",
-                "code" => 500
-            ], 500);
+            return Response::view('error.index', ["message" => "CSRF token not found"])->setStatus(419);
         }
 
-        if ($crsfToken !== $request->session('csrf_token')) {
+        if (!hash_equals($request->session('csrf_token'), $crsfToken)) {
             if ($request->isJson()) {
-                return Response::json([
-                    "message" => "CSRF token not match",
-                    "code" => 401
-                ], 401);
+                return Response::json(["message" => "CSRF token not match"])->setStatus(403);
             }
-            return Response::view('error.index', [
-                "message" => "CSRF token not match",
-                "code" => 401
-            ], 401);
+            return Response::view('error.index', ["message" => "CSRF token not match"])->setStatus(403);
         }
         
         $request->session()->remove('csrf_token');
