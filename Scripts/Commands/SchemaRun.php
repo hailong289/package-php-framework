@@ -1,8 +1,10 @@
 <?php
 
-namespace Hola\Scripts;
+namespace Hola\Scripts\Commands;
 
-class SchemaRunScript extends \Hola\Core\Command {
+use Hola\Core\Command;
+
+class SchemaRun extends Command {
     protected $command = 'schema:run';
     protected $command_description = 'Run the database schema';
     protected $arguments = ['type'];

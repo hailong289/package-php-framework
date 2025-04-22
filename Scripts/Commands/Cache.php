@@ -1,7 +1,6 @@
 <?php
-namespace Hola\Scripts;
-class CacheScript extends \Hola\Core\Command
-{
+namespace Hola\Scripts\Commands;
+class Cache extends \Hola\Core\Command {
     protected $command = 'clear:cache';
     protected $command_description = 'clear cache';
     protected $arguments = ["?type"];
@@ -14,7 +13,7 @@ class CacheScript extends \Hola\Core\Command
         switch ($type) {
             case 'router':
                 $item = __DIR__ROOT."/storage/cache/{$prefix}_routers.cache";
-                if(file_exists($item)){ 
+                if(file_exists($item)){
                     unlink($item);
                 }
                 $this->output()->info("=== Clear cache router successfully ===");

@@ -6,6 +6,7 @@ use Hola\Container\Container;
 use Hola\Events\AppEvents;
 use Hola\Exceptions\AppException;
 use Hola\Exceptions\RouterException;
+use Hola\Scripts\CliCommand;
 use Hola\Transport\Request;
 use Hola\Transport\Response;
 use Hola\Routings\Router;
@@ -19,8 +20,8 @@ class Application extends Container
     /** @var array|null */
     private $middlewares;
 
-    /** @var \Symfony\Component\Console\Application|null */
-    private ?\Symfony\Component\Console\Application $cli = null;
+    /** @var CliCommand|null */
+    private ?CliCommand $cli = null;
 
     public function __construct(){}
     
@@ -108,9 +109,8 @@ class Application extends Container
      */
     public function runCLI()
     {
-        if (empty($this->cli)) {
-            $this->registerCommand();
-        }
+        $this->registerShutdown();
+        $this->registerCommand();
         $this->cli->run();
         return $this;
     }
@@ -130,35 +130,9 @@ class Application extends Container
      */
     public function registerCommand()
     {
-        $this->cli = new \Symfony\Component\Console\Application();
-        $command_dir = scandir(__DIR__ROOT .'/App/Commands');
-        $command_dir = array_diff($command_dir, array('.', '..'));
-
-        $array_command = [];
-        if (!empty($command_dir)) {
-            foreach($command_dir as $item){
-                $item = str_replace('.php','',$item);
-                $array_command[] = $this->make("App\\Commands\\$item");
-            }
-        }
-        $array_command = array_merge($array_command, [
-            $this->make(\Hola\Scripts\ControllerScript::class),
-            $this->make(\Hola\Scripts\ModelScript::class),
-            $this->make(\Hola\Scripts\ViewScript::class),
-            $this->make(\Hola\Scripts\RequestScript::class),
-            $this->make(\Hola\Scripts\MiddlewareScript::class),
-            $this->make(\Hola\Scripts\QueueScript::class),
-            $this->make(\Hola\Scripts\CommandScript::class),
-            $this->make(\Hola\Scripts\MailScript::class),
-            $this->make(\Hola\Scripts\RouterScript::class),
-            $this->make(\Hola\Scripts\CacheScript::class),
-            $this->make(\Hola\Scripts\GenerateScript::class),
-            $this->make(\Hola\Scripts\SchemaScript::class),
-            $this->make(\Hola\Scripts\SchemaRunScript::class),
-        ]);
-        foreach ($array_command as $item) {
-            $this->cli->add($item);
-        }
+        $this->cli = app()->make(CliCommand::class)
+            ->initAppCommand()
+            ->register();
     }
 
     /**

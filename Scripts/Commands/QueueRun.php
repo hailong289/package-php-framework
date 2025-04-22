@@ -1,5 +1,5 @@
 <?php
-namespace Hola\Scripts;
+namespace Hola\Scripts\Commands;
 
 use Hola\Connection\RabbitMQ;
 use Hola\Connection\Redis;
@@ -9,7 +9,7 @@ use Hola\Database\QueryBuilder;
 use Hola\Exceptions\QueueException;
 use Hola\Queue\ListenQueue;
 
-class QueueScript extends \Hola\Core\Command
+class QueueRun extends \Hola\Core\Command
 {
     protected $command = 'queue:run';
     protected $command_description = 'Run a queue';
@@ -190,10 +190,10 @@ class QueueScript extends \Hola\Core\Command
         }
 
         while ($queue = $db->select([
-                'id',
-                'queue',
-                'data'
-            ])
+            'id',
+            'queue',
+            'data'
+        ])
             ->from($queue_name)
             ->where('queue', $queue_name)
             ->limit(1)

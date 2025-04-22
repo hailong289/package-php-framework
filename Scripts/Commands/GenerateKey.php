@@ -1,8 +1,8 @@
 <?php
 
-namespace Hola\Scripts;
+namespace Hola\Scripts\Commands;
 
-class GenerateScript extends \Hola\Core\Command
+class GenerateKey extends \Hola\Core\Command
 {
     protected $command = 'generate:key';
     protected $command_description = 'Generate a project key';

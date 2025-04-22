@@ -8,7 +8,6 @@ class TimeoutManager
     private $triggers = [];
     private $payload;
 
-    // Constructor nhận thời gian timeout mặc định (giây)
     public function __construct(int $timeout = 5)
     {
         $this->timeout = $timeout;

@@ -1,9 +1,10 @@
 <?php
-namespace Hola\Scripts;
+
+namespace Hola\Scripts\Commands;
+use Hola\Core\Command;
 use Hola\Routings\Router;
 
-class RouterScript extends \Hola\Core\Command
-{
+class RouterList extends Command {
     protected $command = 'router:list';
     protected $command_description = 'a list of routes';
     protected $arguments = [];

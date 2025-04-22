@@ -1,8 +1,10 @@
 <?php
 
-namespace Hola\Scripts;
+namespace Hola\Scripts\Commands;
 
-class SchemaScript extends \Hola\Core\Command {
+use Hola\Core\Command;
+
+class CreateSchema extends Command {
     protected $command = 'create:schema';
     protected $command_description = 'Run the database create schema';
     protected $options = [
@@ -66,4 +68,6 @@ class ' . $className . ' extends TableMigration {
             $this->output()->text("$migration already exist".PHP_EOL);
         }
     }
+
+
 }
