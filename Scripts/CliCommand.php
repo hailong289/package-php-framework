@@ -19,7 +19,7 @@ class CliCommand {
     public function register() {
         $array_command = [];
         $command_default = scandir(__DIR__ .'/Commands');
-        $command_default = array_diff($command_default, array('.', '..'));
+        $command_default = array_diff($command_default, array('.', '..','QueueJobs'));
         $array_command_default = [];
         if (!empty($command_default)) {
             foreach($command_default as $item){
