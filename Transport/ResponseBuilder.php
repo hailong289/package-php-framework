@@ -1,7 +1,7 @@
 <?php
 
 namespace Hola\Transport;
-use Hola\Core\ViewRender;
+use Hola\Views\ViewRender;
 use Hola\Data\Collection;
 use Hola\Data\ShareData;
 use Hola\Exceptions\AppException;

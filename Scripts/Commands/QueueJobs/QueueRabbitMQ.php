@@ -2,6 +2,7 @@
 namespace Hola\Scripts\Commands\QueueJobs;
 use Hola\Connection\RabbitMQ;
 use Hola\Exceptions\QueueException;
+use PhpAmqpLib\Channel\AMQPChannel;
 
 class QueueRabbitMQ {
     private $queueName = 'jobs';
@@ -9,7 +10,7 @@ class QueueRabbitMQ {
     public $queueConnectionType = 'rabbitmq';
     private $break_job = false;
     private \PhpAmqpLib\Connection\AMQPStreamConnection|\PhpAmqpLib\Connection\AMQPSSLConnection|null $driver = null;
-    private $channel = null;
+    private \PhpAmqpLib\Channel\AMQPChannel|null $channel = null;
     private $is_rollback = false;
 
     private function data($data)
@@ -61,61 +62,82 @@ class QueueRabbitMQ {
         if ($this->is_rollback) {
             $this->queueName = 'failed_jobs';
         }
-        $this->channel = $this->driver->channel();
-        $this->channel->queue_declare($this->queueName, false, true, false, false);
         return $this;
     }
 
-    public function queueWork(QueueManage $queueManage)
+    protected function initChannel(): void
     {
-        $queueManage->eventTimeOut(fn ($payload) => $this->eventTimeOut($payload, $queueManage));
-        $this->getQueue();
-        $callback = function (\PhpAmqpLib\Message\AMQPMessage $msg) use ($queueManage) {
-            $queue = json_decode($msg->body, true);
-            $queue = $this->data($queue);
-            $taskName = $queue['class'] . '_' . uid();
-            if (!empty($queue['timeout'])) {
-                $queueManage->setTimeOut((int)$queue['timeout']);
+        $this->channel = $this->driver->channel();
+        $this->channel->queue_declare(
+            $this->queueName, false, true, false, false
+        );
+    }
+
+    protected function makeCallback(QueueManage $qm): callable
+    {
+        return function (\AMQPMessage $msg) use ($qm) {
+            $data = $this->data(json_decode($msg->body, true));
+            $taskName = "{$data['class']}_".uid();
+
+            if (!empty($data['timeout'])) {
+                $qm->setTimeout((int)$data['timeout']);
             }
-            $callbackQueue = function () use ($queue, $msg, $queueManage) {
-                $queueManage->pendingJob();
+
+            $qm->execute($taskName, function() use ($msg, $qm, $data) {
+                $qm->pendingJob();
                 $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
                 try {
-                    if (!method_exists($queue['class'], 'handle')) {
-                        throw new QueueException("function handle does not exits in {$queue['class']}");
+                    $class = $data['class'];
+                    if (!method_exists($class, 'handle')) {
+                        throw new QueueException("Handle missing in {$class}");
                     }
-                    app()->callWithParams($queue['class'], $queue['payload'])->handle();
-                    $queueManage->doneJob();
+                    app()->callWithParams($class, $data['payload'])->handle();
+                    $qm->doneJob();
                 } catch (\Throwable $e) {
-                    $data = $this->getDataFailed($queue, $exception);
-                    $queueManage->failedJob($this, $data, $exception);
+                    $qm->failedJob($this, $this->getDataFailed($data, $e), $e);
                 }
-            };
-            $queueManage->execute($taskName, $callbackQueue, $queue);
+            }, $data);
         };
+    }
 
-        $this->channel->basic_qos(null, 1, null);
-        $consumer_tag = $this->channel->basic_consume($queue, '', false, false, false, false, $callback);
-        $max_idle = 3;
-        $idle_count = 0;
-        while (count($this->channel->callbacks)) {
-            if ($this->break_job) {
-                break;
-            }
+    protected function waitForJobs(QueueManage $qm, int $maxIdle, int $timeoutSec): void
+    {
+        $idle = 0;
+        while (count($this->channel->callbacks) && !$this->break_job) {
             try {
-                $this->channel->wait(null, false, 3);
-                $idle_count = 0;
-            } catch (\PhpAmqpLib\Exception\AMQPTimeoutException $e) {
-                $idle_count++;
-                if ($idle_count >= $max_idle) {
-                    $queueManage->output->writeln("<info>No jobs after {$max_idle} attempts. Exiting...</info>");
+                $this->channel->wait(null, false, $timeoutSec);
+                $idle = 0;
+            } catch (\AMQPTimeoutException $e) {
+                if (++$idle >= $maxIdle) {
+                    $qm->output->writeln(
+                        "<info>No jobs after {$maxIdle} checks. Exiting...</info>"
+                    );
                     break;
                 }
             }
         }
+    }
 
+    protected function closeChannel(): void
+    {
         $this->channel->close();
         $this->driver->close();
+    }
+
+
+    public function queueWork(QueueManage $queueManage)
+    {
+        $this->getQueue();
+        $this->initChannel();
+        $this->channel->basic_qos(null, 1, null);
+
+        $this->channel->basic_consume(
+            $this->queueName, '', false, false, false, false,
+            $this->makeCallback($queueManage)
+        );
+
+        $this->waitForJobs($queueManage, 3, 3);
+        $this->closeChannel();
     }
 
     private function eventTimeOut($payload, QueueManage $queueManage)
