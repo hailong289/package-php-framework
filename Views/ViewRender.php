@@ -112,7 +112,7 @@ class ViewRender {
         $view = substr(self::$binding['view_root'], strpos(self::$binding['view_root'], 'Views'));
         $extension = in_array($name, self::$file_html) ? '.html' : '.php';
         $encryption = md5($view);
-        return __DIR__ROOT . "/storage/render/$encryption.$extension";
+        return __DIR__ROOT . "/storage/render/{$encryption}{$extension}";
     }
 
     private static function resolveViewHasParse($name, $data)
