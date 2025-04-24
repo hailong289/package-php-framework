@@ -26,7 +26,7 @@ class Cache extends \Hola\Core\Command {
                 $this->output()->info("=== Clear cache config successfully ===");
                 break;
             case 'view':
-                $item = __DIR__ROOT.'/storage/render/Views';
+                $item = __DIR__ROOT.'/storage/render';
                 if(is_dir($item)){
                     $cache = rglob("$item/*");
                     foreach($cache as $v){
@@ -46,7 +46,7 @@ class Cache extends \Hola\Core\Command {
                         }
                     }
                 }
-                $item_view = __DIR__ROOT.'/storage/render/Views';
+                $item_view = __DIR__ROOT.'/storage/render';
                 if(is_dir($item_view)){
                     $cache = rglob("$item_view/*");
                     foreach($cache as $v){
