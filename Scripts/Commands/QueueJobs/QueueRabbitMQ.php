@@ -3,14 +3,17 @@ namespace Hola\Scripts\Commands\QueueJobs;
 use Hola\Connection\RabbitMQ;
 use Hola\Exceptions\QueueException;
 use PhpAmqpLib\Channel\AMQPChannel;
+use PhpAmqpLib\Connection\AMQPSSLConnection;
+use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Message\AMQPMessage;
 
 class QueueRabbitMQ {
     private $queueName = 'jobs';
     private $queueConnection = 'rabbitmq';
     public $queueConnectionType = 'rabbitmq';
     private $break_job = false;
-    private \PhpAmqpLib\Connection\AMQPStreamConnection|\PhpAmqpLib\Connection\AMQPSSLConnection|null $driver = null;
-    private \PhpAmqpLib\Channel\AMQPChannel|null $channel = null;
+    private AMQPStreamConnection|AMQPSSLConnection|null $driver = null;
+    private AMQPChannel|null $channel = null;
     private $is_rollback = false;
 
     private function data($data)
@@ -75,7 +78,7 @@ class QueueRabbitMQ {
 
     protected function makeCallback(QueueManage $qm): callable
     {
-        return function (\AMQPMessage $msg) use ($qm) {
+        return function (AMQPMessage $msg) use ($qm) {
             $data = $this->data(json_decode($msg->body, true));
             $taskName = "{$data['class']}_".uid();
 
@@ -173,10 +176,10 @@ class QueueRabbitMQ {
         $channel = $this->driver->channel();
         $channel->queue_declare('failed_jobs', false, true, false, false);
         $attributes = [
-            'delivery_mode' => \PhpAmqpLib\Message\AMQPMessage::DELIVERY_MODE_PERSISTENT,
+            'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
             'content_type' => 'application/json',
         ];
-        $msg = new \PhpAmqpLib\Message\AMQPMessage(
+        $msg = new AMQPMessage(
             $data,
             $attributes
         );

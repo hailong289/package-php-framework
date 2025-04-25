@@ -41,7 +41,7 @@ class ViewRender {
                     self::resolveViewContent(self::$binding['view_root'], $view),
                     $data
                 );
-                return (new Parser($template))->parse();
+                return (new Parser($template))->parse($view);
             },
             $data
         );
@@ -92,15 +92,15 @@ class ViewRender {
         return $output;
     }
 
-    private static function resolveRenderHtml($name, $callback, $data = [])
+    private static function resolveRenderHtml($path_name, $callback, $data = [])
     {
+        extract($data);
         ob_start();
-        extract($data, EXTR_SKIP);
-        if ($name === 'error.index') {
+        if ($path_name === 'error.index') {
             require(self::$binding['view_root']);
             return ob_get_clean();
         }
-        $view_render = self::encryptionViewRender($name);
+        $view_render = self::encryptionViewRender($path_name);
         createFolder(getFolder($view_render));
         file_put_contents($view_render, $callback());
         require_once $view_render;
@@ -115,20 +115,19 @@ class ViewRender {
         return __DIR__ROOT . "/storage/render/{$encryption}{$extension}";
     }
 
-    private static function resolveViewHasParse($name, $data)
+    private static function resolveViewHasParse($path_name, $data)
     {
-        $threshold = 300; // 5 minutes
-        $viewParse = self::encryptionViewRender($name);
+        $viewParse = self::encryptionViewRender($path_name);
         if (file_exists($viewParse)) {
-            if (in_array($name, self::$file_html)) {
+            if (in_array($path_name, self::$file_html)) {
                 self::$binding['view_parse'] = file_get_contents($viewParse);
             } else {
-                if (time() - filemtime($viewParse) > $threshold) {
+                if (time() - filemtime($viewParse) > 300) { // 5 minutes
                     self::$binding['view_parse'] = null;
                     return false;
                 }
+                extract($data);
                 ob_start();
-                extract($data, EXTR_SKIP);
                 require $viewParse;
                 self::$binding['view_parse'] = ob_get_clean();
             }
