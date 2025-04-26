@@ -8,7 +8,7 @@ class Parser {
     protected $template;
     protected $template_name = null;
     protected $rules = [
-        ['regex' => '/\{\s*\$(\w+)\s*(?:\|\s*(\w+))?\s*\}/', 'render' => 'callback', 'func' => 'variable'],
+        ['regex' => '/\{%\s*(.*?)\s*\%}/s', 'render' => 'callback', 'func' => 'variable'],
         [
             'regex' => '/@php\s*\{/',
             'render' => '<?php <<PUSH:php>>'
@@ -62,7 +62,7 @@ class Parser {
     public function __construct($template) {
         $this->template = $template;
     }
-    
+
     public function parse($view) {
         $this->template_name = $view;
 
@@ -109,7 +109,7 @@ class Parser {
     private function variable($matches)
     {
         $expression = trim($matches[1]);
-        $value = "\$$expression";
+        $value = "$expression";
         $pipe = trim($matches[2] ?? '');
 
         if (!empty($pipe)) {
@@ -122,12 +122,11 @@ class Parser {
 
     private function resolvePipe(string $pipe, string $value): string
     {
-        $dirPipes = __DIR__ROOT . '/App/Pipes';
         $pipeClassName = ucfirst($pipe) . 'Pipe';
         $fullClass = "\\App\\Pipes\\{$pipeClassName}";
         $fullClassDefault = "\\Hola\\Views\\Pipes\\{$pipeClassName}";
         $getPipe = class_exists($fullClassDefault) ? $fullClassDefault : $fullClass;
-      
+
         if (!class_exists($getPipe)) {
             throw new AppException("Pipe '{$pipe}' does not exist in view {$this->template_name}");
         }
