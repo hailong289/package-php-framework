@@ -48,7 +48,7 @@ class Parser {
         ],
 
         [
-            'regex' => '/\}/',
+            'regex' => '/(?<!<\?php)(?<!\?>)\}/',
             'render' => '<<POP>>'
         ],
         ['regex' => '/@class\((.*?)\)/', 'render' => 'class="<?=implode(" ",$1)?>"'],
@@ -96,7 +96,7 @@ class Parser {
                     'for' => '<?php endfor; ?>',
                     'switch' => '<?php endswitch; ?>',
                     'php' => '?>',
-                    default => ''
+                    default => '}'
                 };
                 $line = str_replace('<<POP>>', $phpEnd, $line);
             }
