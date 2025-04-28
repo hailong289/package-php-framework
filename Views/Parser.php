@@ -8,7 +8,7 @@ class Parser {
     protected $template;
     protected $template_name = null;
     protected $rules = [
-        ['regex' => '/\{%\s*(.*?)\s*\%}/s', 'render' => 'callback', 'func' => 'variable'],
+        ['regex' => '/\{{\s*(.*?)\s*\}}/s', 'render' => 'callback', 'func' => 'variable'],
         [
             'regex' => '/@php\s*\{/',
             'render' => '<?php <<PUSH:php>>'
