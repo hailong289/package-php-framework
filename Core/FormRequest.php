@@ -9,7 +9,7 @@ use Hola\Transport\Response;
 
 class FormRequest extends Request {
     private $data_errors = null;
-    private $data = [];
+    private $data = null;
     public function __construct()
     {
         $this->validate();
@@ -57,7 +57,7 @@ class FormRequest extends Request {
         return $this->data_errors;
     }
 
-    public function data()
+    public function data(): array|object|null
     {
         return $this->data;
     }

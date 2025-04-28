@@ -46,7 +46,14 @@ class Parser {
                 '<?php default: ?>'
             ]
         ],
-
+        [
+            'regex' => '/@empty\s*\((.*?)\)\s*\{/',
+            'render' => '<?php if(empty($1)): ?>'
+        ],
+        [
+            'regex' => '/@notEmpty\s*\((.*?)\)\s*\{/',
+            'render' => '<?php if(!empty($1)): ?>'
+        ],
         [
             'regex' => '/(?<!<\?php)(?<!\?>)\}/',
             'render' => '<<POP>>'
@@ -57,6 +64,7 @@ class Parser {
         ['regex' => '/@selected\((.*?)\)/', 'render' => 'selected="$1"'],
         ['regex' => '/@disabled\((.*?)\)/', 'render' => 'disabled="$1"'],
         ['regex' => '/@readonly\((.*?)\)/', 'render' => 'readonly="$1"'],
+        ['regex' => '/@(\w+)\s*=\s*"([^"]+)"/', 'render' => 'callback', 'func' => 'bindEventJS']
     ];
 
     public function __construct($template) {
@@ -120,6 +128,32 @@ class Parser {
         return "<?= $value ?>";
     }
 
+    private function bindEventJS($matches)
+    {
+        $event = strtolower($matches[1]);   // @Click => click
+        $handler = $matches[2];             // functionName
+
+        $eventMapping = [
+            'click', 'input', 'change', 'submit',
+            'mouseover', 'mouseout', 'mouseenter', 'mouseleave',
+            'keydown', 'keyup', 'focus', 'blur'
+        ];
+
+        if (in_array($event, $eventMapping)) {
+            $handler = preg_replace_callback('/\{{\s*(.*?)\s*\}}/s', function ($m) {
+                $phpVar = $m[1];
+                return "'<?= $phpVar ?>'";
+            }, $handler);
+
+            if (strpos($handler, '(') === false) {
+                $handler .= '()';
+            }
+            return "on$event" . '="' . $handler . '"';
+        }
+
+        return $matches[0];
+    }
+
     private function resolvePipe(string $pipe, string $value): string
     {
         $pipeClassName = ucfirst($pipe) . 'Pipe';
@@ -133,4 +167,5 @@ class Parser {
 
         return "(new {$getPipe}())->handle({$value})";
     }
+
 }
