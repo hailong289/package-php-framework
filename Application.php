@@ -92,8 +92,8 @@ class Application extends Container
      */
     public function run()
     {
-        $this->registerShutdown();
         try {
+            $this->registerShutdown();
             return $this->initializeCore()
                 ->handleHttpRequest();
         } catch (\Throwable $e) {
@@ -109,8 +109,8 @@ class Application extends Container
      */
     public function runCLI()
     {
-        $this->registerShutdown();
         try {
+            $this->registerShutdown();
             $this->registerCommand();
             $this->cli->run();
         } catch (\Throwable $e) {
