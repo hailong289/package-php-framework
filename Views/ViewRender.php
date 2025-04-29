@@ -94,17 +94,17 @@ class ViewRender {
 
     private static function resolveRenderHtml($path_name, $callback, $data = [])
     {
-        extract($data);
-        ob_start();
         if ($path_name === 'error.index') {
-            require(self::$binding['view_root']);
-            return ob_get_clean();
+            return self::getDefaultViewError($data);
         }
         $view_render = self::encryptionViewRender($path_name);
         createFolder(getFolder($view_render));
         file_put_contents($view_render, $callback());
-        require_once $view_render;
-        return ob_get_clean();
+        $outputHtml = self::includeViewWithVars($view_render, $data);
+        if (in_array($path_name, self::$file_html)) {
+            file_put_contents($view_render, $outputHtml);
+        }
+        return $outputHtml;
     }
 
     private static function encryptionViewRender($name)
@@ -143,5 +143,20 @@ class ViewRender {
                 $xml->addChild($key, htmlspecialchars($value));
             }
         }
+    }
+
+    private static function getDefaultViewError($data)
+    {
+        extract($data);
+        ob_start();
+        require(self::$binding['view_root']);
+        return ob_get_clean();
+    }
+
+    private static function includeViewWithVars($view_render, $data) {
+        extract($data);
+        ob_start();
+        require $view_render;
+        return ob_get_clean();
     }
 }

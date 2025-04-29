@@ -110,8 +110,13 @@ class Application extends Container
     public function runCLI()
     {
         $this->registerShutdown();
-        $this->registerCommand();
-        $this->cli->run();
+        try {
+            $this->registerCommand();
+            $this->cli->run();
+        } catch (\Throwable $e) {
+            $this->handleErrorLogs($e);
+            echo $e->getMessage() . PHP_EOL . $e->getTraceAsString();
+        }
         return $this;
     }
 
