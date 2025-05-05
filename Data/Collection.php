@@ -30,7 +30,7 @@ class Collection
     }
 
     public function value($key = null, $default = null) {
-        $data = $this->count() ? $this->data[0] : $this->data;
+        $data = $this->count() ? array_values($this->data)[0] : $this->data;
         if (is_null($key)) {
             return $data;
         }

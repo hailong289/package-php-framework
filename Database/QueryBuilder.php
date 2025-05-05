@@ -824,31 +824,32 @@ class QueryBuilder {
             });
             foreach ($relationData as $idx => $relation) {
                 $name = $relation['name'];
-                $current_key = $relation['current_key']['name'];
+                $related_key = $relation['current_key']['name'];
                 $foreign_key = $relation['foreign_key']['name'];
+                $foreign_key2 = $relation['foreign_key2']['name'];
                 if (!empty($relation[$name])) {
                     $values = $relation[$name];
                     $keyValue = in_array($relation['relation'], [
                         'BELONG_TO',
                         'HAS_ONE'
                     ]) ? 'value':'values';
-                    $item->{$name} = collection()->set($values)->filter(function ($value) use ($item, $foreign_key, $current_key) {
-                        if (is_array($value->{$foreign_key})) {
-                            $ids = $value->{$foreign_key};
-                            return in_array($item->{$current_key}, $ids);
+                    $item->{$name} = collection()->set($values)->filter(function ($value) use ($item, $foreign_key, $related_key) {
+                        if (is_array($value->{$related_key})) {
+                            $ids = $value->{$related_key};
+                            return in_array($item->{$foreign_key}, $ids);
                         } else {
-                            return $item->{$current_key} === $value->{$foreign_key};
+                            return $item->{$foreign_key} === $value->{$related_key};
                         }
                     })->{$keyValue}();
                 } else {
-                    $current_key_val = $item->{$current_key};
+                    $related_key_val = $item->{$foreign_key};
                     $item->{$name} = $this->resolveRelationsQuery(
                         $relation['related'],
                         $relation['table_3rd'],
-                        $current_key,
-                        $current_key_val,
-                        $relation['foreign_key']['name'],
-                        $relation['foreign_key2']['name'],
+                        $related_key,
+                        $related_key_val,
+                        $foreign_key,
+                        $foreign_key2,
                         $relation['query'],
                         $relation['columns'],
                         $relation['relation']
@@ -867,22 +868,25 @@ class QueryBuilder {
             return !$item['useN1Query'];
         });
         foreach ($relationNotUseQueryN1 as $idx => $relation) {
-            $current_key = $relation['current_key']['name'];
-            $current_key_val = collection()->set($values)->map(function ($item) use ($current_key) {
+            $related_key = $relation['current_key']['name'];
+            $foreign_key = $relation['foreign_key']['name'];
+            $foreign_key2 = $relation['foreign_key2']['name'];
+            $related_key_value = collection()->set($values)->map(function ($item) use ($foreign_key) {
                 $keys = get_object_vars($item);
-                if (isset($keys[$current_key])) {
-                    return $item->{$current_key};
+                if (isset($keys[$foreign_key])) {
+                    return $item->{$foreign_key};
                 }
                 return 0;
             })->filter(fn ($item) => $item > 0)->toArray();
-            if (!empty($current_key_val)) {
+            if (!empty($related_key_value)) {
+                $related_key_value = array_unique($related_key_value);
                 $this->bindings['relations'][$idx][$relation['name']] = $this->resolveRelationsQuery(
                     $relation['related'],
                     $relation['table_3rd'],
-                    $current_key,
-                    $current_key_val,
-                    $relation['foreign_key']['name'],
-                    $relation['foreign_key2']['name'],
+                    $related_key,
+                    $related_key_value,
+                    $foreign_key,
+                    $foreign_key2,
                     $relation['query'],
                     $relation['columns'],
                     $relation['relation']
@@ -903,8 +907,8 @@ class QueryBuilder {
     private function resolveRelationsQuery(
         $related,
         $table_3rd,
-        $current_key_name,
-        $current_key_val,
+        $related_key_name,
+        $related_key_val,
         $foreign_key,
         $foreign_key2 = null,
         $queryBuilder = null,
@@ -912,12 +916,12 @@ class QueryBuilder {
         $reletion = 'HAS_ONE'
     ) {
         $related = $this->getTableRelation($related);
-        if (empty($current_key_val)) {
+        if (empty($related_key_val)) {
             return [];
         }
         $whereName = 'where';
         $valueName = 'value';
-        if (is_array($current_key_val)) {
+        if (is_array($related_key_val)) {
             $whereName = 'whereIn';
             $valueName = 'values';
         }
@@ -929,7 +933,7 @@ class QueryBuilder {
             if ($reletion === 'HAS_MANY') {
                 $valueName = 'values';
             }
-            $query = $related->{$whereName}($foreign_key, $current_key_val);
+            $query = $related->{$whereName}($related_key_name, $related_key_val);
             $query = $query->when(!is_null($columns), function ($builder) use ($columns) {
                 if (is_string($columns)) {
                     $columns = explode(', ', $columns);
@@ -944,8 +948,8 @@ class QueryBuilder {
             return $this->resolveRelationsMany(
                 $table_3rd,
                 $whereName,
-                $current_key_name,
-                $current_key_val,
+                $related_key_name,
+                $related_key_val,
                 $foreign_key,
                 $foreign_key2,
                 $related,
@@ -956,8 +960,8 @@ class QueryBuilder {
             return $this->resolveRelationsMany(
                 $table_3rd,
                 $whereName,
-                $current_key_name,
-                $current_key_val,
+                $related_key_name,
+                $related_key_val,
                 $foreign_key,
                 $foreign_key2,
                 $related,
