@@ -29,8 +29,8 @@ class Response {
         return self::build()->xml($data, $status, $headers);
     }
 
-    public static function exit() {
-        return self::build()->exit();
+    public static function terminate() {
+        return self::build()->terminate();
     }
     
     public static function setStatus($code)
@@ -45,5 +45,19 @@ class Response {
     public static function metaTag(array $data = []) {
         return self::build()->metaTag($data);
     }
+    
+    public static function file($path)
+    {
+        return self::build()->file($path);
+    }
+    
+    public static function download($path)
+    {
+        return self::build()->download($path);
+    }
 
+    public static function text($string)
+    {
+        return self::build()->text($string);
+    }
 }

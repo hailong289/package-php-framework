@@ -33,9 +33,9 @@ class FormRequest extends Request {
                     $data = $this->data_auth();
                 }
                 if ($is_json) {
-                    return Response::json($data)->setStatus(403)->callback()->exit();
+                    return Response::json($data)->setStatus(403)->send()->terminate();
                 }
-                return Response::view($name_view, $data)->setStatus(403)->callback()->exit();
+                return Response::view($name_view, $data)->setStatus(403)->send()->terminate();
             }
         }
 

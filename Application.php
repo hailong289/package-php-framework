@@ -176,17 +176,28 @@ class Application extends Container
      * @param mixed $return
      * @return $this
      */
-    private function responseCore($return) {
-        if ($return instanceof ResponseBuilder) {
-            return $return->callback();
-        } else if (is_array($return) || is_object($return)) {
-            echo json_encode($return, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-        } else if (is_string($return) && is_file($return)) {
-            readfile($return);
-        } else {
-            echo $return;
+    private function responseCore($response) {
+        if ($response instanceof ResponseBuilder) {
+            return $response->send();
         }
-        return $this;
+
+        if (is_array($response) || is_object($response)) {
+            return Response::json($response)->send();
+        }
+
+        if (is_string($response)) {
+            if (is_file($response)) {
+                return Response::file($response)->send();
+            }
+
+            return Response::text($response)->send();
+        }
+
+        if ($response instanceof \Closure) {
+            return $this->handleClosure($response);
+        }
+
+        return Response::text('Invalid response')->send();
     }
 
     /**
@@ -348,6 +359,14 @@ class Application extends Container
                 $error['file'],
                 $error['line']
             ));
+        }
+    }
+
+    private function handleClosure(\Closure $closure) {
+        try {
+            return $closure();
+        } catch (\Exception $e) {
+            return Response::text('Error executing closure: ' . $e->getMessage())->send();
         }
     }
 }

@@ -42,7 +42,7 @@ class ResponseBuilder {
         return $this;
     }
 
-    public function metaTag($data = []) {
+    public function metaTag($data = [], $off = false) {
         $metaTags = [];
         
         if (!empty($data['title'])) {
@@ -54,7 +54,7 @@ class ResponseBuilder {
         }
         
         if (!empty($data['keywords'])) {
-            $metaTags[] = '<meta name="keywords" content="' . htmlspecialchars(implode(", ", $data['keywords'])) . '">';
+            $metaTags[] = "<meta name=\"keywords\" content=\"{$data['keywords']}\">";
         }
         
         if (!empty($data['robots'])) {
@@ -90,7 +90,7 @@ class ResponseBuilder {
             $metaTags[] = "<script type=\"application/ld+json\">{$jsonLD}</script>";
         }
 
-        $this->bindings['metaTags'] = implode("\n", $metaTags);
+        $this->bindings['metaTags'] = !$off ? implode("\n", $metaTags) : null;
         return $this;
     }
 
@@ -104,7 +104,39 @@ class ResponseBuilder {
         return $this;
     }
 
-    public function exit() {
+    public function file($filePath)
+    {
+        $this->bindings['path'] = $filePath;
+        $this->bindings['action'] = 'file';
+        $this->bindings['headers'] = array_merge($this->bindings['headers'], [
+            'Content-Type' => 'application/octet-stream',
+            'Content-Disposition' => 'inline; filename="' . basename($filePath) . '"'
+        ]);
+        return $this;
+    }
+
+    public function download($filePath)
+    {
+        $this->bindings['path'] = $filePath;
+        $this->bindings['action'] = 'download';
+        $this->bindings['headers'] = array_merge($this->bindings['headers'], [
+            'Content-Type' => 'application/octet-stream',
+            'Content-Disposition' => 'attachment; filename="' . basename($filePath) . '"'
+        ]);
+        return $this;
+    }
+
+    public function text($string)
+    {
+        $this->bindings['data'] = ['text' => $string];
+        $this->bindings['action'] = 'text';
+        $this->bindings['headers'] = array_merge($this->bindings['headers'], [
+            'Content-Type' => 'text/plain; charset=utf-8'
+        ]);
+        return $this;
+    }
+
+    public function terminate() {
         exit();
     }
 
@@ -202,7 +234,7 @@ class ResponseBuilder {
         return $this;
     }
     
-    public function callback($output = null) {
+    public function send() {
         $this->resolveHeaders();
         if ($this->bindings['action'] !== 'redirect') {
             $this->resolveStatus();
@@ -214,32 +246,40 @@ class ResponseBuilder {
                 }
                 $status = is_null($this->bindings['status']) ? 302 : $this->bindings['status'];
                 header('Location: ' . $this->bindings['path'], true, $status);
-                $this->exit();
+                $this->terminate();
                 break;
             case 'json':
                 $json = json_encode($this->getData(true), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 if (json_last_error() !== JSON_ERROR_NONE) {
                     throw new AppException("JSON response encoding error: " . json_last_error_msg());
                 }
-                if ($output) {
-                    return $json;
-                }
                 echo $json;
                 break;
             case 'view':
                 $this->resolveMetaTags();
                 $html = ViewRender::render($this->bindings['path'], $this->getData(true));
-                if ($output) {
-                    return $html;
-                }
                 echo $html;
                 break;
             case 'xml':
                 $return = ViewRender::renderXml($this->getData(false, true));
-                if ($output) {
-                    return $return->asXML();
-                }
                 echo $return->asXML();
+                break;
+            case 'file':
+                if (is_file($this->bindings['path'])) {
+                    readfile($this->bindings['path']);
+                } else {
+                    throw new AppException("File not found: " . $this->bindings['path'], 404);
+                }
+                break;
+            case 'download':
+                if (is_file($this->bindings['path'])) {
+                    readfile($this->bindings['path']);
+                } else {
+                    throw new AppException("File not found: " . $this->bindings['path'], 404);
+                }
+                break;
+            case 'text':
+                echo $this->getData(false, true)['text'] ?? '';
                 break;
             default:
                 break;
