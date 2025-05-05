@@ -116,10 +116,10 @@ class Parser {
 
     private function variable($matches)
     {
-        $expression = trim($matches[1]);
-        $value = "$expression";
-        $pipe = trim($matches[2] ?? '');
-
+        $match = trim($matches[1]);
+        $expression = explode('|', $match);
+        $value = trim(array_shift($expression));
+        $pipe = trim($expression[0] ?? '');
         if (!empty($pipe)) {
             $pipeHandler = $this->resolvePipe($pipe, $value);
             return "<?= $pipeHandler ?>";
@@ -156,16 +156,29 @@ class Parser {
 
     private function resolvePipe(string $pipe, string $value): string
     {
+        $valuePipe = explode(':', $pipe);
+        $pipe = array_shift($valuePipe);
         $pipeClassName = ucfirst($pipe) . 'Pipe';
         $fullClass = "\\App\\Pipes\\{$pipeClassName}";
         $fullClassDefault = "\\Hola\\Views\\Pipes\\{$pipeClassName}";
-        $getPipe = class_exists($fullClassDefault) ? $fullClassDefault : $fullClass;
+        $getPipe = class_exists($fullClass) ? $fullClass : $fullClassDefault;
 
         if (!class_exists($getPipe)) {
             throw new AppException("Pipe '{$pipe}' does not exist in view {$this->template_name}");
         }
 
-        return "(new {$getPipe}())->handle({$value})";
+        $funcHandle = 'handle';
+        if (!empty($valuePipe)) {
+            $funcHandle .= "($value";
+            foreach ($valuePipe as $v) {
+                $funcHandle .= ", ". trim($v);
+            }
+            $funcHandle .= ")";
+        } else {
+            $funcHandle .= "($value)";
+        }
+
+        return "(new {$getPipe}())->$funcHandle";
     }
 
 }
