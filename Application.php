@@ -218,14 +218,23 @@ class Application extends Container
     private function responseError(\Throwable $e)
     {
         $this->handleErrorLogs($e);
-        $errors = [
-            "message" => $e->getMessage(),
-            "code" => $this->getStatusCode($e->getCode()),
-            "line" => $e->getLine(),
-            "file" => $e->getFile(),
-            "trace" => $e->getTraceAsString(),
-            "previous" => $e->getPrevious()
-        ];
+        $app_debug = conval('APP_DEBUG', false);
+        if (!$app_debug) {
+            $code = $this->getStatusCode($e->getCode());
+            $errors = [
+                "message" => $code === 500 ? "Internal Server Error" : $e->getMessage(),
+                "code" => $code
+            ];
+        } else {
+            $errors = [
+                "message" => $e->getMessage(),
+                "code" => $this->getStatusCode($e->getCode()),
+                "line" => $e->getLine(),
+                "file" => $e->getFile(),
+                "trace" => $e->getTraceAsString(),
+                "previous" => $e->getPrevious()
+            ];
+        }
         if ($this->isJson()) {
             $res = Response::json($errors)->setStatus($errors['code']);
             return $this->responseCore($res);

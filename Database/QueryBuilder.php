@@ -934,12 +934,12 @@ class QueryBuilder {
                 $valueName = 'values';
             }
             $query = $related->{$whereName}($related_key_name, $related_key_val);
-            $query = $query->when(!is_null($columns), function ($builder) use ($columns) {
+            $query = $query->when(!is_null($columns), function ($builder) use ($columns, $related_key_name) {
                 if (is_string($columns)) {
-                    $columns = explode(', ', $columns);
+                    $columns = array_filter(array_map('trim', explode(',', $columns)));
                 }
-                if (in_array($foreign_key, $columns)) {
-                    $columns[] = $foreign_key;
+                if (!in_array($related_key_name, $columns)) {
+                    $columns[] = $related_key_name;
                 }
                 $builder->select($columns);
             })->when($queryBuilder instanceof \Closure, fn ($builder) => $queryBuilder($builder));
@@ -971,39 +971,53 @@ class QueryBuilder {
         }
     }
 
-    private function resolveRelationsMany($table_3rd, $whereName, $current_key_name, $current_key_val, $foreign_key, $foreign_key2, $related, $columns, $queryBuilder)
+    private function resolveRelationsMany($table_3rd, $whereName, $related_key_name, $related_key_val, $foreign_key, $foreign_key2, $related, $columns, $queryBuilder)
     {
         $table_3rd = $this->getTableRelation($table_3rd);
-        $data_table_3rd = $table_3rd->{$whereName}($foreign_key, $current_key_val)
+        $data_table_3rd = $table_3rd->{$whereName}($foreign_key, $related_key_val)
             ->get()
             ->toArray();
-        $id_joins = collection($data_table_3rd)->dataColumn($foreign_key2)->toArray();
+        $id_joins = collection($data_table_3rd)
+            ->dataColumn($foreign_key2)
+            ->toArray();
+
         if (empty($id_joins)) {
             return [];
         }
-        $query = $related->whereIn($current_key_name, $id_joins);
-        $query = $query->when(!is_null($columns), function ($builder) use ($columns) {
+
+        $query = $related->whereIn($related_key_name, $id_joins);
+        $query = $query->when(!is_null($columns), function ($builder) use (
+            $columns,
+            $related_key_name
+        ) {
             if (is_string($columns)) {
-                $columns = explode(', ', $columns);
+                $columns = array_filter(array_map('trim', explode(',', $columns)));
             }
-            if (in_array($current_key_name, $columns)) {
-                $columns[] = $current_key_name;
+            if (!in_array($related_key_name, $columns)) {
+                $columns[] = $related_key_name;
             }
             $builder->select($columns);
         })->when($queryBuilder instanceof \Closure, fn ($builder) => $queryBuilder($builder));
-        if (is_array($current_key_val)) {
-            $data = $query->get()->map(function ($item) use (
+
+        if (is_array($related_key_val)) {
+            return $query->get()->map(function ($item) use (
                 $data_table_3rd,
-                $current_key_name,
+                $related_key_name,
                 $foreign_key,
                 $foreign_key2
             ) {
-                $item->{$foreign_key} = collection($data_table_3rd)->filter(function ($value) use ($item, $current_key_name, $foreign_key2) {
-                    return $item->{$current_key_name} == $value->{$foreign_key2};
-                })->dataColumn($foreign_key)->toArray();
+                $item->{$foreign_key} = collection($data_table_3rd)
+                    ->filter(function ($value) use (
+                        $item,
+                        $related_key_name,
+                        $foreign_key2
+                    ) {
+                        return $item->{$related_key_name} == $value->{$foreign_key2};
+                    })
+                    ->dataColumn($foreign_key)
+                    ->toArray();
                 return $item;
             })->values();
-            return $data;
         }
         return $query->get()->values();
     }
