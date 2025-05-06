@@ -55,7 +55,7 @@ class Application extends Container
      * Register the application shutdown function.
      * @throws AppException
      */
-    protected function registerShutdown(): void
+    private function registerShutdown(): void
     {
         register_shutdown_function([$this, 'handleShutdown']);
     }
@@ -64,10 +64,11 @@ class Application extends Container
      * Initialize the core components of the application.
      * @throws AppException
      */
-    public function initializeCore()
+    private function initializeCore()
     {
-        $this->register();
         $this->registerDependencies();
+        $this->register();
+        $this->registerEvent();
         $this->registerRouter();
         $this->registerMiddleware();
         return $this;
@@ -133,7 +134,7 @@ class Application extends Container
      * @throws AppException
      * @return void
      */
-    public function registerCommand()
+    private function registerCommand()
     {
         $this->cli = app()->make(CliCommand::class)
             ->initAppCommand()
@@ -166,7 +167,7 @@ class Application extends Container
      * Handle the exception.
      * @return void
      */
-    public function handleException(\Throwable $e)
+    private function handleException(\Throwable $e)
     {
         return $this->responseError($e);
     }
@@ -235,7 +236,7 @@ class Application extends Container
                 "previous" => $e->getPrevious()
             ];
         }
-        if ($this->isJson()) {
+        if ($this->request()->isJson()) {
             $res = Response::json($errors)->setStatus($errors['code']);
             return $this->responseCore($res);
         }
@@ -243,18 +244,6 @@ class Application extends Container
         return $this->responseCore($res);
     }
 
-    /**
-     * Check if the request is JSON.
-     * @return bool
-     */
-    private function isJson()
-    {
-        try {
-            return app()->request()->isJson();
-        } catch (\Throwable $e) {
-            return false;
-        }
-    }
 
     /**
      * Write the error logs.

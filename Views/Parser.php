@@ -60,10 +60,10 @@ class Parser {
         ],
         ['regex' => '/@class\((.*?)\)/', 'render' => 'class="<?=implode(" ",$1)?>"'],
         ['regex' => '/@style\((.*?)\)/', 'render' => 'style="<?=implode(" ",$1)?>"'],
-        ['regex' => '/@checked\((.*?)\)/', 'render' => 'checked="$1"'],
-        ['regex' => '/@selected\((.*?)\)/', 'render' => 'selected="$1"'],
-        ['regex' => '/@disabled\((.*?)\)/', 'render' => 'disabled="$1"'],
-        ['regex' => '/@readonly\((.*?)\)/', 'render' => 'readonly="$1"'],
+        ['regex' => '/@checked\((.*?)\)/', 'render' => '<?=($1) ? "checked" : ""?>'],
+        ['regex' => '/@selected\((.*?)\)/', 'render' => '<?=($1) ? "selected" : ""?>'],
+        ['regex' => '/@disabled\((.*?)\)/', 'render' => '<?=($1) ? "disabled" : ""?>'],
+        ['regex' => '/@readonly\((.*?)\)/', 'render' => '<?=($1) ? "readonly" : ""?>'],
         ['regex' => '/@(\w+)\s*=\s*"([^"]+)"/', 'render' => 'callback', 'func' => 'bindEventJS']
     ];
 
