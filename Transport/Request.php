@@ -174,6 +174,11 @@ class Request extends RequestBuilder {
         return $_SERVER['SERVER_NAME'];
     }
 
+    public function originalDomain()
+    {
+        return $_SERVER['HTTP_ORIGIN'] ?? '';
+    }
+
     public function path() {
         $request_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         return $request_path;

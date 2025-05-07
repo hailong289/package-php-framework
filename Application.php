@@ -39,6 +39,10 @@ class Application extends Container
         $this->singleton(Request::class, function () {
             return new Request();
         });
+        
+        $this->singleton(Response::class, function () {
+            return new Response();
+        });
 
         $this->singleton(Router::class, function () {
             return new Router();

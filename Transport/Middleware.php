@@ -8,13 +8,15 @@ class Middleware {
 
     public function run(Request $request, \Closure $continue)
     {
-        if ($this instanceof \App\Http\Middleware\VerifyCsrfToken) {
+        if ($this instanceof \App\Http\Middleware\CorsMiddleware) {
+            return $this->resolveCors($request, $continue);
+        } else if ($this instanceof \App\Http\Middleware\VerifyCsrfToken) {
             return $this->resolveVerifyCsrfToken($request, $continue);
-        }
+        } 
         return $this->forward($request, $continue);
     }
 
-    public function resolveVerifyCsrfToken(Request $request, \Closure $continue)
+    private function resolveVerifyCsrfToken(Request $request, \Closure $continue)
     {
         if (
             $request->isGet() ||
@@ -43,7 +45,7 @@ class Middleware {
         return $continue($request);
     }
 
-    public function exceptPaths($path, $except) {
+    private function exceptPaths($path, $except) {
         foreach ($except as $pattern) {
             if ($pattern === '*') {
                 return true;
@@ -54,6 +56,50 @@ class Middleware {
             }
         }
         return false;
+    }
+
+    private function resolveCors(Request $request, $continue)
+    {
+        $origin = $request->originalDomain();
+
+        if (!$origin || !$this->isAllowedOrigin($origin)) {
+            return $continue($request);
+        }
+
+        $cors = [
+            'Access-Control-Allow-Origin' => ($this->config['allowed_origins'][0] === '*' ? '*' : $origin),
+            'Access-Control-Allow-Methods' => $this->implodeOrWildcard($this->config['allowed_methods']),
+            'Access-Control-Allow-Headers' => $this->implodeOrWildcard($this->config['allowed_headers']),
+            'Access-Control-Max-Age' => $this->config['max_age'],
+        ];
+
+        if (!empty($this->config['exposed_headers'])) {
+            $cors['Access-Control-Expose-Headers'] = implode(', ', $this->config['exposed_headers']);
+        }
+        
+        if ($this->config['supports_credentials']) {
+            $cors['Access-Control-Allow-Credentials'] = 'true';
+        }
+        app()->response()->setHeaders($cors);
+        return $continue($request);
+    }
+
+    private function isAllowedOrigin(string $origin): bool
+    {
+        if (empty($this->config['allowed_origins'])) {
+            return true;
+        }
+        
+        if (in_array('*', $this->config['allowed_origins'])) {
+            return true;
+        }
+
+        return in_array($origin, $this->config['allowed_origins']);
+    }
+
+    private function implodeOrWildcard(array $list): string
+    {
+        return in_array('*', $list) ? '*' : implode(', ', $list);
     }
 
 }

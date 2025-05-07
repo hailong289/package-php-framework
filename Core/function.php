@@ -680,3 +680,16 @@ if (!function_exists('concat')) {
         return implode($glue, array_filter($strings, 'strlen'));
     }
 }
+
+if (!function_exists('share')) {
+    /**
+     * Share data
+     * @param string $key
+     * @param mixed $value
+     * @return \Hola\Data\ShareData
+     */
+    function share()
+    {
+        return \Hola\Data\ShareData::init();
+    }
+}

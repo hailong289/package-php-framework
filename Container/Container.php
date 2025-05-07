@@ -3,6 +3,7 @@ namespace Hola\Container;
 use Hola\Events\AppEvents;
 use Hola\Exceptions\AppException;
 use Hola\Transport\Request;
+use Hola\Transport\Response;
 
 class Container
 {
@@ -42,6 +43,9 @@ class Container
         return $this->singletons[AppEvents::class];
     }
 
+    /**
+     * @return Request
+     */
     public function request()
     {
         if (!empty($this->singletons[Request::class])) {
@@ -49,6 +53,17 @@ class Container
         }
         $this->singletons[Request::class] = new Request();
         return $this->singletons[Request::class];
+    }
+    
+    /**
+     * @return Response
+     */
+    public function response() {
+        if (!empty($this->singletons[Response::class])) {
+            return $this->singletons[Response::class];
+        }
+        $this->singletons[Response::class] = new Response();
+        return $this->singletons[Response::class];
     }
 
     /**

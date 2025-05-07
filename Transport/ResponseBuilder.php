@@ -147,12 +147,21 @@ class ResponseBuilder {
 
     public function setHeaders($headers = [])
     {
-        $this->bindings['headers'] = $headers;
+        if (empty($this->bindings['headers'])) {
+            $this->bindings['headers'] = $headers;
+        } else {
+            $this->bindings['headers'] = array_merge($this->bindings['headers'], $headers);
+        }
         return $this;
     }
 
     private function resolveHeaders()
     {
+
+        if (empty($this->bindings['headers'])) {
+            return;
+        }
+
         foreach ($this->bindings['headers'] as $key => $value) {
             if (is_numeric($key)) {
                 header($value);

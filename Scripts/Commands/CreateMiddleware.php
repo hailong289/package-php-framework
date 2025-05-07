@@ -56,9 +56,9 @@ class CreateMiddleware extends Command {
         return '<?php
 namespace App\Http\Middleware;
 use Hola\Transport\Request;
-use Hola\Transport\Response;
+use Hola\Transport\Middleware;
 
-class ' . $className . ' {
+class ' . $className . ' extends Middleware {
      public function forward(Request $request, \Closure $continue){
          return $continue($request);
      }
