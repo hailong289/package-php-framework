@@ -37,9 +37,9 @@ class Container
     public function event(): AppEvents
     {
         if (!empty($this->singletons[AppEvents::class])) {
-            return $this->singletons[AppEvents::class];
+            return $this->getClass(AppEvents::class);
         }
-        $this->singletons[AppEvents::class] = AppEvents::start();
+        $this->singletons[AppEvents::class] = $this->build(AppEvents::class);
         return $this->singletons[AppEvents::class];
     }
 
@@ -49,9 +49,9 @@ class Container
     public function request()
     {
         if (!empty($this->singletons[Request::class])) {
-            return $this->singletons[Request::class];
+            return $this->getClass(Request::class);
         }
-        $this->singletons[Request::class] = new Request();
+        $this->singletons[Request::class] = $this->build(Request::class);
         return $this->singletons[Request::class];
     }
     
@@ -60,9 +60,9 @@ class Container
      */
     public function response() {
         if (!empty($this->singletons[Response::class])) {
-            return $this->singletons[Response::class];
+            return $this->getClass(Response::class);
         }
-        $this->singletons[Response::class] = new Response();
+        $this->singletons[Response::class] = $this->build(Response::class);
         return $this->singletons[Response::class];
     }
 
@@ -71,9 +71,15 @@ class Container
      */
     private function getClass($abstract) {
         if (isset($this->singletons[$abstract])) {
+            if ($this->singletons[$abstract] instanceof \Closure) {
+                return $this->singletons[$abstract]();
+            }
             return $this->singletons[$abstract];
         }
         if (isset($this->bindings[$abstract])) {
+            if ($this->bindings[$abstract] instanceof \Closure) {
+                return $this->bindings[$abstract]();
+            }
             return $this->bindings[$abstract];
         }
         return $abstract;
@@ -95,7 +101,7 @@ class Container
             }
             $factory = $this->getClosure($factory);
         }
-        $this->bindings[$abstract] = $factory();
+        $this->bindings[$abstract] = $factory;
         return $this;
     }
 
@@ -109,13 +115,14 @@ class Container
         if (is_null($factory)) {
             $factory = $abstract;
         }
+
         if (!$factory instanceof \Closure) {
             if (!is_string($factory)) {
                 throw new \TypeError(self::class.'::bind(): Argument #2 ($factory) must be of type Closure|string|null');
             }
             $factory = $this->getClosure($factory);
         }
-        $this->singletons[$abstract] = $factory();
+        $this->singletons[$abstract] = $factory;
         return $this;
     }
 
@@ -127,7 +134,7 @@ class Container
     public function replace($abstract, $factory): void
     {
         if (isset($this->bindings[$abstract])) {
-            $this->bindings[$abstract] = $factory();
+            $this->bindings[$abstract] = $factory;
         }
     }
 
@@ -138,9 +145,6 @@ class Container
      * @return T The instantiated object of the class.
      */
     public function make($abstract, $factory = null) {
-        if (isset($this->singletons[$abstract])) {
-            return $this->singletons[$abstract];
-        }
         return $this->build($abstract);
     }
 
@@ -255,7 +259,7 @@ class Container
         }
 
         if (interface_exists($class)) {
-            $class = $this->bindings[$class] ?? null;
+            $class = $this->getClass($class);
             if (!$class) {
                 throw new AppException("No concrete implementation found for interface $class");
             }
