@@ -7,7 +7,7 @@ use Hola\Exceptions\AppException;
 class MiddlewareBuilder {
 
     public function handle($callback) {
-        $key_middlware = concat('', 'passable', PROJECT_KEY);
+        $key_middlware = concat('', 'passable', conval('PROJECT_KEY'));
         /** @var Application $app */
         [$middlewares, $app] = $callback();
         $pipeline = array_reduce(

@@ -13,29 +13,29 @@ class ShareData {
     }
     
     public function create($key = 'data', $value) {
-        self::$bindings[PROJECT_KEY][$key] = $value;
+        self::$bindings[conval('PROJECT_KEY')][$key] = $value;
     }
 
     public function all() {
-        return self::$bindings[PROJECT_KEY];
+        return self::$bindings[conval('PROJECT_KEY')];
     }
 
     public function getErrorByKey($key) {
-        return self::$bindings[PROJECT_KEY]['errors'][$key] ?? null;
+        return self::$bindings[conval('PROJECT_KEY')]['errors'][$key] ?? null;
     }
 
     public function setErrors($key, $value)
     {
-        self::$bindings[PROJECT_KEY]['errors'][$key] = $value;
+        self::$bindings[conval('PROJECT_KEY')]['errors'][$key] = $value;
         return $this;
     }
 
     public function get($key, $default = null) {
-        return self::$bindings[PROJECT_KEY]['data'][$key] ?? $default;
+        return self::$bindings[conval('PROJECT_KEY')]['data'][$key] ?? $default;
     }
 
     public function set($key, $value) {
-        self::$bindings[PROJECT_KEY]['data'][$key] = $value;
+        self::$bindings[conval('PROJECT_KEY')]['data'][$key] = $value;
         return $this;
     }
     

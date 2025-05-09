@@ -50,6 +50,12 @@ class RegisterLoad
         return $this;
     }
 
+    public function loadEnvironment($file = '.env')
+    {
+        $dotenv = \Dotenv\Dotenv::createImmutable(__DIR__ROOT, $file);
+        $dotenv->load();
+    }
+
     /**
      * load config
      *
@@ -57,11 +63,10 @@ class RegisterLoad
      */
     public function loadConfig()
     {
-        require_once __DIR__ROOT ."/config/constant.php";
         $config = rglob(__DIR__ROOT ."/config/*.php") ?? [];
         $config_arr = [];
         foreach ($config as $item) {
-            if (file_exists($item) && $item !== __DIR__ROOT ."/config/constant.php") {
+            if (file_exists($item)) {
                 $items = explode("/", $item);
                 $end = end($items);
                 $end = str_replace('.php', '', $end);
@@ -112,7 +117,7 @@ class RegisterLoad
         if (file_exists($pathName)) {
             $this->bind['include'][] = $pathName;
         }
-        if (empty(defined('PROJECT_KEY') && constant('PROJECT_KEY'))) {
+        if (empty(conval('PROJECT_KEY'))) {
             die('PROJECT_KEY is not defined');
         }
         $this->resolveInclude();

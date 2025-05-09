@@ -377,9 +377,13 @@ class QueryBuilder {
                 $this->resolveTable($sql);
                 break;
             case 'INSERT':
+                $this->resolveAttribute($bindings, true);
+                $this->resolveColumnDate($bindings);
                 $sql = $this->resolveInsert($bindings);
                 break;
             case 'UPDATE':
+                $this->resolveAttribute($bindings, true);
+                $this->resolveColumnDate($bindings, true);
                 $sql = $this->resolveUpdate($bindings);
                 break;
             case 'DELETE':
@@ -433,7 +437,6 @@ class QueryBuilder {
 
     public function get(): Collection
     {
-        app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'get']);
         return $this->resolveData($this->toSql(), 'select', function ($selectData) {
             $this->clearBindings(true);
             return $selectData;
@@ -447,7 +450,6 @@ class QueryBuilder {
 
     public function first(): Collection
     {
-        app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'get']);
         return $this->resolveData($this->toSql(), 'selectOne', function ($selectData) {
             $this->clearBindings(true);
             return $selectData;
@@ -456,11 +458,8 @@ class QueryBuilder {
 
     public function create($data): Collection
     {
-        app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'create']);
         $object = $this->clone();
-        $this->resolveAttribute($data);
         return $this->resolveData($this->toSql('INSERT', $data), 'insertLastId', function ($id) use ($object) {
-            app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'created']);
             $this->clearBindings(true);
             $selectData = $this->resolveCloneObject($object, ['from','variables'])->find($id);
             return $selectData;
@@ -485,10 +484,7 @@ class QueryBuilder {
 
     public function insert($data) : bool
     {
-        app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'create']);
-        $this->resolveAttribute($data, 'SET');
         return $this->resolveData($this->toSql('INSERT', $data), 'insert', function ($selectData, $status) {
-            app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'created']);
             $this->clearBindings(true);
             return $status;
         }, $this->bindings['params']);
@@ -496,10 +492,7 @@ class QueryBuilder {
 
     public function insertLastId($data) : int
     {
-        app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'create']);
-        $this->resolveAttribute($data, 'SET');
         return $this->resolveData($this->toSql('INSERT', $data), 'insertLastId', function ($id) {
-            app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'created']);
             $this->clearBindings(true);
             return $id;
         }, $this->bindings['params']);
@@ -507,7 +500,6 @@ class QueryBuilder {
 
     public function update($data, $id = null) : bool
     {
-        app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'update']);
         if (!is_null($id)) {
             if (is_array($id)) {
                 foreach ($id as $key => $value) {
@@ -517,9 +509,7 @@ class QueryBuilder {
                 $this->where('id', $id);
             }
         }
-        $this->resolveAttribute($data, 'UPDATE');
         return $this->resolveData($this->toSql('UPDATE', $data), 'update', function ($selectData, $status) {
-            app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'updated']);
             $this->clearBindings(true);
             return $status;
         },$this->bindings['params']);
@@ -539,12 +529,10 @@ class QueryBuilder {
 
     public function delete($id = null): bool
     {
-        app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'delete']);
         if (!is_null($id)) {
             $this->where('id', $id);
         }
         return $this->resolveData($this->toSql('DELETE'), 'delete', function ($selectData, $status) {
-            app()->event()->trigger('app.model', ['type' => 'event_model', 'action' => 'deleted']);
             $this->clearBindings(true);
             return $status;
         }, $this->bindings['params']);
@@ -612,35 +600,58 @@ class QueryBuilder {
     {
         $status = false;
         $selectData = [];
+        $events = [
+            'type' => 'event_model',
+            'action' => ''
+        ];
         switch ($select) {
             case 'select':
+                $events['action'] = 'get';
                 $select = collection(self::$connection->select($sql, $bindings));
                 if ($select->isEmpty()) {
+                    app()->event()->trigger('app.model', $events);
                     return $callback(collection([]), $status);
                 }
                 $selectData = $this->resolveRelations($select);
-                $selectData = $selectData->map(fn ($item) => $this->resolveAttribute($item, 'GET'));
+                $selectData = $selectData->map(fn ($item) => $this->resolveAttribute($item));
                 break;
             case 'selectOne':
+                $events['action'] = 'get';
                 $select = collection(self::$connection->selectOne($sql, $bindings));
                 if ($select->isEmpty()) {
+                    app()->event()->trigger('app.model', $events);
                     return $callback(collection([]), $status);
                 }
                 $selectData = $this->resolveRelations($select, 'FIRST');
-                $selectData = $selectData->mapFirst(fn ($item) => $this->resolveAttribute($item, 'GET'));
+                $selectData = $selectData->mapFirst(fn ($item) => $this->resolveAttribute($item));
                 break;
             case 'insert':
+                $events['action'] = 'create';
+                app()->event()->trigger('app.model', $events);
                 $status = self::$connection->insert($sql, $bindings);
+                $events['action'] = 'created';
                 break;
             case 'insertLastId':
+                $events['action'] = 'create';
+                app()->event()->trigger('app.model', $events);
                 $selectData = self::$connection->insertLastId($sql, $bindings);
+                $events['action'] = 'created';
                 break;
             case 'update':
+                $events['action'] = 'update';
+                app()->event()->trigger('app.model', $events);
                 $status = self::$connection->update($sql, $bindings);
+                $events['action'] = 'updated';
                 break;
             case 'delete':
+                $events['action'] = 'delete';
+                app()->event()->trigger('app.model', $events);
                 $status = self::$connection->delete($sql, $bindings);
+                $events['action'] = 'deleted';
                 break;
+        }
+        if (!empty($events['action'])) {
+            app()->event()->trigger('app.model', $events);
         }
         return $callback($selectData, $status);
     }
@@ -1022,70 +1033,59 @@ class QueryBuilder {
         return $query->get()->values();
     }
 
-    private function resolveAttribute(&$item, $type = 'SET')
+    private function resolveAttribute(&$item, $isSet = false)
     {
         if (is_null($this->model)) {
             return $item;
         }
-        $is_array = is_array($item);
-        $format = $is_array ? $item : get_object_vars($item);
+        $format = is_array($item) ? $item : get_object_vars($item);
         $keys = array_keys($format);
-        $attribute = $type === 'SET' || $type === 'UPDATE' ? 'setAttributes' : 'getAttributes';
+        $attribute = $isSet ? 'setAttributes' : 'getAttributes';
         foreach ($keys as $key) {
             if (is_numeric($key) || is_object($key) || is_array($key) || is_null($key)) {
                 continue;
             }
             $method = $attribute.ucfirst($key);
             if (method_exists($this->model, $method)) {
-                if ($is_array) {
+                if (isset($item[$key])) {
                     $item[$key] = $this->model->{$method}($item[$key]);
-                } else {
+                } elseif (isset($item->{$key})) {
                     $item->{$key} = $this->model->{$method}($item->{$key});
                 }
             }
         }
 
-        if ($type === 'GET') {
-            if (!empty($this->bindings['variables']['hidden'])) {
-                foreach ($this->bindings['variables']['hidden'] as $key_hidden) {
-                    if (array_key_exists($key_hidden,(array)$item)) {
-                        if ($is_array) {
-                            unset($item[$key_hidden]);
-                        } else {
-                            unset($item->{$key_hidden});
-                        }
-                    }
-                }
-            }
-        } else if ($type === 'SET') {
-            if (
-                !empty($this->bindings['variables']['time_auto']) &&
-                !empty($this->bindings['variables']['date_created'])
-            ) {
-                $date_created = $this->bindings['variables']['date_created'];
-                if ($is_array) {
-                    $item[$date_created] = date('Y-m-d H:i:s');
-                } else {
-                    $item->{$date_created} = date('Y-m-d H:i:s');
-                }
-            }
-        } else if ($type === 'UPDATE') {
-            if (
-                !empty($this->bindings['variables']['time_auto']) &&
-                !empty($this->bindings['variables']['date_updated'])
-            ) {
-                $date_updated = $this->bindings['variables']['date_updated'];
-                if ($is_array) {
-                    $item[$date_updated] = date('Y-m-d H:i:s');
-                } else {
-                    $item->{$date_updated} = date('Y-m-d H:i:s');
+        if (!$isSet && !empty($this->bindings['variables']['hidden'])) {
+            foreach ($this->bindings['variables']['hidden'] as $key_hidden) {
+                if (isset($item[$key_hidden])) {
+                    unset($item[$key_hidden]);
+                } elseif (isset($item->{$key_hidden})) {
+                    unset($item->{$key_hidden});
                 }
             }
         }
         return $item;
     }
+    
+    
 
-    public function resolveSoftDelete()
+    private function resolveColumnDate(&$item, $isUpdate = false) {
+        if (empty($this->bindings['variables']['time_auto'])) {
+            return false;
+        }
+        $columns = $isUpdate ? 'date_updated' : 'date_created';
+        if (!empty($this->bindings['variables'][$columns])) {
+            $date_col = $this->bindings['variables'][$columns];
+            if (is_array($item)) {
+                $item[$date_col] = date('Y-m-d H:i:s');
+            } else {
+                $item->{$date_col} = date('Y-m-d H:i:s');
+            }
+        }
+        return true;
+    }
+
+    private function resolveSoftDelete()
     {
         $bindings = [];
         if (is_null($this->model)) {

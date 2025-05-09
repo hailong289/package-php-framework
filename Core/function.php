@@ -358,6 +358,14 @@ if (!function_exists('conval')) {
         if (defined($value) && constant($value)) {
             return constant($value);
         }
+        
+        if (getenv($value)) {
+            return getenv($value);
+        }
+
+        if (isset($_ENV[$value])) {
+            return $_ENV[$value];
+        }
 
         return $default;
     }

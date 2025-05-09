@@ -22,7 +22,7 @@ class ConfigApp {
      * @param $value
      */
     public function create($key, $value) {
-        self::$bindings[PROJECT_KEY][$key] = $value;
+        self::$bindings[conval('PROJECT_KEY')][$key] = $value;
     }
 
     /**
@@ -30,7 +30,7 @@ class ConfigApp {
      */
     public function all()
     {
-        return self::$bindings[PROJECT_KEY];
+        return self::$bindings[conval('PROJECT_KEY')];
     }
 
     /**
@@ -38,7 +38,7 @@ class ConfigApp {
      * @return mixed
      */
     public function get($name) {
-        $list_config = self::$bindings[PROJECT_KEY] ?? [];
+        $list_config = self::$bindings[conval('PROJECT_KEY')] ?? [];
         $keys = explode('.', $name);
         $firstName = array_shift($keys);
         $config = $list_config[$firstName] ?? [];
@@ -51,7 +51,7 @@ class ConfigApp {
      * @return $this
      */
     public function set($name, $value) {
-        $list_config = self::$bindings[PROJECT_KEY] ?? [];
+        $list_config = self::$bindings[conval('PROJECT_KEY')] ?? [];
         $keys = explode('.', $name);
         $firstName = array_shift($keys);
         $config = $list_config[$firstName] ?? [];
