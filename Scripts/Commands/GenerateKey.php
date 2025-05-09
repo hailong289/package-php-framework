@@ -7,7 +7,7 @@ class GenerateKey extends \Hola\Core\Command
     protected $command = 'generate:key';
     protected $command_description = 'Generate a project key';
     protected $arguments = [];
-    protected $options = [];
+    protected $options = ['?file'];
 
 
     public function __construct()
@@ -18,23 +18,50 @@ class GenerateKey extends \Hola\Core\Command
     public function handle()
     {
         $new_project_key = generateKey(32);
-        $concurrentDirectory = __DIR__ROOT . "/config/constant.php";
-        if (!file_exists($concurrentDirectory)) {
-            $this->output()->text(sprintf('File "%s" was not found', $concurrentDirectory));
-            return;
-        }
+        $key = 'PROJECT_KEY';
+        $envFile = __DIR__ROOT . '/.env';
 
-        $file_contents = file_get_contents($concurrentDirectory);
-        if (preg_match('/const PROJECT_KEY.*=.*\'.*?\'/', $file_contents)) {
-            $file_contents = preg_replace(
-                '/const PROJECT_KEY.*=.*\'.*?\'/',
-                'const PROJECT_KEY=\'' . $new_project_key . '\'',
-                $file_contents
-            );
+        if ($this->updateOrAddEnvKey($key, $new_project_key)) {
+            $this->output()->text("Key generate successfully. KEY:$key=$new_project_key" . PHP_EOL);
         } else {
-            $file_contents .= PHP_EOL . 'const PROJECT_KEY=\'' . $new_project_key . '\';';
+            $this->output()->error('Error when process key ' . $key);
         }
-        file_put_contents($concurrentDirectory, $file_contents);
-        $this->output()->text("Key generate successfully. KEY:$new_project_key" . PHP_EOL);
+    }
+
+    /**
+     * @param string $key 
+     * @param string|null $value 
+     * @return bool 
+     */
+    protected function updateOrAddEnvKey(string $key, ?string $value = null): bool
+    {
+        try {
+            $envFile = $this->getOption('file') ?? '.env';
+            $envContent = file_exists($envFile) ? file_get_contents($envFile) : '';
+            $lines = explode("\n", $envContent);
+            $keyExists = false;
+            $newValue = $value;
+
+            // Kiểm tra và cập nhật key nếu tồn tại
+            foreach ($lines as &$line) {
+                if (strpos($line, "$key=") === 0) {
+                    $line = "$key=$newValue";
+                    $keyExists = true;
+                    break;
+                }
+            }
+            
+            if (!$keyExists) {
+                $lines[] = "$key=$newValue";
+            }
+            
+            $newContent = implode("\n", array_filter($lines, fn($line) => trim($line) !== ''));
+            file_put_contents($envFile, $newContent);
+            $_ENV[$key] = $newValue;
+            putenv("$key=$newValue");
+            return true;
+        } catch (\Exception $e) {
+            return false; 
+        }
     }
 }
