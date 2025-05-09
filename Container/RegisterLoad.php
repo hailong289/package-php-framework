@@ -132,6 +132,7 @@ class RegisterLoad
      */
     public function initCLI()
     {
+        $this->loadEnvironment();
         $this->loadConfig();
         $this->loadTimeZone();
         $this->registerFolder(['database']);
