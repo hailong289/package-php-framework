@@ -110,7 +110,7 @@ class Parser {
                     'switch' => '<?php endswitch; ?>',
                     'case', 'default' => '',
                     'php' => '?>',
-                     default => ''
+                     default => '}'
                 };
                 $line = str_replace('<<CLOSE>>', $phpEnd, $line);
             }

@@ -1047,9 +1047,9 @@ class QueryBuilder {
             }
             $method = $attribute.ucfirst($key);
             if (method_exists($this->model, $method)) {
-                if (isset($item[$key])) {
+                if (is_array($item) && isset($item[$key])) {
                     $item[$key] = $this->model->{$method}($item[$key]);
-                } elseif (isset($item->{$key})) {
+                } elseif (is_object($item) && isset($item->{$key})) {
                     $item->{$key} = $this->model->{$method}($item->{$key});
                 }
             }
@@ -1057,9 +1057,9 @@ class QueryBuilder {
 
         if (!$isSet && !empty($this->bindings['variables']['hidden'])) {
             foreach ($this->bindings['variables']['hidden'] as $key_hidden) {
-                if (isset($item[$key_hidden])) {
+                if (is_array($item) && isset($item[$key_hidden])) {
                     unset($item[$key_hidden]);
-                } elseif (isset($item->{$key_hidden})) {
+                } elseif (is_object($item) && isset($item->{$key_hidden})) {
                     unset($item->{$key_hidden});
                 }
             }
