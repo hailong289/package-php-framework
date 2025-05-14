@@ -20,6 +20,8 @@ class AttributeType {
 
     public function values($values)
     {
+        $values = array_map(fn($value) => "'$value'", $values);
+        $values = implode(', ', $values);
         $this->value = "($values)";
         return $this;
     }
