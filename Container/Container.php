@@ -21,7 +21,8 @@ class Container
         'method' => [
             'method' => null,
             'params' => []
-        ]
+        ],
+        'resolved' => []
     ];
 
     /**
@@ -42,11 +43,10 @@ class Container
     
     public function event(): AppEvents
     {
-        if (!empty($this->singletons[AppEvents::class])) {
-            return $this->getClass(AppEvents::class);
+        if ($this->resolved(AppEvents::class)) {
+            return $this->getResolved(AppEvents::class);
         }
-        $this->singletons[AppEvents::class] = $this->build(AppEvents::class);
-        return $this->singletons[AppEvents::class];
+        return $this->build(AppEvents::class);
     }
 
     /**
@@ -54,22 +54,20 @@ class Container
      */
     public function request()
     {
-        if (!empty($this->singletons[Request::class])) {
-            return $this->getClass(Request::class);
+        if ($this->resolved(Request::class)) {
+            return $this->getResolved(Request::class);
         }
-        $this->singletons[Request::class] = $this->build(Request::class);
-        return $this->singletons[Request::class];
+        return $this->build(Request::class);
     }
     
     /**
      * @return Response
      */
     public function response() {
-        if (!empty($this->singletons[Response::class])) {
-            return $this->getClass(Response::class);
+        if ($this->resolved(Response::class)) {
+            return $this->getResolved(Response::class);
         }
-        $this->singletons[Response::class] = $this->build(Response::class);
-        return $this->singletons[Response::class];
+        return $this->build(Response::class);
     }
 
     /**
@@ -77,12 +75,37 @@ class Container
      */
     private function getClass($abstract) {
         if (isset($this->singletons[$abstract])) {
-            if ($this->singletons[$abstract] instanceof \Closure) {
-                return $this->singletons[$abstract]();
-            }
             return $this->singletons[$abstract];
         }
         return $abstract;
+    }
+
+    /**
+     * @param $abstract
+     * @return bool
+     */
+    public function bound($abstract)
+    {
+        return isset($this->singletons[$abstract]);
+    }
+
+    /**
+     * @param $abstract
+     * @return bool
+     */
+    public function resolved($abstract)
+    {
+        return isset($this->bindings['resolved'][$abstract]);
+    }
+
+    /**
+     * @param $abstract
+     * @param $factory
+     * @return $this
+     */
+    public function getResolved($abstract)
+    {
+        return $this->bindings['resolved'][$abstract];
     }
 
     /**
@@ -92,17 +115,7 @@ class Container
      */
     public function singleton($abstract, $factory = null)
     {
-        if (is_null($factory)) {
-            $factory = $abstract;
-        }
-
-        if (!$factory instanceof \Closure) {
-            if (!is_string($factory)) {
-                throw new \TypeError(self::class.'::bind(): Argument #2 ($factory) must be of type Closure|string|null');
-            }
-            $factory = $this->getClosure($factory);
-        }
-        $this->singletons[$abstract] = $factory;
+        $this->singletons[$abstract] = $this->bind($abstract, $factory);
         return $this;
     }
 
@@ -114,6 +127,26 @@ class Container
      */
     public function make($abstract, $params = []) {
         return $this->build($abstract, $params);
+    }
+
+    /**
+     * @param $abstract
+     * @param $factory
+     * @return \Closure
+     */
+    private function bind($abstract, $factory = null)
+    {
+        if (is_null($factory)) {
+            $factory = $abstract;
+        }
+
+        if (!$factory instanceof \Closure) {
+            if (!is_string($factory)) {
+                throw new \TypeError(self::class.'::bind(): Argument #2 ($factory) must be of type Closure|string|null');
+            }
+            $factory = $this->getClosure($factory);
+        }
+        return $factory;
     }
 
     /**
@@ -154,6 +187,10 @@ class Container
                 $bindingClassMethod = $this->getClass($className);
                 if (is_string($bindingClassMethod)) {
                     $bindingClassMethod = $this->make($bindingClassMethod);
+                } elseif ($bindingClassMethod instanceof \Closure) {
+                    $bindingClassMethod = $bindingClassMethod();
+                } elseif ($bindingClassMethod instanceof \ReflectionClass) {
+                    $bindingClassMethod = $this->make($bindingClassMethod->getName());
                 }
                 $dependencies[$param->getName()] = $bindingClassMethod;
             } elseif (!empty($this->bindings['method']['params']) && $param->isDefaultValueAvailable()) {
@@ -209,26 +246,21 @@ class Container
      * Build an instance of the given class, resolving dependencies as needed.
      *
      * @template T
-     * @param class-string<T> $class The class name to instantiate.
+     * @param class-string<T> $abstract The class name to instantiate.
      * @param array $params Additional parameters to pass to the constructor.
      * @return T The instantiated object of type T.
      * @throws \ReflectionException If the class cannot be reflected or instantiated.
      */
-    private function build($class, $params = [])
+    private function build($abstract, $params = [])
     {
-        if ($class instanceof \Closure) {
-            return $class($this);
-        }
+        $abstract = $this->getClass($abstract);
 
-        if (interface_exists($class)) {
-            $class = $this->getClass($class);
-            if (!$class) {
-                throw new AppException("No concrete implementation found for interface $class");
-            }
+        if ($abstract instanceof \Closure) {
+            return $abstract();
         }
 
         try {
-            $classReflection = new \ReflectionClass($class);
+            $classReflection = new \ReflectionClass($abstract);
         } catch (\ReflectionException $e) {
             throw new \ReflectionException($e->getMessage(), 500);
         }
@@ -251,9 +283,8 @@ class Container
         $dependencies = $constructor->getParameters();
 
         $instances = $this->resolveConstructorDependencies($dependencies);
-
-        // finally pass dependancy and param to class instance
-        return $classReflection->newInstanceArgs($instances);
+        $this->bindings['resolved'][$className] = $classReflection->newInstanceArgs($instances);
+        return $this->bindings['resolved'][$className];
     }
 
     /**
