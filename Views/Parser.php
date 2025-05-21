@@ -24,7 +24,7 @@ class Parser {
                 '/@empty\s*\{/s',                             // Match @empty {
                 '/\}\s*@elseif\s*\((.*?)\)\s*\{/',            // Match } @elseif ($condition) {
                 '/\}\s*@else\s*\{/',                          // Match } @else {
-                '/(?<!<\?php)(?<!\?>)\}/'                     // Match closing braces }
+/*                '/(?<!<\?php)(?<!\?>)\}/'                     // Match closing braces }*/
             ],
             'render' => [
                 '<?php <<PUSH:php>>',                       // Render PHP and pop from stack
@@ -40,8 +40,13 @@ class Parser {
                 '<?php else: ?> <<PUSH:empty>>', // Render empty and push to stack
                 '<?php elseif ($1): ?>',                     // Render elseif
                 '<?php else: ?>',                            // Render else
-                '<<CLOSE>>'                                 // Render closing braces
+//                '<<CLOSE>>'                                 // Render closing braces
             ]
+        ],
+        [
+            'regex' => '/(?<php><\?php[\s\S]*?\?>|<\?[\s\S]*?\?>|(?i)<style\b[\s\S]*?<\/style>|(?i)<script\b[\s\S]*?<\/script>)/i', // Match closing braces }
+            'render' => '<<CLOSE>>',
+            'func' => 'replaceClosingBraces'
         ],
         [
             'regex' => '/@empty\s*\((.*?)\)\s*\{/',
@@ -70,12 +75,18 @@ class Parser {
         foreach ($this->rules as $rule) {
             $regex = $rule['regex'];
             $render = $rule['render'];
-            if ($render === 'callback') {
-                $this->template = preg_replace_callback($regex, function ($matches) use ($rule) {
-                    return $this->{$rule['func']}($matches);
-                }, $this->template);
-            } else {
-                $this->template = preg_replace($regex, $render, $this->template);
+            switch ($render) {
+                case 'callback':
+                    $this->template = preg_replace_callback($regex, function ($matches) use ($rule) {
+                        return $this->{$rule['func']}($matches);
+                    }, $this->template);
+                    break;
+                case '<<CLOSE>>':
+                    $this->template = $this->{$rule['func']}($this->template, $regex, $render);
+                    break;
+                default:
+                    $this->template = preg_replace($regex, $render, $this->template);
+                    break;
             }
         }
 
@@ -110,7 +121,7 @@ class Parser {
                     'switch' => '<?php endswitch; ?>',
                     'case', 'default' => '',
                     'php' => '?>',
-                     default => '}'
+                     default => ''
                 };
                 $line = str_replace('<<CLOSE>>', $phpEnd, $line);
             }
@@ -185,6 +196,19 @@ class Parser {
         }
 
         return "(new {$getPipe}())->$funcHandle";
+    }
+
+    private function replaceClosingBraces($template, $pattern, $render)
+    {
+        $parts = preg_split($pattern, $template, -1, PREG_SPLIT_DELIM_CAPTURE);
+        $result = '';
+        foreach ($parts as $part) {
+            if (!preg_match($pattern, $part)) {
+                $part = str_replace('}', $render, $part);
+            }
+            $result .= $part;
+        }
+        return $result;
     }
 
 }

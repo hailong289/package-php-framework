@@ -9,7 +9,9 @@ class ViewRender {
     private static $file_html = [];
     private static $binding = [
         'view_root' => null, // path root
-        'view_parse' => null // path has render
+        'view_parse' => null, // path has render
+        'layout' => null, // path layout
+        'sections' => [], // path section
     ];
 
     public static function instance(): ViewRender
@@ -38,7 +40,7 @@ class ViewRender {
             $view,
             function () use ($view, $data) {
                 $template = self::resolveIncludes(
-                    self::resolveViewContent(self::$binding['view_root'], $view),
+                    self::getContentView(self::$binding['view_root'], $view),
                     $data
                 );
                 return (new Parser($template))->parse($view);
@@ -67,7 +69,7 @@ class ViewRender {
         return false;
     }
 
-    private static function resolveViewContent($view, $name)
+    private static function getContentView($view, $name)
     {
         if (in_array($name, self::$file_html)) {
             ob_start();
@@ -82,7 +84,7 @@ class ViewRender {
         $output = preg_replace('/<!--(.*?)-->/', '', $output);
         while (preg_match('/@include\(\s*[\'"](.+?)[\'"]\s*\)/', $output, $matches)) {
             $included_content = self::resolveIncludes(
-                self::resolveViewContent(
+                self::getContentView(
                     view_root($matches[1]),
                     $matches[1]
                 )

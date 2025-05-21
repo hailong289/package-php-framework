@@ -92,11 +92,11 @@ class QueueRedis {
                     if (!method_exists($queue['class'], 'handle')) {
                         throw new QueueException("function handle does not exits in {$queue['class']}");
                     }
-                    app()->callWithParams($queue['class'], $queue['payload'])->handle();
+                    app()->make($queue['class'], $queue['payload'])->handle();
                     $queueManage->doneJob();
                 } catch (\Throwable $exception) {
                     $data = $this->getDataFailed($queue, $exception);
-                    $queueManage->failedJob($this, $data);
+                    $queueManage->failedJob($this, $data, $exception);
                 }
             };
             $queueManage->execute($taskName, $callback, $queue);

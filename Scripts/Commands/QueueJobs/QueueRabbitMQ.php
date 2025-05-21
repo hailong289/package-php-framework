@@ -94,7 +94,7 @@ class QueueRabbitMQ {
                     if (!method_exists($class, 'handle')) {
                         throw new QueueException("Handle missing in {$class}");
                     }
-                    app()->callWithParams($class, $data['payload'])->handle();
+                    app()->make($class, $data['payload'])->handle();
                     $qm->doneJob();
                 } catch (\Throwable $e) {
                     $qm->failedJob($this, $this->getDataFailed($data, $e), $e);

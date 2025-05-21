@@ -16,7 +16,13 @@ class Container
     /**
      * @var array
      */
-    protected $bindings = [];
+    protected $bindings = [
+        'alias' => null,
+        'method' => [
+            'method' => null,
+            'params' => []
+        ]
+    ];
 
     /**
      * @var array
@@ -76,33 +82,7 @@ class Container
             }
             return $this->singletons[$abstract];
         }
-        if (isset($this->bindings[$abstract])) {
-            if ($this->bindings[$abstract] instanceof \Closure) {
-                return $this->bindings[$abstract]();
-            }
-            return $this->bindings[$abstract];
-        }
         return $abstract;
-    }
-
-    /**
-     * @param $abstract
-     * @param $factory
-     * @return $this
-     */
-    public function set($abstract, $factory = null)
-    {
-        if (is_null($factory)) {
-            $factory = $abstract;
-        }
-        if (!$factory instanceof \Closure) {
-            if (!is_string($factory)) {
-                throw new \TypeError(self::class.'::bind(): Argument #2 ($factory) must be of type Closure|string|null');
-            }
-            $factory = $this->getClosure($factory);
-        }
-        $this->bindings[$abstract] = $factory;
-        return $this;
     }
 
     /**
@@ -127,25 +107,13 @@ class Container
     }
 
     /**
-     * @param $abstract
-     * @param $factory
-     * @return void
-     */
-    public function replace($abstract, $factory): void
-    {
-        if (isset($this->bindings[$abstract])) {
-            $this->bindings[$abstract] = $factory;
-        }
-    }
-
-    /**
      * @template T
      * @param class-string<T> $abstract The class name to instantiate.
-     * @param mixed $factory Optional factory to resolve the instance.
+     * @param array $params Additional parameters to pass to the constructor.
      * @return T The instantiated object of the class.
      */
-    public function make($abstract, $factory = null) {
-        return $this->build($abstract);
+    public function make($abstract, $params = []) {
+        return $this->build($abstract, $params);
     }
 
     /**
@@ -159,30 +127,19 @@ class Container
         };
     }
 
-
-    /**
-     * @template T
-     * @param class-string<T> $abstract The class name to instantiate.
-     * @param array $params Additional parameters to pass to the constructor.
-     * @return T The instantiated object of the class.
-     */
-    public function callWithParams($abstract, $params = []) {
-        return $this->build($abstract, $params);
-    }
-
     /**
      * @var array
      */
     public function call($callable)
     {
-        $this->resolveCallback($callable);
+        $this->resolveBindAliasWithMethod($callable);
 
-        if (empty($this->callbackClass)) {
-            throw new \TypeError(self::class . '::call(): Class must not be empty');
+        if (empty($this->bindings['alias'])) {
+            throw new \TypeError(self::class.'::call(): Argument #1 ($callable) must be of type string|array');
         }
-        $bindingClass = $this->callbackClass;
+
         try {
-            $methodReflection = new \ReflectionMethod($bindingClass, $this->callbackMethod);
+            $methodReflection = new \ReflectionMethod($this->bindings['alias'], $this->bindings['method']['name']);
         } catch (\ReflectionException $e) {
             throw new \ReflectionException($e->getMessage(), 500);
         }
@@ -192,22 +149,24 @@ class Container
         // loop with dependencies/parameters
         foreach ($methodParams as $param) {
             $type = $param->getType(); // check type
-            if ($type && $type instanceof \ReflectionNamedType) { /// if parameter is a class
+            if ($type && $type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
                 $className = $type->getName();
                 $bindingClassMethod = $this->getClass($className);
                 if (is_string($bindingClassMethod)) {
                     $bindingClassMethod = $this->make($bindingClassMethod);
                 }
-                array_push($dependencies, $bindingClassMethod); // push  to $dependencies array
+                $dependencies[$param->getName()] = $bindingClassMethod;
+            } elseif (!empty($this->bindings['method']['params']) && $param->isDefaultValueAvailable()) {
+                $dependencies[$param->getName()] = array_shift($this->bindings['method']['params']);
+            } else {
+                throw new AppException("Missing required parameter: {$param->getName()}");
             }
         }
-        foreach ($this->callbackMethodParams as $value) {
+        foreach ($this->bindings['method']['params'] as $value) {
             array_push($dependencies, $value);
         }
-        // make class instance
-        $initClass = $this->make($bindingClass);
         // call method with $dependencies/parameters
-        return $methodReflection->invoke($initClass, ...$dependencies);
+        return $methodReflection->invoke($this->make($this->bindings['alias']), ...$dependencies);
     }
 
 
@@ -215,7 +174,7 @@ class Container
      * separate class and method name
      * @param $callback
      */
-    private function resolveCallback($callback)
+    private function resolveBindAliasWithMethod($callback)
     {
         //separate class and method
         if (is_string($callback)) {
@@ -225,21 +184,24 @@ class Container
             $segments = $callback;
         }
         // set class name with namespace
-        $this->callbackClass = $segments[0];
+        $this->bindings['alias'] = $segments[0];
         unset($segments[0]);
 
         // set method name . if method name not provided then default method __invoke
         if (isset($segments[1])) {
-            $this->callbackMethod = $segments[1];
+            $this->bindings['method']['name'] = $segments[1];
             unset($segments[1]);
         } else {
             $this->callbackMethod = '__invoke';
+            $this->bindings['method']['name'] = '__invoke';
         }
         // set method params
         if (isset($segments[2])) {
             $this->callbackMethodParams = array_values($segments);
+            $this->bindings['method']['params'] = array_values($segments);
         } else {
             $this->callbackMethodParams = [];
+            $this->bindings['method']['params'] = [];
         }
     }
 
@@ -306,6 +268,10 @@ class Container
             if ($class instanceof \ReflectionClass) {
                 $abstract = $class->getName();
                 $array[$dependency->getName()] = $this->make($abstract);
+            } elseif ($dependency->isDefaultValueAvailable()) {
+                $array[$dependency->getName()] = $dependency->getDefaultValue();
+            } else {
+                throw new AppException("Unresolvable dependency: {$dependency->getName()} in {$dependency->getDeclaringClass()->getName()}");
             }
         }
         return $array;
@@ -322,5 +288,4 @@ class Container
             ? new \ReflectionClass($parameter->getType()->getName())
             : null;
     }
-
 }
