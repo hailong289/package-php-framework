@@ -74,11 +74,12 @@ class Container
      * get class binding
      */
     private function getClass($abstract) {
-        if (isset($this->singletons[$abstract])) {
+        if ($this->bound($abstract)) {
             return $this->singletons[$abstract];
         }
         return $abstract;
     }
+
 
     /**
      * @param $abstract
@@ -100,6 +101,27 @@ class Container
 
     /**
      * @param $abstract
+     * @return bool
+     */
+    public function has($abstract): bool {
+        return $this->bound($abstract) || $this->resolved($abstract);
+    }
+
+    /**
+     * @template T
+     * @param class-string<T> $abstract The class name to instantiate.
+     * @return T The instantiated object of the class.
+     */
+    public function get($abstract)
+    {
+        if ($this->resolved($abstract)) {
+            return $this->bindings['resolved'][$abstract];
+        }
+        return $this->build($abstract);
+    }
+
+    /**
+     * @param $abstract
      * @param $factory
      * @return $this
      */
@@ -116,6 +138,19 @@ class Container
     public function singleton($abstract, $factory = null)
     {
         $this->singletons[$abstract] = $this->bind($abstract, $factory);
+        return $this;
+    }
+
+    /**
+     * @param $abstract
+     * @param $factory
+     * @return $this
+     */
+    public function singletonIf($abstract, $factory = null)
+    {
+        if (!$this->bound($abstract)) {
+            $this->singletons[$abstract] = $this->bind($abstract, $factory);
+        }
         return $this;
     }
 
@@ -229,22 +264,18 @@ class Container
             $this->bindings['method']['name'] = $segments[1];
             unset($segments[1]);
         } else {
-            $this->callbackMethod = '__invoke';
             $this->bindings['method']['name'] = '__invoke';
         }
         // set method params
         if (isset($segments[2])) {
-            $this->callbackMethodParams = array_values($segments);
             $this->bindings['method']['params'] = array_values($segments);
         } else {
-            $this->callbackMethodParams = [];
             $this->bindings['method']['params'] = [];
         }
     }
 
     /**
      * Build an instance of the given class, resolving dependencies as needed.
-     *
      * @template T
      * @param class-string<T> $abstract The class name to instantiate.
      * @param array $params Additional parameters to pass to the constructor.
