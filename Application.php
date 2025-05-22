@@ -2,6 +2,7 @@
 
 namespace Hola;
 use App\Http\Middleware\Kernel;
+use Hola\Connection\ConnectionManager;
 use Hola\Container\Container;
 use Hola\Events\AppEvents;
 use Hola\Exceptions\AppException;
@@ -50,6 +51,10 @@ class Application extends Container
         
         $this->singleton(AppEvents::class, function () {
             return AppEvents::start();
+        });
+
+        $this->singleton(ConnectionManager::class, function () {
+            return new ConnectionManager();
         });
         
         return $this;

@@ -1,5 +1,6 @@
 <?php
 namespace Hola\Queue\Driver;
+use Hola\Connection\ConnectionManager;
 use Hola\Queue\Interface\QueueDriverInterface;
 use Hola\Connection\RabbitMQ;
 
@@ -13,7 +14,13 @@ class RabbitMQQueueDriver implements QueueDriverInterface
     
     public function enqueue(string $connection, string $queue, string $data): void
     {
-        $rabbitMQ = RabbitMQ::instance($connection);
+        $rabbitMQ = app()
+            ->get(ConnectionManager::class)
+            ->setConfigName('queue')
+            ->setConnectionType('rabbitmq')
+            ->setConnectionName($connection)
+            ->getConnection();
+
         $channel = $rabbitMQ->channel();
 
         try {

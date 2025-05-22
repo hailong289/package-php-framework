@@ -1,9 +1,10 @@
 <?php
 
 namespace Hola\Database;
+use Hola\Connection\ConnectionManager;
 use Hola\Connection\PdoSql;
 
-class Connection {
+class QueryConnectBuilder {
 
     private null|\PDO $pdo = null;
     private $swithConnect = false;
@@ -13,8 +14,8 @@ class Connection {
         'time' => 0
     ];
 
-    public function __construct($conn = null, $type = null) {
-        $this->connect($conn, $type);
+    public function __construct($conn = null) {
+        $this->connect($conn);
     }
 
     public function getPdo() {
@@ -132,25 +133,25 @@ class Connection {
         return array_values($bindings);
     }
 
-    public function connect($connection = null, $type = null) {
+    public function connect($connection = null) {
         if (!is_null($connection)) {
-            return $this->switchConnect($connection, $type);
+            $this->pdo = app()
+                ->get(ConnectionManager::class)
+                ->setConnectionType('database')
+                ->setConnectionName($connection)
+                ->getConnection();
         }
+
         if (!is_null($this->pdo)) {
             return $this->pdo;
         }
-        $this->pdo = PdoSql::instance();
-        return $this->pdo;
-    }
 
-    public function switchConnect($con, $type = null)
-    {
-        $this->swithConnect = true;
-        if ($type === 'queue') {
-            $this->pdo = (new PdoSql())->connect($con, 'queue');
-        } else {
-            $this->pdo = (new PdoSql())->connect($con, 'database');
-        }
+        $this->pdo = app()
+            ->get(ConnectionManager::class)
+            ->setConnectionType('database')
+            ->setConnectionName(config('database.default'))
+            ->getConnection();
+
         return $this->pdo;
     }
 

@@ -1,84 +1,108 @@
 <?php
 namespace Hola\Connection;
+use Hola\Connection\Interfaces\IConnections;
 use Hola\Exceptions\ConnectionException;
 
-class PdoSql {
-    private static $instance = null;
-    private static $instance_queue = null;
+class PdoSql implements IConnections {
+    private $host;
+    private $port;
+    private $db_name;
+    private $username;
+    private $password;
+    private $dsn_config;
+    private $driver; // mysql, pgsql, sqlite
+    private $options;
+    private \PDO|null $connection = null;
 
     public function __construct() {}
 
     /**
-     * @param string|null $name
-     * @return \PDO
-     * @throws \Exception
+     * @param string $host
+     * @param int $port
+     * @param string $db_name
+     * @param string $username
+     * @param string $password
+     * @param string|null $dsn_config
+     * @param string $driver
+     * @param array $options
+     * @return PdoSql
      */
-    public static function instance($name = null) {
-        $conn_name = $name ?? config('database.default', 'mysql');
-        if(self::$instance == null) {
-            self::$instance = (new PdoSql())->connect($conn_name, 'database');
-        }
-        return self::$instance;
+    public function setConfig(
+        $host,
+        $port,
+        $db_name,
+        $username,
+        $password,
+        $dsn_config = null,
+        $driver = 'mysql',
+        $options = []
+    )
+    {
+        $this->host = $host;
+        $this->port = $port;
+        $this->db_name = $db_name;
+        $this->username = $username;
+        $this->password = $password;
+        $this->dsn_config = $dsn_config;
+        $this->driver = $driver;
+        $this->options = $options;
+        return $this;
     }
 
     /**
-     * @param string|null $name
-     * @return \PDO
-     * @throws \Exception
+     * @return string
      */
-    public static function queueConnect($name = 'database')
+    private function getDns()
     {
-        $conn_name = $name ?? config('queue.default', 'database');
-        if(self::$instance_queue == null){
-            self::$instance_queue = (new PdoSql())->connect($conn_name, 'queue');
+        if (!is_null($this->dsn_config)) {
+            $dsn = $this->dsn_config;
+        } else {
+            $dsn = "$this->driver:dbname=$this->db_name;host=$this->host;port=$this->port";
         }
-        return self::$instance_queue;
+        return $dsn;
     }
 
     /**
      * @return bool
      */
-    public static function isConnect()
+    public function isConnect()
     {
-        return self::$instance != null;
+        return !is_null($this->connection);
     }
 
     /**
-     * @return bool
+     * @return $this
+     * @throws \Throwable
+     * @throws \PDOException
      */
-    public static function isConnectQueue()
+    public function reConnect()
     {
-        return self::$instance_queue != null;
+        $this->connect();
+        return $this;
     }
 
     /**
-     * @param $name
-     * @param string $config_name
+     * @return \PDO|null
+     */
+    public function getConnection()
+    {
+        return $this->connection;
+    }
+
+    /**
      * @return \PDO
      * @throws \Throwable
      * @throws \PDOException
      */
-    public function connect($name, $config_name = 'database') {
-        $config = config("$config_name.connections");
-        $db_connection = $config[$name];
-        $host = $db_connection['host'];
-        $port = $db_connection['port'];
-        $db_name = $db_connection['db_name'];
-        $username = $db_connection['username'];
-        $password = $db_connection['password'];
-        $dsn_config = $db_connection['dsn'] ?? null;
-        $driver = $db_connection['driver'] ?? 'mysql';
+    public function connect() {
         try{
-            // dsn configuration
-            $dsn = "$driver:dbname=$db_name;host=$host;port=$port";
-            if (!is_null($dsn_config)) {
-                $dsn = $dsn_config;
-            }
-            // Configure options, - configure uft8, - configure exceptions when query fails
-            $options = $db_connection['options'] ?? [];
             // connection command
-            $conn = new \PDO($dsn,$username,$password,$options);
-            return $conn;
+            $this->connection = new \PDO(
+                $this->getDns(),
+                $this->username,
+                $this->password,
+                $this->options
+            );
         }catch (\PDOException $e){
             $mess = $e->getMessage();
             throw new ConnectionException("Connection database failed: $mess", 500);

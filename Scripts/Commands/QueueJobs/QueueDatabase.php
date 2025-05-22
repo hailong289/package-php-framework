@@ -2,6 +2,7 @@
 
 namespace Hola\Scripts\Commands\QueueJobs;
 
+use Hola\Connection\ConnectionManager;
 use Hola\Database\DBO;
 use Hola\Database\QueryBuilder;
 use Hola\Exceptions\QueueException;
@@ -52,7 +53,8 @@ class QueueDatabase {
 
     public function connect()
     {
-        $this->driver = DBO::connection($this->queueConnection, 'queue');
+        app()->get(ConnectionManager::class)->setConfigName('queue');
+        $this->driver = DBO::connection($this->queueConnection);
         return $this;
     }
 

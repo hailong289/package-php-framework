@@ -1,69 +1,89 @@
 <?php
 namespace Hola\Connection;
+use Hola\Connection\Interfaces\IConnections;
 use Hola\Exceptions\ConnectionException;
 
-class RabbitMQ {
-    private static $instance = null;
-    private static $instance_queue = null;
+class RabbitMQ implements IConnections {
+    private $host;
+    private $port;
+    private $username;
+    private $password;
+    private $vhost;
+    private $scheme;
+    private $options;
+    private $connection = null;
 
-    /**
-     * @param string|null $name
-     * @return \PhpAmqpLib\Connection\AMQPStreamConnection
-     * @throws \Exception
-     */
-    public static function instance($name = null){
-        $conn_name = $name ?? config('queue.default', 'rabbitmq');
-        if(self::$instance == null){
-            $connection = (new RabbitMQ())->connect($conn_name);
-            self::$instance = $connection;
-        }
-        return self::$instance;
+    public function setConfig(
+        $host,
+        $port,
+        $username,
+        $password,
+        $vhost = '/',
+        $scheme = 'amqp',
+        $options = []
+    )
+    {
+        $this->host = $host;
+        $this->port = $port;
+        $this->username = $username;
+        $this->password = $password;
+        $this->vhost = $vhost;
+        $this->scheme = $scheme;
+        $this->options = $options;
     }
 
     /**
      * @return bool
      */
-    public static function isConnect()
+    public function isConnect()
     {
-        return self::$instance != null;
+        return !is_null($this->connection);
     }
 
     /**
-     * @param $name
-     * @param string $config_name
+     * @return RabbitMQ
+     */
+    public function reConnect() {
+        if ($this->isConnect()) {
+            $this->connection->close();
+        }
+        $this->connect();
+        return $this;
+    }
+
+    /**
+     * @return \PhpAmqpLib\Connection\AMQPStreamConnection|\PhpAmqpLib\Connection\AMQPSSLConnection|null
+     */
+    public function getConnection()
+    {
+        return $this->connection;
+    }
+
+    /**
      * @return \PhpAmqpLib\Connection\AMQPStreamConnection
      * @throws \Throwable
      */
-    public function connect($name, $config_name = 'queue') {
-        $config = config("$config_name.connections");
-        $connection = $config[$name];
-        $host = $connection['host'];
-        $port = $connection['port'];
-        $user = $connection['username'];
-        $pass = $connection['password'];
-        $vhost = $connection['vhost'];
-        $scheme = $connection['scheme'];
-        $options = $connection['options'];
+    public function connect() {
         try {
             if($scheme === "amqps") {
                 $conn = new \PhpAmqpLib\Connection\AMQPSSLConnection(
-                    $host,
-                    $port,
-                    $user,
-                    $pass,
-                    $vhost,
-                    $options
+                    $this->host,
+                    $this->port,
+                    $this->username,
+                    $this->password,
+                    $this->vhost,
+                    $this->options
                 );
             } else {
                 $conn = new \PhpAmqpLib\Connection\AMQPStreamConnection(
-                    $host,
-                    $port,
-                    $user,
-                    $pass,
-                    $vhost
+                    $this->host,
+                    $this->port,
+                    $this->username,
+                    $this->password,
+                    $this->vhost
                 );
             }
-            return $conn;
+            $this->connection = $conn;
         } catch (\Throwable $e) {
             throw new ConnectionException("Connect rabbitMQ failed. Error: ".$e->getMessage(), 500);
         }

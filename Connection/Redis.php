@@ -1,52 +1,72 @@
 <?php
 namespace Hola\Connection;
+use Hola\Connection\Interfaces\IConnections;
 use Hola\Exceptions\ConnectionException;
 
-class Redis {
-    private static $instance = null;
-    private static $instance_queue = null;
+class Redis implements IConnections {
+    private $host;
+    private $port;
+    private $username;
+    private $password;
+    private $timeout;
+    private $reserved;
+    private $retryInterval;
+    private $readTimeout;
+    private $connection = null;
 
     /**
-     * @param string|null $name
-     * @return \Redis
-     * @throws \Exception
+     * @param string $host
+     * @param int $port
+     * @param string $username
+     * @param string $password
+     * @param int $timeout
+     * @param string|null $reserved
+     * @param int $retryInterval
+     * @param int $readTimeout
      */
-    public static function instance($name = null) {
-        $conn_name = $name ?? 'redis';
-        if(self::$instance == null){
-            self::$instance = (new Redis())->connect($conn_name, 'database');
-        }
-        return self::$instance;
-    }
-
-    /**
-     * @param string|null $name
-     * @return \Redis
-     * @throws \Exception
-     */
-    public static function queueConnect($name = null)
+    public function setConfig(
+        $host,
+        $port,
+        $username,
+        $password,
+        $timeout = 0,
+        $reserved = null,
+        $retryInterval = 0,
+        $readTimeout = 0
+    )
     {
-        $conn_name = $name ?? 'redis';
-        if(self::$instance_queue == null){
-            self::$instance_queue = (new Redis())->connect($conn_name, 'queue');
-        }
-        return self::$instance_queue;
+        $this->host = $host;
+        $this->port = $port;
+        $this->username = $username;
+        $this->password = $password;
+        $this->timeout = $timeout;
+        $this->reserved = $reserved;
+        $this->retryInterval = $retryInterval;
+        $this->readTimeout = $readTimeout;
     }
 
     /**
      * @return bool
      */
-    public static function isConnect()
+    public function isConnect()
     {
-        return self::$instance != null;
+        return !is_null($this->connection);
     }
 
     /**
-     * @return bool
+     * @return Redis
      */
-    public static function isConnectQueue()
+    public function reConnect()
     {
-        return self::$instance_queue != null;
+        $this->connect();
+        return $this;
+    }
+
+    /**
+     * @return \Redis|null
+     */
+    public function getConnection() {
+        return $this->connection;
     }
 
     /**
@@ -56,24 +76,20 @@ class Redis {
      * @throws \RedisException
      * @throws \Throwable
      */
-    public function connect($name, $config_name = 'database') {
+    public function connect() {
         try {
-            $config = config("$config_name.connections");
-            $conn = new \Redis();
-            $connection = $config[$name];
-            $host = $connection['host'];
-            $port = $connection['port'];
-            $username = $connection['username'];
-            $password = $connection['password'];
-            $timeout = $connection['timeout'];
-            $reserved = $connection['reserved'];
-            $retryInterval = $connection['retryInterval'];
-            $readTimeout = $connection['readTimeout'];
-            $conn->connect($host, $port, $timeout, $reserved, $retryInterval, $readTimeout);
-            if($username && $password) {
-                $conn->rawCommand('auth', $username, $password);
+            $this->connection = new \Redis();
+            $this->connection->connect(
+                $this->host,
+                $this->port,
+                $this->timeout,
+                $this->reserved,
+                $this->retryInterval,
+                $this->readTimeout
+            );
+            if($this->username && $this->password) {
+                $this->connection->rawCommand('auth', $this->username, $this->password);
             }
-            return $conn;
         } catch (\RedisException $e) {
             throw new ConnectionException("Connect redis failed. Error: ".$e->getMessage(), 500);
         } catch (\Throwable $e) {

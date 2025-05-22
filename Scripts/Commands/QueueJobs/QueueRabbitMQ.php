@@ -1,5 +1,6 @@
 <?php
 namespace Hola\Scripts\Commands\QueueJobs;
+use Hola\Connection\ConnectionManager;
 use Hola\Connection\RabbitMQ;
 use Hola\Exceptions\QueueException;
 use PhpAmqpLib\Channel\AMQPChannel;
@@ -53,7 +54,12 @@ class QueueRabbitMQ {
 
     public function connect()
     {
-        $this->driver = RabbitMQ::instance($this->queueConnection);
+        $this->driver = app()
+            ->get(ConnectionManager::class)
+            ->setConfigName('queue')
+            ->setConnectionType('rabbitmq')
+            ->setConnectionName($this->queueConnection)
+            ->getConnection();
         return $this;
     }
 

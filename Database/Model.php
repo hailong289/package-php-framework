@@ -5,8 +5,8 @@ namespace Hola\Database;
 class Model {
     private static QueryBuilder $builder;
 
-    private static function build($conn = null, $type = null) {
-        self::$builder = QueryBuilder::connect($conn, $type);
+    private static function build() {
+        self::$builder = new QueryBuilder();
         $modelCalled = static::class;
         if ($modelCalled === "Hola\Database\DBO") {
             return self::$builder;
@@ -50,9 +50,9 @@ class Model {
         return self::build()->rollBack();
     }
 
-    public static function connection($conn = null, $type = null)
+    public static function connection($conn = null)
     {
-        return self::build($conn, $type);
+        return self::build()->connection($conn);
     }
 
     public static function select($columns = ['*'])

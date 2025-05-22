@@ -2,6 +2,7 @@
 
 namespace Hola\Scripts\Commands\QueueJobs;
 
+use Hola\Connection\ConnectionManager;
 use Hola\Connection\Redis;
 use Hola\Exceptions\QueueException;
 
@@ -50,7 +51,12 @@ class QueueRedis {
 
     public function connect()
     {
-        $this->driver = Redis::queueConnect($this->queueConnection);
+        $this->driver = app()
+            ->get(ConnectionManager::class)
+            ->setConfigName('queue')
+            ->setConnectionType('redis')
+            ->setConnectionName($this->queueConnection)
+            ->getConnection();
         return $this;
     }
 

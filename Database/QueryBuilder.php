@@ -4,21 +4,17 @@ use Hola\Data\Collection;
 
 class QueryBuilder {
 
-    public static Connection|null $connection = null;
+    public static QueryConnectBuilder|null $connection = null;
     private $model = null;
 
-    public function __construct() {}
+    public function __construct() {
+        $this->connection();
+    }
 
-    public static function connect($conn = null, $type = null)
+    public function connection($name = null)
     {
-        if (!is_null($conn)) {
-            self::$connection = new Connection($conn, $type);
-        } else {
-            if (is_null(self::$connection)) {
-                self::$connection = new Connection();
-            }
-        }
-        return new self();
+        self::$connection = new QueryConnectBuilder($name);
+        return $this;
     }
 
     /** @var array[]  */
@@ -62,7 +58,7 @@ class QueryBuilder {
 
     public function reconnectDefault()
     {
-        self::$connection = new Connection();
+        self::$connection = new QueryConnectBuilder();
         return $this;
     }
 
