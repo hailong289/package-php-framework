@@ -5,4 +5,5 @@ interface IConnections {
     public function isConnect();
     public function reConnect();
     public function getConnection();
+    public function setConfig(...$args);
 }

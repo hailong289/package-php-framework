@@ -1,6 +1,7 @@
 <?php
 
 namespace Hola\Data\Cache\Driver;
+use Hola\Connection\ConnectionManager;
 use Hola\Connection\Redis;
 use Hola\Data\Cache\Interfaces\ICacheDriver;
 
@@ -51,7 +52,12 @@ class CacheRedis implements ICacheDriver {
     }
 
     private function connect() {
-        $this->instance = Redis::instance($this->default_connection);
+        $this->instance = app()
+                ->get(ConnectionManager::class)
+                ->setConfigName('cache')
+                ->setConnectionType('redis')
+                ->setConnectionName($this->default_connection)
+                ->getConnection();
         return $this;
     }
 }

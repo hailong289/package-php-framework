@@ -8,7 +8,7 @@ class ConnectionManager {
     protected $connectionName = null; // default connection name
     protected $connectionType = 'database'; // Redis, RabbitMQ, database
     protected $connection = null; // default connection
-    protected $configName = 'database'; // only for database, queue
+    protected $configName = 'database'; // only for database, queue, cache
     protected $configs = []; // default config name
 
     public function __construct()
