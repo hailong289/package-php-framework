@@ -10,6 +10,11 @@ class Parser {
     protected $rules = [
         ['regex' => '/\{{\s*(.*?)\s*\}}/s', 'render' => 'callback', 'func' => 'variable'],
         [
+            'regex' => '/(?<php><\?php[\s\S]*?\?>|<\?[\s\S]*?\?>|(?i)<style\b[\s\S]*?<\/style>|(?i)<script\b[\s\S]*?<\/script>)/i', // Match closing braces }
+            'render' => '<<CLOSE>>',
+            'func' => 'replaceClosingBraces'
+        ],
+        [
             'regex' => [
                 '/@php\s*\{/',
                 '/@if\s*\((.*?)\)\s*\{/',                     // Match @if ($condition) {
@@ -42,11 +47,6 @@ class Parser {
                 '<?php else: ?>',                            // Render else
 //                '<<CLOSE>>'                                 // Render closing braces
             ]
-        ],
-        [
-            'regex' => '/(?<php><\?php[\s\S]*?\?>|<\?[\s\S]*?\?>|(?i)<style\b[\s\S]*?<\/style>|(?i)<script\b[\s\S]*?<\/script>)/i', // Match closing braces }
-            'render' => '<<CLOSE>>',
-            'func' => 'replaceClosingBraces'
         ],
         [
             'regex' => '/@empty\s*\((.*?)\)\s*\{/',
