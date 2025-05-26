@@ -71,7 +71,7 @@ class QueueRun extends \Hola\Core\Command
 
             $switchDB->getDriver()->queueWork($queueManage);
         } catch (\Throwable $th) {
-            log_write($th);
+            logs()->write_error($th);
             $this->output()->error($th->getMessage());
             return false;
         }

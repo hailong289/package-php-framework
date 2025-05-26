@@ -105,7 +105,7 @@ class QueueManage {
             }
         }
         $this->output->writeln("<error>{$exception->getMessage()}</error>");
-        log_write($exception);
+        logs()->write_error($exception);
         $driver->pushFailedJob($data);
         pcntl_alarm(0);
     }

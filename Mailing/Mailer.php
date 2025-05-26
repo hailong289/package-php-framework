@@ -24,15 +24,15 @@ class Mailer {
         $debug = null
     ) {
         $this->isConfig = true;
-        $this->mail->SMTPDebug = conval('MAIL_DEBUG', SMTP::DEBUG_OFF, $debug);// Enable verbose debug output
+        $this->mail->SMTPDebug = $debug ?? conval('MAIL_DEBUG', SMTP::DEBUG_OFF);// Enable verbose debug output
         $this->mail->isSMTP();
-        $this->mail->Host = conval('MAIL_HOST','smtp.gmail.com', $host);
-        $this->mail->SMTPAuth = conval('MAIL_AUTH', true, $auth);// Enable SMTP authentication
-        $this->mail->Username = conval('MAIL_USERNAME','user@gmail.com', $username);// SMTP username
-        $this->mail->Password = conval('MAIL_PASSWORD','password', $password); // SMTP password
-        $this->mail->CharSet = conval('MAIL_CHARSET', PHPMailer::CHARSET_UTF8, $charset);
-        $this->mail->SMTPSecure = conval('MAIL_ENCRYPTION', PHPMailer::ENCRYPTION_SMTPS, $encryption); // Enable TLS encryption; `PHPMailer::ENCRYPTION_SMTPS` also accepted
-        $this->mail->Port = conval('MAIL_PORT', 587, $port); // TCP port to connect to
+        $this->mail->Host = $host ?? conval('MAIL_HOST','smtp.gmail.com');
+        $this->mail->SMTPAuth = $auth ?? conval('MAIL_AUTH', true);// Enable SMTP authentication
+        $this->mail->Username = $username ?? conval('MAIL_USERNAME','user@gmail.com');// SMTP username
+        $this->mail->Password = $password ?? conval('MAIL_PASSWORD','password'); // SMTP password
+        $this->mail->CharSet = $charset ?? conval('MAIL_CHARSET', PHPMailer::CHARSET_UTF8);
+        $this->mail->SMTPSecure = $encryption ?? conval('MAIL_ENCRYPTION', PHPMailer::ENCRYPTION_SMTPS); // Enable TLS encryption; `PHPMailer::ENCRYPTION_SMTPS` also accepted
+        $this->mail->Port = $port ?? conval('MAIL_PORT', 587); // TCP port to connect to
         return $this;
     }
 

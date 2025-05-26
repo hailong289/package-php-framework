@@ -139,6 +139,7 @@ if(!function_exists('logs')){
                 echo "</pre>";
                 exit();
             }
+            
             public function dump_html(...$args) {
                 http_response_code(500);
                 echo "<pre>";
@@ -146,69 +147,47 @@ if(!function_exists('logs')){
                 echo "</pre>";
                 exit();
             }
-            function write($data, $name_file = 'debug') {
+
+            function write(array $data, $name_file = 'application') {
                 $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
-                $data = json_encode($data);
+                $data = implode("\n", $data);
                 if (!file_exists(__DIR__ROOT .'/storage')) {
                     mkdir(__DIR__ROOT .'/storage', 0777, true);
                 }
                 file_put_contents(__DIR__ROOT ."/storage/$name_file.log",$date . $data . PHP_EOL, FILE_APPEND);
                 return $this;
             }
-            function debug($data) {
+
+            function debug(array $data) {
                 $date = "\n\n[".date('Y-m-d H:i:s')."]: ";
-                $data = json_encode($data);
+                $data = implode("\n", $data);
                 file_put_contents(__DIR__ROOT .'/storage/debug.log',$date . $data . PHP_EOL, FILE_APPEND);
                 return $this;
             }
+
+            function write_error(\Throwable $e, $name_file = 'application')
+            {
+                $storagePath = __DIR__ROOT . '/storage';
+                if (!file_exists($storagePath) && !mkdir($storagePath, 0777, true) && !is_dir($storagePath)) {
+                    echo sprintf('Directory "%s" was not created', $storagePath);
+                    return;
+                }
+
+                $storagePath = __DIR__ROOT . '/storage';
+                $logFile = "$storagePath/$name.log";
+
+                $errorMessage = sprintf(
+                    "[%s][%d]: %s in %s on line %d\n%s\n\n",
+                    date('Y-m-d H:i:s'),
+                    $e->getCode(),
+                    $e->getMessage(),
+                    $e->getFile(),
+                    $e->getLine(),
+                    $e->getTraceAsString()
+                );
+                file_put_contents($logFile, $errorMessage, FILE_APPEND | LOCK_EX);
+            }
         };
-    }
-}
-
-if(!function_exists('log_write')){
-    /**
-     * @param $e
-     * @param string $name
-     */
-    function log_write($e, $name = 'application') {
-        $storagePath = __DIR__ROOT . '/storage';
-        if (!file_exists($storagePath) && !mkdir($storagePath, 0777, true) && !is_dir($storagePath)) {
-            echo sprintf('Directory "%s" was not created', $storagePath);
-            return;
-        }
-
-        $storagePath = __DIR__ROOT . '/storage';
-        $logFile = "$storagePath/$name.log";
-
-        $errorMessage = sprintf(
-            "[%s][%d]: %s in %s on line %d\n%s\n\n",
-            date('Y-m-d H:i:s'),
-            $e->getCode(),
-            $e->getMessage(),
-            $e->getFile(),
-            $e->getLine(),
-            $e->getTraceAsString()
-        );
-
-        file_put_contents($logFile, $errorMessage, FILE_APPEND | LOCK_EX);
-    }
-}
-
-if(!function_exists('get_view')){
-    /**
-     * @param $name
-     * @param array $data
-     * @return mixed
-     */
-    function get_view($name, $data = [])
-    {
-        $view = preg_replace('/([.]+)/', '/' , $name);
-        if(!file_exists(__DIR__ROOT . '/App/Views/'.$view.'.view.php')){
-            throw new \RuntimeException("File App/Views/$view.view.php does not exist", 500);
-        }
-        extract($data);
-        $file = __DIR__ROOT . '/App/Views/'.$view.'.view.php';
-        require_once $file;
     }
 }
 
@@ -330,34 +309,14 @@ if(!function_exists('convert_to_object')){
     }
 }
 
-if(!function_exists('config_env')){
-    /**
-     * @param $value
-     * @param string $default
-     * @return mixed|string
-     */
-    function config_env($value, $default = '')
-    {
-        return defined($value) && constant($value) ?  constant($value):$default;
-    }
-}
-
 if (!function_exists('conval')) {
     /**
      * @param $value
      * @param string $default
-     * @param null $first_val
      * @return mixed|string
      */
-    function conval($value, $default = '', $first_val = null)
+    function conval($value, $default = '')
     {
-        if (!is_null($first_val)) {
-            return $first_val;
-        }
-
-        if (defined($value) && constant($value)) {
-            return constant($value);
-        }
         
         if (getenv($value)) {
             return getenv($value);
@@ -367,6 +326,21 @@ if (!function_exists('conval')) {
             return $_ENV[$value];
         }
 
+        return $default;
+    }
+}
+
+if (!function_exists('const_get')) {
+    /**
+     * @param $value
+     * @param string $default
+     * @return mixed|string
+     */
+    function const_get($value, $default = '')
+    {
+        if (defined($value) && constant($value)) {
+            return constant($value);
+        }
         return $default;
     }
 }
