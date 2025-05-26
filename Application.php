@@ -280,6 +280,8 @@ class Application extends Container
             $e->getTraceAsString()
         );
 
+        file_put_contents($logFile, $errorMessage, FILE_APPEND);
+
         app()->event()->trigger('app.exceptions', [
             'type' => 'event_exceptions',
             'message' => $e->getMessage(),
@@ -291,7 +293,21 @@ class Application extends Container
             'previous' => $e->getPrevious()
         ]);
 
-        file_put_contents($logFile, $errorMessage, FILE_APPEND | LOCK_EX);
+        $currentException = $e;
+        $level = 0;
+        while ($currentException->getPrevious()) {
+            $level++;
+            $currentException = $currentException->getPrevious();
+            $logMessage = sprintf(
+                "[%s] Error level %d: %s in %s on line %d\n",
+                date('Y-m-d H:i:s'),
+                $level,
+                $currentException->getMessage(),
+                $currentException->getFile(),
+                $currentException->getLine()
+            );
+            file_put_contents($logFile, $logMessage, FILE_APPEND);
+        }
     }
 
     /**

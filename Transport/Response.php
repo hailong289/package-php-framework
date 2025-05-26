@@ -60,4 +60,9 @@ class Response {
     {
         return self::build()->text($string);
     }
+    
+    public static function noContent()
+    {
+        return self::build()->noContent();
+    }
 }

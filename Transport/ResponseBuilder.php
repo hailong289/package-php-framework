@@ -135,6 +135,16 @@ class ResponseBuilder {
         ]);
         return $this;
     }
+    
+    public function noContent()
+    {
+        $this->bindings['status'] = 204;
+        $this->bindings['action'] = 'no_content';
+        $this->bindings['headers'] = array_merge($this->bindings['headers'], [
+            'Content-Type' => 'text/plain; charset=utf-8'
+        ]);
+        return $this;
+    }
 
     public function terminate() {
         exit();
