@@ -1,10 +1,10 @@
 <?php
 
 namespace Hola\Database\Structure;
-use Hola\Database\Connection;
+use Hola\Database\QueryConnectBuilder;
 
 class SchemaManager {
-    private static Connection|null $connection = null;
+    private static QueryConnectBuilder|null $connection = null;
     
     public function __construct()
     {
@@ -13,11 +13,11 @@ class SchemaManager {
 
     /**
      * Get Connection instance
-     * @return Connection
+     * @return QueryConnectBuilder
      */
     public static function connect() {
         if (is_null(self::$connection)) {
-            self::$connection = new Connection();
+            self::$connection = new QueryConnectBuilder();
         }
         return self::$connection;
     }
