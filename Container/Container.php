@@ -228,14 +228,20 @@ class Container
                     $bindingClassMethod = $this->make($bindingClassMethod->getName());
                 }
                 $dependencies[$param->getName()] = $bindingClassMethod;
-            } elseif (!empty($this->bindings['method']['params']) && $param->isDefaultValueAvailable()) {
-                $dependencies[$param->getName()] = array_shift($this->bindings['method']['params']);
+            }  else if ($param->isDefaultValueAvailable()) {
+                if (count($this->bindings['method']['params']) > 0) {
+                    $dependencies[$param->getName()] = array_shift($this->bindings['method']['params']);
+                } else {
+                    $dependencies[$param->getName()] = $param->getDefaultValue();
+                }
             } else {
-                throw new AppException("Missing required parameter: {$param->getName()}");
+                // if parameter has value then use it
+                if (count($this->bindings['method']['params']) > 0) {
+                    $dependencies[$param->getName()] = array_shift($this->bindings['method']['params']);
+                } else {
+                    throw new AppException("Missing required parameter: {$param->getName()} in {$this->bindings['alias']}::{$this->bindings['method']['name']}");
+                }
             }
-        }
-        foreach ($this->bindings['method']['params'] as $value) {
-            array_push($dependencies, $value);
         }
         // call method with $dependencies/parameters
         return $methodReflection->invoke($this->make($this->bindings['alias']), ...$dependencies);
