@@ -3,6 +3,8 @@
 namespace Hola\Scripts\Commands;
 
 use Hola\Core\Command;
+use Hola\Database\DBO;
+use Hola\Database\Structure\DBSchema;
 
 class SchemaRun extends Command {
     protected $command = 'schema:run';
@@ -35,23 +37,46 @@ class SchemaRun extends Command {
     protected function getMigrations() {
         $migrationPath = $this->getOption('path');
         if (!empty($migrationPath)) {
-            $migration = str_replace('.php', '', $migrationPath);
-            $migration = str_replace(__DIR__ROOT . '/database/SchemaMigrate/', '', $migration);
-            return [$migration];
+            $migration = $this->getClassesFromFile($migrationPath);
+            return [[
+                'class' => $migration,
+                'path' => basename(__DIR__ROOT . "/$migrationPath")
+            ]];
         }
         $migrations = rglob(__DIR__ROOT . '/database/SchemaMigrate/*.php') ?? [];
-        $migrationsClass = array_map(function ($migration) {
-            $migration = $this->getClassesFromFile($migration);
-            return $migration;
+        $migrationsClass = array_map(function ($migrationPath) {
+            $migration = $this->getClassesFromFile($migrationPath);
+            return [
+                'class' => $migration,
+                'path' => basename($migrationPath)
+            ];
         }, $migrations);
         return $migrationsClass;
     }
 
     protected function runMigration($migration, $type = 'up') {
         try {
+            $alias = $migration['class'];
+            $path = $migration['path'];
+            if (DBSchema::hasTable('schema_table_run')) {
+                $hasRun = DBO::from('schema_table_run')
+                    ->where('name', $path)
+                    ->first();
+                
+                if (!$hasRun->isEmpty()) {
+                    $this->output()->text('Migration ' . $alias . ' has already run');
+                    return;
+                }
+            }
             $typeRun = 'run' . ucfirst($type);
-            app('\\App\\Database\\SchemaMigrate\\' . $migration)->{$typeRun}();
-            $this->output()->text('Migration ' . $migration . ' run successfully');
+            app('\\App\\Database\\SchemaMigrate\\' . $alias)->{$typeRun}();
+            $this->output()->text('Migration ' . $alias . ' run successfully');
+            if (DBSchema::hasTable('schema_table_run')) {
+                DBO::from('schema_table_run')->insert([
+                    'name' => $path,
+                    'created_at' => date('Y-m-d H:i:s')
+                ]);
+            }
         } catch (\Throwable $e) {
             $this->output()->error([
                 'message' => $e->getMessage(),
