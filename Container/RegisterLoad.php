@@ -4,10 +4,22 @@ use Hola\Core\ConfigApp;
 
 class RegisterLoad
 {
+    private ConfigApp|null $configApp = null;
     private $bind = [
         'config' => [],
-        'include' => []
+        'include' => [],
+        'has_cache' => false,
     ];
+
+    public function __construct() {
+        $this->configApp = ConfigApp::init();
+        $this->bind['config'] = cache()
+            ->file()
+            ->setPath('storage/cache')
+            ->get('configs') ?? [];
+        $this->bind['has_cache'] = !empty($this->bind['config']);
+    }
+
     /**
      * Register file
      *
@@ -52,8 +64,22 @@ class RegisterLoad
 
     public function loadEnvironment($file = '.env')
     {
+        if (!empty($this->bind['config']['environment'])) {
+            return $this;
+        }
         $dotenv = \Dotenv\Dotenv::createImmutable(__DIR__ROOT, $file);
         $dotenv->load();
+        $env_arr = [];
+        foreach ($_ENV as $key => $value) {
+            if (!isset($env_arr[$key])) {
+                $env_arr[$key] = $value;
+            }
+        }
+        $env_arr = array_merge($env_arr, getenv());
+        if (!isset($env_arr['PROJECT_KEY'])) {
+            die('PROJECT_KEY is not defined in environment');
+        }
+        $this->bind['config']['environment'] = $env_arr;
     }
 
     /**
@@ -70,7 +96,11 @@ class RegisterLoad
                 $items = explode("/", $item);
                 $end = end($items);
                 $end = str_replace('.php', '', $end);
-                $this->bind['config'][$end] = require($item);
+                if (!empty($this->bind['config'][$end])) {
+                    continue;
+                } else {
+                    $this->bind['config'][$end] = require($item);
+                }
             }
         }
     }
@@ -88,7 +118,11 @@ class RegisterLoad
                 $items = explode("/", $item);
                 $end = end($items);
                 $end = str_replace('.php', '', $end);
-                $this->bind['config'][$end] = require($item);
+                if (!empty($this->bind['config']['language'][$end])) {
+                    continue;
+                } else {
+                    $this->bind['config']['language'][$end] = require($item);
+                }
             }
         }
     }
@@ -116,9 +150,6 @@ class RegisterLoad
         $pathName = __DIR__ROOT . "/App/App.php";
         if (file_exists($pathName)) {
             $this->bind['include'][] = $pathName;
-        }
-        if (empty(conval('PROJECT_KEY'))) {
-            die('PROJECT_KEY is not defined');
         }
         $this->resolveInclude();
         $this->resolveConfig();
@@ -190,9 +221,13 @@ class RegisterLoad
 
     private function resolveConfig()
     {
-        $data = cache()->file()->setPath('storage/cache')->getOrStore('configs', $this->bind['config']);
-        foreach ($data as $key => $item) {
-            ConfigApp::init()->create($key, $item);
+        if (!$this->bind['has_cache']) {
+            cache()->file()
+                ->setPath('storage/cache')
+                ->store('configs', $this->bind['config']);
+        }
+        foreach ($this->bind['config'] as $key => $item) {
+            $this->configApp->create($key, $item);
         }
     }
 

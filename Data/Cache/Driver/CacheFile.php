@@ -23,28 +23,23 @@ class CacheFile implements ICacheDriver {
     }
 
     public function get($key) {
-        $key = $this->prefix . $key;
         if (!$this->has($key)) {
             return [];
         }
+        $key = $this->prefix . $key;
         $cacheFile = $this->getLinkFile($key);
-        $effect = (time() - filemtime($cacheFile) < $time);
-        if (!$effect) { // expired
-            $this->delete($key);
-            return [];
-        }
         $values = file_get_contents($cacheFile);
         return unserialize($values);
     }
 
     public function set($key, $values = [], $time = null) {
-        $key = $this->prefix . $key;
+        $key_with = $this->prefix . $key;
         createFolder($this->path);
         $time = $time ?? $this->expire;
         if (!$this->has($key)) {
-            return file_put_contents($this->getLinkFile($key), serialize($values));
+            return file_put_contents($this->getLinkFile($key_with), serialize($values));
         }
-        $cacheFile = $this->getLinkFile($key);
+        $cacheFile = $this->getLinkFile($key_with);
         $effect = (time() - filemtime($cacheFile) < $time);
         if (!$effect) {
             return file_put_contents($cacheFile, serialize($values));
