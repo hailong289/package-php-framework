@@ -317,6 +317,10 @@ if (!function_exists('conval')) {
      */
     function conval($value, $default = '')
     {
+
+        if (isset(config('environment')[$value])) {
+            return config('environment')[$value];
+        }
         
         if (getenv($value)) {
             return getenv($value);

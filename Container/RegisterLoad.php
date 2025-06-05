@@ -64,7 +64,7 @@ class RegisterLoad
 
     public function loadEnvironment($file = '.env')
     {
-        if (!empty($this->bind['config']['environment'])) {
+        if ($this->bind['has_cache']) {
             return $this;
         }
         $dotenv = \Dotenv\Dotenv::createImmutable(__DIR__ROOT, $file);
@@ -89,6 +89,9 @@ class RegisterLoad
      */
     public function loadConfig()
     {
+        if ($this->bind['has_cache']) {
+            return $this;
+        }
         $config = rglob(__DIR__ROOT ."/config/*.php") ?? [];
         $config_arr = [];
         foreach ($config as $item) {
@@ -96,11 +99,7 @@ class RegisterLoad
                 $items = explode("/", $item);
                 $end = end($items);
                 $end = str_replace('.php', '', $end);
-                if (!empty($this->bind['config'][$end])) {
-                    continue;
-                } else {
-                    $this->bind['config'][$end] = require($item);
-                }
+                $this->bind['config'][$end] = require($item);
             }
         }
     }
@@ -112,17 +111,16 @@ class RegisterLoad
      */
     public function loadLanguage()
     {
+        if ($this->bind['has_cache']) {
+            return $this;
+        }
         $language = rglob(__DIR__ROOT ."/language/*.php") ?? [];
         foreach ($language as $item) {
             if (file_exists($item)) {
                 $items = explode("/", $item);
                 $end = end($items);
                 $end = str_replace('.php', '', $end);
-                if (!empty($this->bind['config']['language'][$end])) {
-                    continue;
-                } else {
-                    $this->bind['config']['language'][$end] = require($item);
-                }
+                $this->bind['config']['language'][$end] = require($item);
             }
         }
     }
