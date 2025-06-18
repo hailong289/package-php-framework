@@ -41,7 +41,7 @@ class ViewRender {
         return self::resolveRenderHtml(
             $view,
             function () use ($view) {
-                $template = self::resolveIncludes(self::getContentView(self::$binding['view_root'], $view));
+                $template = self::getContentView(self::$binding['view_root'], $view);
                 return (new Parser($template))->parse($view);
             }
         );
@@ -168,7 +168,6 @@ class ViewRender {
         return ob_get_clean();
     }
     // extend view
-
     /**
      * Inherit layout
      * @param string $template

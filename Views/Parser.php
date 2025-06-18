@@ -11,7 +11,6 @@ class Parser {
         ['regex' => '/\{{\s*(.*?)\s*\}}/s', 'render' => 'callback', 'func' => 'variable'],
         [
             'regex' => [
-                '/@php\s*\{/',
                 '/@if\s*\((.*?)\)\s*\{/',                     // Match @if ($condition) {
                 '/@foreach\s*\((.*?)\)\s*\{/s',               // Match @foreach ($collection as $item) {
                 '/@forelse\s*\(([^ ]+)(?:\s*(as\s*.+?))?\)\s*\{/s',               // Match @forelse ($collection as $item) {
@@ -24,15 +23,13 @@ class Parser {
                 '/@empty\s*\{/s',                             // Match @empty {
                 '/\}\s*@elseif\s*\((.*?)\)\s*\{/',            // Match } @elseif ($condition) {
                 '/\}\s*@else\s*\{/',                          // Match } @else {
-/*                '/(?<!<\?php)(?<!\?>)\}/'                     // Match closing braces }*/
             ],
             'render' => [
-                '<?php <<PUSH:php>>',                       // Render PHP and pop from stack
                 '<?php if ($1): ?> <<PUSH:if>>',             // Render if and push to stack
                 '<?php foreach ($1): ?> <<PUSH:foreach>>',   // Render foreach and push to stack
                 '<?php if (!empty($1)): ?>' . PHP_EOL . '<?php foreach ($1 $2): ?> <<PUSH:forelse>>',   // Render forelse and push to stack
                 '<?php for ($1): ?> <<PUSH:for>>',           // Render for and push to stack
-                '<?php switch ($1): case "anything": break; ?> <<PUSH:switch>>',     // Render switch and push to stack
+                '<?php switch ($1): case conval("PROJECT_KEY"): break; ?> <<PUSH:switch>>',     // Render switch and push to stack
                 '<?php case $1: ?> <<PUSH:case>>',                         // Render case
                 '<?php break; ?>'.PHP_EOL,                           // Render break
                 '<?php continue; ?>'.PHP_EOL,                        // Render continue
@@ -40,17 +37,10 @@ class Parser {
                 '<?php else: ?> <<PUSH:empty>>', // Render empty and push to stack
                 '<?php elseif ($1): ?>',                     // Render elseif
                 '<?php else: ?>',                            // Render else
-//                '<<CLOSE>>'                                 // Render closing braces
             ]
         ],
-        [
-            'regex' => '/@empty\s*\((.*?)\)\s*\{/',
-            'render' => '<?php if(empty($1)): ?>'
-        ],
-        [
-            'regex' => '/@notEmpty\s*\((.*?)\)\s*\{/',
-            'render' => '<?php if(!empty($1)): ?>'
-        ],
+        ['regex' => '/@empty\s*\((.*?)\)\s*\{/', 'render' => '<?php if(empty($1)): ?> <<PUSH:if>>'],
+        ['regex' => '/@notEmpty\s*\((.*?)\)\s*\{/', 'render' => '<?php if(!empty($1)): ?> <<PUSH:if>>'],
         ['regex' => '/@class\((.*?)\)/', 'render' => 'class="<?=implode(" ",$1)?>"'],
         ['regex' => '/@style\((.*?)\)/', 'render' => 'style="<?=implode(" ",$1)?>"'],
         ['regex' => '/@checked\((.*?)\)/', 'render' => '<?=($1) ? "checked" : ""?>'],
@@ -63,6 +53,7 @@ class Parser {
             'render' => '<<CLOSE>>',
             'func' => 'replaceClosingBraces'
         ],
+        ['regex' => '/@php\s*\{/', 'render' => '<?php <<PUSH:php>>']
     ];
 
     public function __construct($template) {
