@@ -42,6 +42,8 @@ class ViewRender {
             $view,
             function () use ($view) {
                 $template = self::getContentView(self::$binding['view_root'], $view);
+                // If the view has a parent layout, we need to parse it
+                $template = (new ViewCompiler())->compile($template);
                 return (new Parser($template))->parse($view);
             }
         );
@@ -63,21 +65,6 @@ class ViewRender {
             return ob_get_clean();
         }
         return file_get_contents($view);
-    }
-
-    private static function resolveIncludes($output)
-    {
-        $output = preg_replace('/<!--(.*?)-->/', '', $output);
-        while (preg_match('/@include\(\s*[\'"](.+?)[\'"]\s*\)/', $output, $matches)) {
-            $included_content = self::resolveIncludes(
-                self::getContentView(
-                    view_root($matches[1]),
-                    $matches[1]
-                )
-            );
-            $output = str_replace($matches[0], $included_content, $output);
-        }
-        return $output;
     }
 
     private static function resolveRenderHtml($path_name, $callback)
@@ -166,61 +153,5 @@ class ViewRender {
         ob_start();
         require $view_render;
         return ob_get_clean();
-    }
-    // extend view
-    /**
-     * Inherit layout
-     * @param string $template
-     * @return static
-     */
-    public static function inherit($template)
-    {
-        self::$binding['parent_layout'] = $template;
-        return self::instance();
-    }
-
-    /**
-     * Start section
-     * @param string $section
-     * @return void
-     */
-    public static function start($section)
-    {
-        self::$binding['current_section'] = $section;
-        ob_start();
-    }
-
-    /**
-     * End section
-     * @return void
-     */
-    public static function stop() {
-        if (self::$binding['current_section']) {
-            self::$binding['sections'][self::$binding['current_section']] = ob_get_clean();
-            self::$binding['current_section'] = null;
-        }
-    }
-
-    /**
-     * @param string $section
-     * @return void
-     */
-    public static function attach($section)
-    {
-        if (isset(self::$binding['sections'][$section])) {
-            self::$binding['sections'] .= ob_get_clean();
-        } else {
-            self::$binding['sections'] = ob_get_clean();
-        }
-        self::$binding['current_section'] = null;
-    }
-
-    /**
-     * @param string $section
-     * @return string
-     */
-    public static function yield($section)
-    {
-        return self::$binding['sections'][$section] ?? '';
     }
 }
