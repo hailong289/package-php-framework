@@ -10,6 +10,7 @@ class CacheFile implements ICacheDriver {
     public function __construct() {
         $this->prefix = config('cache.prefix') ?? 'cache_';
         $this->path = __DIR__ROOT . '/' . config("cache.stores.file.path");
+        $this->expire = config('cache.stores.file.expire') ?? 3600;
     }
 
     public function prefix($prefix) {
@@ -28,6 +29,11 @@ class CacheFile implements ICacheDriver {
         }
         $key = $this->prefix . $key;
         $cacheFile = $this->getLinkFile($key);
+        $effect = (time() - filemtime($cacheFile) < $this->expire);
+        if (!$effect) {
+            unlink($cacheFile);
+            return [];
+        }
         $values = file_get_contents($cacheFile);
         return unserialize($values);
     }
