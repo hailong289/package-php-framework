@@ -94,7 +94,15 @@ class ViewCompiler {
     {
         $includeName = view_root(trim($matches[1], $this->trim_chars));
         if (file_exists($includeName)) {
-            return file_get_contents($includeName);
+            $content = file_get_contents($includeName);
+            $content = preg_replace_callback(
+                "/@include\((.*?)\)/",
+                function ($matches) {
+                    return $this->includeView($matches);
+                },
+                $content
+            );
+            return $content;
         }
     }
 
