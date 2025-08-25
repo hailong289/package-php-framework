@@ -216,7 +216,7 @@ if(!function_exists('translate')){
     function translate($key, $data_key = [], $lang = null)
     {
         $language = $lang ?? conval('LANGUAGE', 'vi');
-        $data = config()->get($language) ?? [];
+        $data = config()->get("language.$language") ?? [];
         $convert = $data[$key] ?? $key;
         foreach ($data_key as $k=>$value) {
             $convert = str_replace("{{".$k."}}", $value, $convert);
