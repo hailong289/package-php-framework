@@ -42,7 +42,7 @@ class ViewCompiler {
         foreach ($this->compiledRegex as $rule) {
             $stringTemp = preg_replace_callback(
                 $rule['regex'],
-                function ($matches) use ($rule, $stringTemp) {
+                function ($matches) use ($rule) {
                     return $this->{$rule['callback']}($matches);
                 },
                 $stringTemp

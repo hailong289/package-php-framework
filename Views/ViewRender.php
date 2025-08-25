@@ -161,11 +161,10 @@ class ViewRender {
 
     public static function include($view_root)
     {
-        $view_render = __DIR__ROOT . "/storage/render/$view_root";
-        if (file_exists($view_render)) {
+        if (file_exists($view_root)) {
             extract(self::$binding['data']);
             ob_start();
-            include $view_render;
+            include $view_root;
             return ob_get_clean();
         }
         return '';
