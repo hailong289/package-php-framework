@@ -94,12 +94,7 @@ class ViewCompiler {
     {
         $includeName = view_root(trim($matches[1], $this->trim_chars));
         if (file_exists($includeName)) {
-            $view_encrypt = md5($includeName);
-            $content_raw = file_get_contents($includeName);
-            $content_compile = (new ViewCompiler())->compile($content_raw);
-            $content_parse = (new Parser($content_compile))->parse($includeName);
-            file_put_contents(__DIR__ROOT . "/storage/render/$view_encrypt.php", $content_parse);
-            $content = "<?=\Hola\Views\ViewRender::include('$view_encrypt.php')?>";
+            $content = $this->encryptIncludeView($includeName);
             $content_callback = preg_replace_callback(
                 "/@include\((.*?)\)/",
                 function ($matches) {
@@ -109,6 +104,27 @@ class ViewCompiler {
             );
             return $content_callback;
         }
+    }
+
+    private function encryptIncludeView($includeName)
+    {
+        $view_encrypt = md5($includeName);
+        $view_root = __DIR__ROOT . "/storage/render/$view_encrypt.php";
+        if (!file_exists($view_root)) {
+            $content_raw = file_get_contents($includeName);
+            $content_compile = (new ViewCompiler())->compile($content_raw);
+            $content_parse = (new Parser($content_compile))->parse($includeName);
+            file_put_contents($view_root, $content_parse);
+        } else {
+            $lastModified = filemtime($view_root);
+            if ($lastModified === false || (time() - $lastModified) > 300) {
+                $content_raw = file_get_contents($includeName);
+                $content_compile = (new ViewCompiler())->compile($content_raw);
+                $content_parse = (new Parser($content_compile))->parse($includeName);
+                file_put_contents($view_root, $content_parse);
+            }
+        }
+        return "<?=\Hola\Views\ViewRender::include('$view_root')?>";
     }
 
 }

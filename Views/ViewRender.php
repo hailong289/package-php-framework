@@ -163,6 +163,7 @@ class ViewRender {
     {
         $view_render = __DIR__ROOT . "/storage/render/$view_root";
         if (file_exists($view_render)) {
+            extract(self::$binding['data']);
             ob_start();
             include $view_render;
             return ob_get_clean();
