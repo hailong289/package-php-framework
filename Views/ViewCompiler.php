@@ -16,19 +16,14 @@ class ViewCompiler {
 
     private $compiledRegex = [
         [
-            'regex' => "/@startContent\((.*?)\)/",
-            'callback' => 'startView',
-            'assign' => true
-        ],
-        [
-            'regex' => "/@stopContent/",
-            'callback' => 'stopView',
-            'assign' => true
-        ],
-        [
             'regex' => "/@inherit\((.*?)\)/",
             'callback' => 'inheritView',
             'assign' => false
+        ],
+        [
+            'regex' => "/@startContent\((.*?)\)(.*?)@stopContent/s",
+            'callback' => 'captureSection',
+            'assign' => true
         ],
         [
             'regex' => "/@yield\((.*?)\)/",
@@ -47,7 +42,7 @@ class ViewCompiler {
         foreach ($this->compiledRegex as $rule) {
             $stringTemp = preg_replace_callback(
                 $rule['regex'],
-                function ($matches) use ($rule) {
+                function ($matches) use ($rule, $stringTemp) {
                     return $this->{$rule['callback']}($matches);
                 },
                 $stringTemp
@@ -62,21 +57,11 @@ class ViewCompiler {
         return file_get_contents(view_root($viewName));
     }
 
-    private function startView($matches)
+    private function captureSection($matches)
     {
         $name = trim($matches[1], $this->trim_chars);
-        ob_start();
-        $this->items['@startContent'][$name] = '';
-        return '';
-    }
-    
-    private function stopView()
-    {
-        $content = ob_get_clean();
-        $lastKey = array_key_last($this->items['@startContent']);
-        if ($lastKey) {
-            $this->items['@startContent'][$lastKey] = $content;
-        }
+        $content = $matches[2]; // nội dung giữa start/stop
+        $this->items['@startContent'][$name] = $content;
         return '';
     }
 
