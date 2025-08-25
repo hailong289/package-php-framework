@@ -100,35 +100,39 @@ class ViewRender {
 
     protected static function resolveViewRoot($view)
     {
-        if(!file_exists(view_root($view))){
+        $view_root = view_root($view);
+        if(!file_exists($view_root)){
             if ($view === 'error.index') {
                 self::$binding['view_root'] = __DIR__ . "/pages/error.view.php";
                 return false;
             }
             throw new AppException("File App/Views/$view.view.php does not exist", 500);
         }
-        self::$binding['view_root'] = view_root($view);
+        self::$binding['view_root'] = $view_root;
         return false;
     }
 
     protected static function resolveViewHasParse($path_name)
     {
         $viewParse = self::encryptionViewRender($path_name);
+
         if (!file_exists($viewParse)) {
             return false;
         }
+
         if (in_array($path_name, self::$binding['html'])) {
             self::$binding['view_parse'] = file_get_contents($viewParse);
             return true;
         }
-        if (time() - filemtime($viewParse) > 300) { // 5 minutes
+
+        // Check file modify time > 5 minutes
+        $lastModified = filemtime($viewParse);
+        if ($lastModified === false || (time() - $lastModified) > 300) {
             self::$binding['view_parse'] = null;
             return false;
         }
-        extract(self::$binding['data']);
-        ob_start();
-        require $viewParse;
-        self::$binding['view_parse'] = ob_get_clean();
+
+        self::$binding['view_parse'] = self::includeViewWithVars($viewParse);
         return true;
     }
 
@@ -153,5 +157,16 @@ class ViewRender {
         ob_start();
         require $view_render;
         return ob_get_clean();
+    }
+
+    public static function include($view_root)
+    {
+        $view_render = __DIR__ROOT . "/storage/render/$view_root";
+        if (file_exists($view_render)) {
+            ob_start();
+            include $view_render;
+            return ob_get_clean();
+        }
+        return '';
     }
 }

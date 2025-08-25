@@ -94,15 +94,20 @@ class ViewCompiler {
     {
         $includeName = view_root(trim($matches[1], $this->trim_chars));
         if (file_exists($includeName)) {
-            $content = file_get_contents($includeName);
-            $content = preg_replace_callback(
+            $view_encrypt = md5($includeName);
+            $content_raw = file_get_contents($includeName);
+            $content_compile = (new ViewCompiler())->compile($content_raw);
+            $content_parse = (new Parser($content_compile))->parse($includeName);
+            file_put_contents(__DIR__ROOT . "/storage/render/$view_encrypt.php", $content_parse);
+            $content = "<?=\Hola\Views\ViewRender::include('$view_encrypt.php')?>";
+            $content_callback = preg_replace_callback(
                 "/@include\((.*?)\)/",
                 function ($matches) {
                     return $this->includeView($matches);
                 },
                 $content
             );
-            return $content;
+            return $content_callback;
         }
     }
 
