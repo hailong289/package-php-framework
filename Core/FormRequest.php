@@ -26,11 +26,11 @@ class FormRequest extends Request {
                     'code' => 403
                 ];
                 $name_view = 'error.index';
-                if (method_exists($this,'view_auth')) {
-                    $name_view = $this->view_auth();
+                if (method_exists($this,'failedView')) {
+                    $name_view = $this->failedView();
                 }
-                if (method_exists($this,'data_auth')) {
-                    $data = $this->data_auth();
+                if (method_exists($this,'withData')) {
+                    $data = $this->withData();
                 }
                 if ($is_json) {
                     return Response::json($data)->setStatus(403)->send()->terminate();
