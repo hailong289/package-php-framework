@@ -53,8 +53,7 @@ class QueueDatabase {
 
     public function connect()
     {
-        app()->get(ConnectionManager::class)->setConfigName('queue');
-        $this->driver = DBO::connection($this->queueConnection);
+        $this->driver = (new QueryBuilder())->queueConnection($this->queueConnection);
         return $this;
     }
 

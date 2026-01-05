@@ -7,6 +7,7 @@ class Model {
 
     private static function build() {
         self::$builder = new QueryBuilder();
+        self::$builder->connection();
         $modelCalled = static::class;
         if ($modelCalled === "Hola\Database\DBO") {
             return self::$builder;

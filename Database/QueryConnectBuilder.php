@@ -14,7 +14,11 @@ class QueryConnectBuilder {
         'time' => 0
     ];
 
-    public function __construct($conn = null) {
+    public function __construct($conn = null, $type = 'database') {
+        if ($type === 'queue') {
+            $this->queueConnectDB($conn);
+            return;
+        }
         $this->connect($conn);
     }
 
@@ -150,6 +154,23 @@ class QueryConnectBuilder {
             ->get(ConnectionManager::class)
             ->setConnectionType('database')
             ->setConnectionName(config('database.default'))
+            ->getConnection();
+
+        return $this->pdo;
+    }
+
+    public function queueConnectDB($connection)
+    {
+
+        if (!is_null($this->pdo)) {
+            return $this->pdo;
+        }
+
+        $this->pdo = app()
+            ->get(ConnectionManager::class)
+            ->setConfigName('queue')
+            ->setConnectionType('database')
+            ->setConnectionName($connection)
             ->getConnection();
 
         return $this->pdo;

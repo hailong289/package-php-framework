@@ -5,15 +5,21 @@ use Hola\Data\Collection;
 class QueryBuilder {
 
     public static QueryConnectBuilder|null $connection = null;
+    public static string|null $name = null;
     private $model = null;
-
-    public function __construct() {
-        $this->connection();
-    }
 
     public function connection($name = null)
     {
-        self::$connection = new QueryConnectBuilder($name);
+        if (is_null(self::$connection) || (!is_null($name) && $name !== self::$name)) {
+            self::$connection = new QueryConnectBuilder($name);
+        }
+        self::$name = $name;
+        return $this;
+    }
+
+    public function queueConnection($name = null)
+    {
+        self::$connection = new QueryConnectBuilder($name, 'queue');
         return $this;
     }
 
@@ -908,6 +914,7 @@ class QueryBuilder {
             return new $related();
         }
         $model = new QueryBuilder();
+        $model->connection();
         return $model->from($related);
     }
 
