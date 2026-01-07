@@ -15,7 +15,7 @@ class QueueRun extends \Hola\Core\Command
 {
     protected $command = 'queue:run';
     protected $command_description = 'Run a queue';
-    protected $arguments = ['?type_connection'];
+    protected $arguments = ['?connection_type'];
     protected $options = ['?queue','?timeout','?connection', '?failed_rollback'];
     protected $jobs_queue = 'jobs';
     protected $connection = 'database';

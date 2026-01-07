@@ -174,7 +174,7 @@ if(!function_exists('logs')){
                 }
 
                 $storagePath = __DIR__ROOT . '/storage';
-                $logFile = "$storagePath/$name.log";
+                $logFile = "$storagePath/$name_file.log";
 
                 $errorMessage = sprintf(
                     "[%s][%d]: %s in %s on line %d\n%s\n\n",
