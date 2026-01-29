@@ -119,9 +119,226 @@ if(!function_exists('log_debug')){
      */
     function log_debug(...$args) {
         http_response_code(500);
-        echo "<pre>";
-        print_r($args);
-        echo "</pre>";
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
+        $caller = $trace[0];
+        $file = $caller['file'] ?? 'Unknown';
+        $line = $caller['line'] ?? 0;
+
+        echo <<<'HTML'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Output</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d30 100%);
+            margin: 0; 
+            padding: 20px; 
+            font-family: 'SF Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            color: #d4d4d4;
+            line-height: 1.6;
+        }
+        
+        .debug-container { max-width: 1400px; margin: 0 auto; }
+        
+        .debug-card { 
+            background: #252526;
+            border: 1px solid #454545;
+            border-radius: 8px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+            overflow: hidden;
+            margin-bottom: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .debug-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.8);
+        }
+        
+        .debug-header {
+            background: linear-gradient(135deg, #2d2d30 0%, #333333 100%);
+            padding: 12px 16px;
+            border-bottom: 2px solid #007acc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .debug-title { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .debug-file { 
+            color: #9cdcfe;
+            font-weight: 600;
+            font-size: 13px;
+            word-break: break-all;
+        }
+        
+        .debug-meta {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .debug-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .badge-line { background: #f44336; color: #fff; }
+        
+        .debug-caller {
+            width: 100%;
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: rgba(0, 122, 204, 0.1);
+            border-left: 3px solid #007acc;
+            border-radius: 4px;
+            color: #4ec9b0;
+            font-size: 12px;
+        }
+        
+        .debug-content {
+            padding: 16px;
+            overflow-x: auto;
+            background: #1e1e1e;
+        }
+        
+        .debug-item {
+            margin-bottom: 20px;
+            padding: 12px;
+            background: #252526;
+            border-radius: 6px;
+            border-left: 3px solid #007acc;
+        }
+        
+        .debug-item:last-child { margin-bottom: 0; }
+        
+        .debug-type {
+            color: #4ec9b0;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .debug-data {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.6;
+            font-size: 13px;
+        }
+        
+        .json-key { color: #9cdcfe; font-weight: 500; }
+        .json-string { color: #ce9178; }
+        .json-number { color: #b5cea8; }
+        .json-boolean { color: #569cd6; font-weight: 600; }
+        .json-null { color: #569cd6; font-style: italic; opacity: 0.8; }
+        .json-bracket { color: #ffd700; font-weight: bold; }
+        
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: #1e1e1e; }
+        ::-webkit-scrollbar-thumb { background: #555; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #777; }
+        
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .debug-header { padding: 10px; }
+            .debug-content { padding: 12px; }
+            .debug-meta { font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+HTML;
+        
+        echo '<div class="debug-card">';
+        echo '<div class="debug-header">';
+        echo '<div class="debug-title">';
+        echo '<span class="debug-file">' . htmlspecialchars(basename($file)) . '</span>';
+        echo '</div>';
+        echo '<div class="debug-meta">';
+        echo '<span class="debug-badge badge-line">Line: ' . $line . '</span>';
+        echo '</div>';
+        
+
+        echo '<div class="debug-caller">Full path: ' . htmlspecialchars($file) . '</div>';
+        echo '</div>';
+        
+        echo '<div class="debug-content">';
+        
+        foreach ($args as $index => $arg) {
+            echo '<div class="debug-item">';
+            $type = gettype($arg);
+            if (is_object($arg)) {
+                $type = get_class($arg);
+            }
+            echo '<div class="debug-type">' . htmlspecialchars($type) . ' (#' . ($index + 1) . ')</div>';
+            
+            echo '<div class="debug-data">';
+            if (is_scalar($arg) || is_null($arg)) {
+                echo '<span class="json-' . gettype($arg) . '">' . htmlspecialchars(var_export($arg, true)) . '</span>';
+            } else {
+                $json = @json_encode($arg, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR);
+                
+                if ($json === false || $json === 'null') {
+                    echo '<span style="color: #dcdcaa">' . htmlspecialchars(print_r($arg, true)) . '</span>';
+                } else {
+                    $json = htmlspecialchars($json, ENT_QUOTES, 'UTF-8');
+                    $json = preg_replace_callback(
+                        '/("(?:[^"\\\\]|\\\\.)*"\s*:|:\s*"(?:[^"\\\\]|\\\\.)*"|:\s*(-?\d+\.?\d*)|:\s*(true|false)|:\s*(null)|[\[\]{}])/i',
+                        function($matches) {
+                            $match = $matches[0];
+                            if (preg_match('/".*?"\s*:/', $match)) {
+                                return '<span class="json-key">' . $match . '</span>';
+                            } elseif (preg_match('/:\s*".*?"/', $match)) {
+                                return preg_replace('/(:\s*)(".*?")/', '$1<span class="json-string">$2</span>', $match);
+                            } elseif (preg_match('/:\s*-?\d+\.?\d*/', $match)) {
+                                return preg_replace('/(:\s*)(-?\d+\.?\d*)/', '$1<span class="json-number">$2</span>', $match);
+                            } elseif (preg_match('/:\s*(true|false)/i', $match)) {
+                                return preg_replace('/(:\s*)(true|false)/i', '$1<span class="json-boolean">$2</span>', $match);
+                            } elseif (preg_match('/:\s*null/i', $match)) {
+                                return preg_replace('/(:\s*)(null)/i', '$1<span class="json-null">$2</span>', $match);
+                            } elseif (preg_match('/[\[\]{}]/', $match)) {
+                                return '<span class="json-bracket">' . $match . '</span>';
+                            }
+                            return $match;
+                        },
+                        $json
+                    );
+                    
+                    echo $json;
+                }
+            }
+            
+            echo '</div>';
+            echo '</div>';
+        }
+        
+        echo '</div>';
+        echo '</div>';
+        echo '</div>';
+        echo '</body>';
+        echo '</html>';
+        
         exit();
     }
 }
@@ -133,10 +350,7 @@ if(!function_exists('logs')){
     function logs(): object {
         return new class implements \Hola\Interfaces\InterfaceLogs\Log {
             public function dump(...$args) {
-                http_response_code(500);
-                echo "<pre>";
-                print_r($args);
-                echo "</pre>";
+                log_debug(...$args);
                 exit();
             }
             

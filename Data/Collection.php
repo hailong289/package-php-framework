@@ -2,151 +2,283 @@
 
 namespace Hola\Data;
 
-class Collection
+use ArrayAccess;
+use ArrayIterator;
+use Countable;
+use IteratorAggregate;
+use JsonSerializable;
+use Traversable;
+use stdClass;
+
+class Collection implements ArrayAccess, IteratorAggregate, Countable, JsonSerializable
 {
-    public $data = [];
-    public function __construct($data)
+    /**
+     * @var object|stdClass
+     */
+    protected $data;
+
+    public function __construct($data = [])
     {
-        $this->data = is_object($data) ? $data : json_decode(json_encode($data));
+        $this->data = $this->convertToObject($data);
     }
-    
-    public function set($data) {
-        $this->data = $data;
+
+    protected function convertToObject($data)
+    {
+        if ($data instanceof self) {
+            return $data->toObject();
+        }
+
+        if (is_object($data)) {
+            return $data;
+        }
+
+        // Optimized: avoid json_encode/decode overhead
+        if (is_array($data)) {
+            $obj = new stdClass();
+            foreach ($data as $key => $value) {
+                if (is_array($value)) {
+                    $obj->{$key} = $this->convertToObject($value);
+                } else {
+                    $obj->{$key} = $value;
+                }
+            }
+            return $obj;
+        }
+
+        return $data;
+    }
+
+    public function __get($name)
+    {
+        return $this->data->{$name} ?? null;
+    }
+
+    public function __set($name, $value)
+    {
+        $this->data->{$name} = $value;
+    }
+
+    public function __isset($name)
+    {
+        return isset($this->data->{$name});
+    }
+
+    public function __unset($name)
+    {
+        unset($this->data->{$name});
+    }
+
+    public function set($data)
+    {
+        $this->data = $this->convertToObject($data);
         return $this;
     }
 
-    public function toArray() {
-        $this->data = is_array($this->data) ? $this->data : json_decode(json_encode($this->data), true);
-        return $this->data;
+    public function toArray()
+    {
+        return $this->objectToArray($this->data);
     }
 
-    public function toObject() {
-        $this->data = is_object($this->data) ? $this->data : json_decode(json_encode($this->data));
-        return $this->data;
-    }
-
-    public function values() {
-        return $this->data;
-    }
-
-    public function value($key = null, $default = null) {
-        $data = $this->count() ? array_values($this->data)[0] : $this->data;
-        if (is_null($key)) {
-            return $data;
+    protected function objectToArray($data)
+    {
+        if (is_object($data)) {
+            $data = get_object_vars($data);
         }
+
         if (is_array($data)) {
-            return isset($data[$key]) ? ($data[$key] ?? $default) : $default;
-        } elseif (is_object($data)) {
-            return isset($data->{$key}) ? ($data->{$key} ?? $default) : $default;
-        } else {
-            return null;
+            return array_map([$this, 'objectToArray'], $data);
         }
+
+        return $data;
+    }
+
+    public function toObject()
+    {
+        return $this->data;
+    }
+
+    public function values()
+    {
+        return array_values((array)$this->data);
+    }
+
+    public function value($key = null, $default = null)
+    {
+        $asArray = (array) $this->data;
+        
+        if (empty($asArray)) {
+            return $default;
+        }
+
+        $firstKey = array_key_first($asArray);
+        $firstItem = $asArray[$firstKey];
+
+        if (is_null($key)) {
+            return $firstItem;
+        }
+
+        if (is_object($firstItem) && isset($firstItem->{$key})) {
+            return $firstItem->{$key};
+        }
+
+        if (is_array($firstItem) && isset($firstItem[$key])) {
+            return $firstItem[$key];
+        }
+
+        return $default;
+    }
+
+    public function getIterator(): Traversable
+    {
+        return new ArrayIterator($this->data);
     }
 
     public function count(): int
     {
-        $is_count = is_countable($this->data) && count($this->data);
-        return $is_count ? count($this->data):0;
+        return count((array)$this->data);
     }
 
-    function flat()
+    public function jsonSerialize(): mixed
     {
-        $return = [];
-        array_walk_recursive($this->toArray(), function($a) use (&$return) { $return[] = $a; });
-        return $return;
+        return $this->data;
+    }
+
+    public function offsetExists($key): bool
+    {
+        return isset($this->data->{$key});
+    }
+
+    public function offsetGet($key): mixed
+    {
+        return $this->data->{$key} ?? null;
+    }
+
+    public function offsetSet($key, $value): void
+    {
+        if (is_null($key)) {
+            $arrayData = (array) $this->data;
+            $arrayData[] = $value;
+            $this->data = (object) $arrayData;
+        } else {
+            $this->data->{$key} = $value;
+        }
+    }
+
+    public function offsetUnset($key): void
+    {
+        unset($this->data->{$key});
     }
 
     public function isEmpty()
     {
+        // Optimized: check properties directly for objects
+        if (is_object($this->data)) {
+            return empty((array)$this->data);
+        }
         return empty($this->data);
     }
 
     public function keys()
     {
-        $data = is_object($this->data) ? (array)$this->data:$this->data;
-        return array_keys($data);
+        return array_keys((array)$this->data);
     }
 
-    public function map($fn) {
-        foreach ($this->data as $key => $data) {
-            $this->data[$key] = $fn($data);
-        }
-        return $this;
-    }
-
-    public function forEach($fn) {
-        foreach ($this->data as $key => $data) {
-            $fn($data, $key);
-        }
-        return $this;
-    }
-
-    public function dataColumn($key)
+    public function map(callable $fn)
     {
-        foreach ($this->data as $key_data => $data) {
-            $keys = get_object_vars($data);
-            if(isset($keys[$key])) {
-                $this->data[$key_data] = $data->{$key};
-            }
+        foreach ($this->data as $key => $value) {
+            $this->data->{$key} = $fn($value);
         }
         return $this;
     }
 
-    public function mapFirst($fn) {
-        $this->data = $fn($this->data);
+    public function forEach(callable $fn)
+    {
+        foreach ($this->data as $key => $value) {
+            $fn($value, $key);
+        }
         return $this;
     }
 
-    public function filter($fn) {
-        foreach ($this->data as $key => $data) {
-            if($fn($data)) {
-                $this->data[$key] = $data;
-            } else {
-                if (is_array($this->data)) {
-                    unset($this->data[$key]);
-                } else {
-                    unset($this->data->{$key});
-                }
-            }
-        }
+    public function filter(callable $fn)
+    {
+        $asArray = (array) $this->data;
+        $filtered = array_filter($asArray, $fn, ARRAY_FILTER_USE_BOTH);
+        $this->data = (object) $filtered;
+
         return $this;
     }
 
     public function push(...$values)
     {
+        $asArray = (array) $this->data;
         foreach ($values as $value) {
-            $this->data[] = $value;
+            $asArray[] = $value;
         }
+        $this->data = (object) $asArray;
         return $this;
     }
 
     public function add($item, $key = null)
     {
         if (is_null($key)) {
-            $this->data[] = $item;
+            $this->push($item);
         } else {
-            if (is_array($this->data)) {
-            	$this->data[$key] = $item;
-            } else {
-            	$this->data->{$key} = $item;
-            }
+            $this->data->{$key} = $item;
         }
         return $this;
     }
 
     public function last()
     {
-        return $this->count() ? $this->data[$this->count() - 1]:$this->data;
+        $asArray = (array) $this->data;
+        if (empty($asArray)) {
+            return null;
+        }
+        $lastKey = array_key_last($asArray);
+        return $asArray[$lastKey];
     }
 
     public function chunk($number, $callback = null)
     {
-        $chunk = array_chunk($this->data, $number);
+        $chunks = array_chunk((array)$this->data, $number);
         if (is_callable($callback)) {
-            $callback($chunk);
-            return;
+            foreach ($chunks as $chunk) {
+                $callback(new self((object)$chunk));
+            }
+            return $this;
         }
-        $this->data = $chunk;
+        $this->data = (object) $chunks;
+        return $this;
+    }
+
+    public function flat()
+    {
+        $result = [];
+        $asArray = $this->objectToArray($this->data);
+        array_walk_recursive($asArray, function ($a) use (&$result) {
+            $result[] = $a;
+        });
+        return $result;
+    }
+
+    public function dataColumn($key)
+    {
+        $asArray = (array)$this->data;
+        $result = [];
+        foreach ($asArray as $k => $item) {
+            if (is_object($item) && isset($item->{$key})) {
+                $result[] = $item->{$key};
+            } elseif (is_array($item) && isset($item[$key])) {
+                $result[] = $item[$key];
+            }
+        }
+        $this->data = (object)$result;
+        return $this;
+    }
+
+    public function mapFirst(callable $fn)
+    {
+        $this->data = $this->convertToObject($fn($this->data));
         return $this;
     }
 }
