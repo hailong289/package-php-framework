@@ -25,10 +25,11 @@ class MailerBuilder extends Mailer {
 
             if (method_exists($this,'view')) {
                 $this->withHtml();
-                if ($this->view() instanceof ResponseBuilder) {
-                    $this->setBody($this->view()->callback(true));
+                $view = $this->view();
+                if ($view instanceof ResponseBuilder) {
+                    $this->setBody($view->raw());
                 } else {
-                    $this->setBody($this->view());
+                    $this->setBody($view);
                 }
             }
 

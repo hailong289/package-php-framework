@@ -42,6 +42,27 @@ class ResponseBuilder {
         return $this;
     }
 
+    public function raw()
+    {
+        $rawData = '';
+        if ($this->bindings['action'] == 'json') {
+            $rawData = json_encode($this->bindings['data']);
+        } elseif ($this->bindings['action'] == 'view') {
+            $rawData = ViewRender::render($this->bindings['path'], $this->bindings['data']);
+        } else if ($this->bindings['action'] == 'text') {
+            $rawData = $this->bindings['data']['text'] ?? '';
+        } else if ($this->bindings['action'] == 'xml') {
+            $rawData = ViewRender::renderXml($this->bindings['data'])->asXML();
+        } else if ($this->bindings['action'] == 'file' || $this->bindings['action'] == 'download') {
+            if (is_file($this->bindings['path'])) {
+                $rawData = file_get_contents($this->bindings['path']);
+            } else {
+                $rawData = '';
+            }
+        }
+        return $rawData;
+    }
+
     public function metaTag($data = [], $off = false) {
         $metaTags = [];
         
