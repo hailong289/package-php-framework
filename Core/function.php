@@ -112,12 +112,12 @@ if(!function_exists('view_root')){
     }
 }
 
-if(!function_exists('log_debug')){
+if(!function_exists('dump')){
     /**
      * @param $data
      * @return string
      */
-    function log_debug(...$args) {
+    function dump(...$args) {
         http_response_code(500);
         $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
         $caller = $trace[0];
