@@ -350,7 +350,7 @@ if(!function_exists('logs')){
     function logs(): object {
         return new class implements \Hola\Interfaces\InterfaceLogs\Log {
             public function dump(...$args) {
-                log_debug(...$args);
+                dump(...$args);
                 exit();
             }
             
