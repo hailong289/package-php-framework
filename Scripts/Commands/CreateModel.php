@@ -33,9 +33,6 @@ class CreateModel extends \Hola\Core\Command
     public function getClassName()
     {
         $name = $this->getArgument('arg_model');
-        if (strpos($name, 'Model') === false) {
-            return $name . 'Model';
-        }
         return $name;
     }
 
@@ -54,7 +51,7 @@ namespace App\Models;
 use Hola\Database\Model;
 
 class ' . $className . ' extends Model {
-    protected static $tableName = "' . $name_table . '";
+    protected static $table = "' . $name_table . '";
     protected static $times_auto = false;
     protected static $date_create = "date_created";
     protected static $date_update = "date_updated";
