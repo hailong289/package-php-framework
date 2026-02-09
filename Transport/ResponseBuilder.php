@@ -251,10 +251,12 @@ class ResponseBuilder {
 
     private function getData($share = false, $onlyData = false)
     {
+        $data = $this->bindings['data'];
+
         if ($onlyData) {
-            return $this->bindings['data'];
+            return $data;
         }
-        $data = $this->resolveDataCollect($this->bindings['data']);
+
         if ($share) {
             ShareData::init()->create('data', $data);
         }
