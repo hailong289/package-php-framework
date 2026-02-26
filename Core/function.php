@@ -288,13 +288,94 @@ HTML;
         foreach ($args as $index => $arg) {
             echo '<div class="debug-item">';
             $type = gettype($arg);
+            $isCallable = is_callable($arg);
+            $isClosure = $arg instanceof Closure;
+            
             if (is_object($arg)) {
                 $type = get_class($arg);
             }
-            echo '<div class="debug-type">' . htmlspecialchars($type) . ' (#' . ($index + 1) . ')</div>';
+            
+            // Add special badge for callables
+            $typeBadge = $type;
+            if ($isClosure) {
+                $typeBadge .= ' <span style="color: #ff79c6; font-weight: bold;">[Closure/Callback]</span>';
+            } elseif ($isCallable && !$isClosure) {
+                $typeBadge .= ' <span style="color: #ff79c6; font-weight: bold;">[Callable]</span>';
+            }
+            
+            echo '<div class="debug-type">' . $typeBadge . ' (#' . ($index + 1) . ')</div>';
             
             echo '<div class="debug-data">';
-            if (is_scalar($arg) || is_null($arg)) {
+            
+            // Handle Closure/Callback specially
+            if ($isClosure) {
+                $reflection = new ReflectionFunction($arg);
+                $output = [];
+                $output[] = '<span style="color: #ff79c6; font-weight: bold;">Closure Details:</span>';
+                $output[] = '';
+                $output[] = '<span class="json-key">File:</span> <span class="json-string">' . htmlspecialchars($reflection->getFileName()) . '</span>';
+                $output[] = '<span class="json-key">Lines:</span> <span class="json-number">' . $reflection->getStartLine() . ' - ' . $reflection->getEndLine() . '</span>';
+                
+                // Get parameters
+                $params = $reflection->getParameters();
+                if (!empty($params)) {
+                    $output[] = '<span class="json-key">Parameters:</span>';
+                    foreach ($params as $param) {
+                        $paramType = $param->hasType() ? $param->getType() . ' ' : '';
+                        $paramDefault = $param->isDefaultValueAvailable() ? ' = ' . var_export($param->getDefaultValue(), true) : '';
+                        $output[] = '  - <span class="json-string">' . $paramType . '$' . $param->getName() . $paramDefault . '</span>';
+                    }
+                }
+                
+                // Get return type
+                if ($reflection->hasReturnType()) {
+                    $output[] = '<span class="json-key">Return Type:</span> <span class="json-string">' . htmlspecialchars($reflection->getReturnType()) . '</span>';
+                }
+                
+                // Get closure source code
+                $output[] = '';
+                $output[] = '<span class="json-key">Source Code:</span>';
+                $startLine = $reflection->getStartLine();
+                $endLine = $reflection->getEndLine();
+                $filename = $reflection->getFileName();
+                
+                if ($filename && $startLine && $endLine) {
+                    $file = file($filename);
+                    $code = array_slice($file, $startLine - 1, $endLine - $startLine + 1);
+                    $output[] = '<span style="color: #dcdcaa;">' . htmlspecialchars(implode('', $code)) . '</span>';
+                }
+                
+                echo implode("\n", $output);
+            } elseif ($isCallable && !$isClosure) {
+                // Handle other callables (arrays, string function names, etc.)
+                $output = [];
+                $output[] = '<span style="color: #ff79c6; font-weight: bold;">Callable Details:</span>';
+                $output[] = '';
+                
+                if (is_string($arg)) {
+                    $output[] = '<span class="json-key">Function:</span> <span class="json-string">' . htmlspecialchars($arg) . '</span>';
+                    if (function_exists($arg)) {
+                        $reflection = new ReflectionFunction($arg);
+                        $output[] = '<span class="json-key">File:</span> <span class="json-string">' . htmlspecialchars($reflection->getFileName()) . '</span>';
+                        $output[] = '<span class="json-key">Line:</span> <span class="json-number">' . $reflection->getStartLine() . '</span>';
+                    }
+                } elseif (is_array($arg) && count($arg) == 2) {
+                    $output[] = '<span class="json-key">Class:</span> <span class="json-string">' . htmlspecialchars(is_object($arg[0]) ? get_class($arg[0]) : $arg[0]) . '</span>';
+                    $output[] = '<span class="json-key">Method:</span> <span class="json-string">' . htmlspecialchars($arg[1]) . '</span>';
+                    
+                    try {
+                        $reflection = new ReflectionMethod($arg[0], $arg[1]);
+                        $output[] = '<span class="json-key">File:</span> <span class="json-string">' . htmlspecialchars($reflection->getFileName()) . '</span>';
+                        $output[] = '<span class="json-key">Line:</span> <span class="json-number">' . $reflection->getStartLine() . '</span>';
+                    } catch (Exception $e) {
+                        $output[] = '<span style="color: #f44336;">Error: ' . htmlspecialchars($e->getMessage()) . '</span>';
+                    }
+                } else {
+                    $output[] = '<span class="json-string">' . htmlspecialchars(var_export($arg, true)) . '</span>';
+                }
+                
+                echo implode("\n", $output);
+            } elseif (is_scalar($arg) || is_null($arg)) {
                 echo '<span class="json-' . gettype($arg) . '">' . htmlspecialchars(var_export($arg, true)) . '</span>';
             } else {
                 $json = @json_encode($arg, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR);
