@@ -281,4 +281,107 @@ class Collection implements ArrayAccess, IteratorAggregate, Countable, JsonSeria
         $this->data = $this->convertToObject($fn($this->data));
         return $this;
     }
+    
+    public function sortBy($key, $direction = 'asc')
+    {
+        $asArray = (array)$this->data;
+        usort($asArray, function ($a, $b) use ($key, $direction) {
+            $valueA = is_object($a) ? ($a->{$key} ?? null) : ($a[$key] ?? null);
+            $valueB = is_object($b) ? ($b->{$key} ?? null) : ($b[$key] ?? null);
+            if ($valueA == $valueB) {
+                return 0;
+            }
+            if ($direction === 'asc') {
+                return ($valueA < $valueB) ? -1 : 1;
+            } else {
+                return ($valueA > $valueB) ? -1 : 1;
+            }
+        });
+        $this->data = (object)$asArray;
+        return $this;
+    }
+
+    public function sortByDesc($key) {
+        return $this->sortBy($key, 'desc');
+    }
+
+    public function sortByAsc($key) {
+        return $this->sortBy($key, 'asc');
+    }
+
+    public function group($key)
+    {
+        $asArray = (array)$this->data;
+        $grouped = [];
+        foreach ($asArray as $item) {
+            $groupKey = is_object($item) ? ($item->{$key} ?? null) : ($item[$key] ?? null);
+            if (!isset($grouped[$groupKey])) {
+                $grouped[$groupKey] = [];
+            }
+            $grouped[$groupKey][] = $item;
+        }
+        $this->data = (object)$grouped;
+        return $this;
+    }
+
+    public function limit($limit) {
+        $asArray = (array)$this->data;
+        $limited = array_slice($asArray, 0, $limit);
+        $this->data = (object)$limited;
+        return $this;
+    }
+
+    public function offset($offset) {
+        $asArray = (array)$this->data;
+        $offsetted = array_slice($asArray, $offset);
+        $this->data = (object)$offsetted;
+        return $this;
+    }
+
+    public function except($keys)
+    {
+        $asArray = (array)$this->data;
+        foreach ($keys as $key) {
+            unset($asArray[$key]);
+        }
+        $this->data = (object)$asArray;
+        return $this;
+    }
+
+    public function only($keys) {
+        $asArray = (array)$this->data;
+        $only = [];
+        foreach ($keys as $key) {
+            if (isset($asArray[$key])) {
+                $only[$key] = $asArray[$key];
+            }
+        }
+        $this->data = (object)$only;
+        return $this;
+    }
+
+    public function exists($key)
+    {
+        $asArray = (array)$this->data;
+        return isset($asArray[$key]);
+    }
+
+    public function merge($data)
+    {
+        $asArray = (array)$this->data;
+        $newData = $this->convertToObject($data);
+        $merged = array_merge($asArray, (array)$newData);
+        $this->data = (object)$merged;
+        return $this;
+    }
+
+    public function union()
+    {
+        $asArray = (array)$this->data;
+        $newData = $this->convertToObject(func_get_args());
+        $union = array_merge($asArray, (array)$newData);
+        $union = array_unique($union);
+        $this->data = (object)$union;
+        return $this;
+    }
 }

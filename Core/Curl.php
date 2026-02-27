@@ -31,6 +31,10 @@ class Curl
         'containsFile' => false,
         'debugFile' => '',
         'saveFile' => '',
+        'retry' => [
+            'number' => 0,
+            'milliseconds' => 0,
+        ]
     ];
 
     public static function init() {
@@ -329,6 +333,20 @@ class Curl
         return $this->send();
     }
 
+    /**
+     * @param int $number
+     * @param int $milliseconds
+     * Configure the package to retry the request a specified number of times with a specified delay in between each retry in case of failure
+     */
+    public function retry(int $number, int $milliseconds = 0, $when = null)
+    {
+        return $this->withPackageOption('retry', [
+            'number' => $number,
+            'milliseconds' => $milliseconds,
+            'when' => $when,
+        ]);
+    }
+
     private function setPostParameters($data)
     {
         if(!empty($data)) {
@@ -397,27 +415,69 @@ class Curl
             $debugFile = fopen($this->packageOptions['debugFile'], 'w');
             $this->withCurlOption('STDERR', $debugFile);
         }
-        $curl = curl_init();
-        $options = $this->forgeOptions();
-        curl_setopt_array($curl, $options);
-        $response = curl_exec($curl);
+
+        $retryCount = $this->packageOptions['retry']['number'] ?? 0;
+        $retryDelay = $this->packageOptions['retry']['milliseconds'] ?? 0;
+        $retryWhen = $this->packageOptions['retry']['when'] ?? null;
+        $attempts = 0;
+        $response = null;
         $responseHeader = null;
-        if($this->curlOptions['HEADER']) {
-            $headerSize = curl_getinfo($curl, CURLINFO_HEADER_SIZE );
-            $responseHeader = substr( $response, 0, $headerSize );
-            $response = substr( $response, $headerSize );
-        }
-
-        // Capture additional request information if needed
         $responseData = array();
-        if($this->packageOptions['responseObject'] || $this->packageOptions['responseArray']) {
-            $responseData = curl_getinfo($curl);
-            if(curl_errno($curl)) {
-                $responseData['errorMessage'] = curl_error($curl);
-            }
-        }
 
-        curl_close($curl);
+        do {
+            if ($attempts > 0 && $retryDelay > 0) {
+                usleep($retryDelay * 1000);
+            }
+
+            $curl = curl_init();
+            $options = $this->forgeOptions();
+            curl_setopt_array($curl, $options);
+            $response = curl_exec($curl);
+            $responseHeader = null;
+
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+
+            if($this->curlOptions['HEADER']) {
+                $headerSize = curl_getinfo($curl, CURLINFO_HEADER_SIZE );
+                $responseHeader = substr( $response, 0, $headerSize );
+                $response = substr( $response, $headerSize );
+            }
+
+            // Capture additional request information if needed
+            $responseData = array();
+            if($this->packageOptions['responseObject'] || $this->packageOptions['responseArray']) {
+                $responseData = curl_getinfo($curl);
+                if($curlErrno) {
+                    $responseData['errorMessage'] = $curlError;
+                }
+            }
+
+            $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+            curl_close($curl);
+            $attempts++;
+
+            // No error, no need to retry
+            if (!$curlErrno) {
+                break;
+            }
+
+            // Has error -> check if should retry
+            if ($retryWhen !== null && is_callable($retryWhen)) {
+                // Only retry when the 'when' callback matches the error
+                if (!$retryWhen([
+                    'errno' => $curlErrno,
+                    'error' => $curlError,
+                    'httpCode' => $httpCode,
+                    'response' => $response,
+                    'responseHeader' => $responseHeader,
+                    'responseData' => $responseData,
+                ])) {
+                    break;
+                }
+            }
+
+        } while ($attempts <= $retryCount);
 
         if($this->packageOptions['saveFile']) {
             // Save to file if a filename was specified
@@ -506,4 +566,5 @@ class Curl
 
         return $this->curlOptions['URL'] .= $parameterString;
     }
+
 }
