@@ -17,6 +17,11 @@ class CacheFile implements ICacheDriver {
         $this->prefix = $prefix;
         return $this;
     }
+    
+    public function expire($expire) {
+        $this->expire = $expire;
+        return $this;
+    }
 
     public function path($path) {
         $this->path = $path;
@@ -29,8 +34,7 @@ class CacheFile implements ICacheDriver {
         }
         $key = $this->prefix . $key;
         $cacheFile = $this->getLinkFile($key);
-        $effect = (time() - filemtime($cacheFile) < $this->expire);
-        if (!$effect) {
+        if (time() - filemtime($cacheFile) > $this->expire) {
             unlink($cacheFile);
             return [];
         }
@@ -46,11 +50,7 @@ class CacheFile implements ICacheDriver {
             return file_put_contents($this->getLinkFile($key_with), serialize($values));
         }
         $cacheFile = $this->getLinkFile($key_with);
-        $effect = (time() - filemtime($cacheFile) < $time);
-        if (!$effect) {
-            return file_put_contents($cacheFile, serialize($values));
-        }
-        return true;
+        return file_put_contents($cacheFile, serialize($values));
     }
 
     public function delete($key) {
