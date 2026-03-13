@@ -61,15 +61,6 @@ class Application extends Container
     }
 
     /**
-     * Register the application shutdown function.
-     * @throws AppException
-     */
-    private function registerShutdown(): void
-    {
-        register_shutdown_function([$this, 'handleShutdown']);
-    }
-
-    /**
      * Initialize the core components of the application.
      * @throws AppException
      */
@@ -89,11 +80,7 @@ class Application extends Container
      * @throws AppException
      */
     public function testRun() {
-        try {
-            $this->run();
-        } catch (\Throwable $e) {
-            echo $e;
-        }
+        $this->run();
     }
 
     /**
@@ -102,13 +89,7 @@ class Application extends Container
      */
     public function run()
     {
-        try {
-            $this->registerShutdown();
-            return $this->initializeCore()
-                ->handleHttpRequest();
-        } catch (\Throwable $e) {
-            return $this->handleException($e);
-        }
+        return $this->initializeCore()->handleHttpRequest();
     }
 
 
@@ -119,14 +100,8 @@ class Application extends Container
      */
     public function runCLI()
     {
-        try {
-            $this->registerShutdown();
-            $this->registerCommand();
-            $this->cli->run();
-        } catch (\Throwable $e) {
-            $this->handleErrorLogs($e);
-            echo $e->getMessage() . PHP_EOL . $e->getTraceAsString();
-        }
+        $this->registerCommand();
+        $this->cli->run();
         return $this;
     }
 
@@ -156,29 +131,16 @@ class Application extends Container
      */
     private function handleHttpRequest()
     {
-        try {
-            if (empty($this->control)) {
-                throw new AppException("Class controller in router does not exit", 500);
-            }
-            $middleware = $this->resolveMiddleware();
-            if (!empty($middleware['return'])) {
-                return $this->responseSuccess($middleware['return']);
-            }
-            $control_array = array_values($this->control);
-            $result = $this->call($control_array);
-            return $this->responseSuccess($result);
-        } catch (\Throwable $e) {
-            return $this->responseError($e);
+        if (empty($this->control)) {
+            throw new AppException("Class controller in router does not exit", 500);
         }
-    }
-
-    /**
-     * Handle the exception.
-     * @return void
-     */
-    private function handleException(\Throwable $e)
-    {
-        return $this->responseError($e);
+        $middleware = $this->resolveMiddleware();
+        if (!empty($middleware['return'])) {
+            return $this->responseSuccess($middleware['return']);
+        }
+        $control_array = array_values($this->control);
+        $result = $this->call($control_array);
+        return $this->responseSuccess($result);
     }
 
     /**
@@ -204,7 +166,7 @@ class Application extends Container
         }
 
         if ($response instanceof \Closure) {
-            return $this->handleClosure($response);
+            return $response();
         }
 
         return Response::text('Invalid response')->send();
@@ -218,96 +180,6 @@ class Application extends Container
     private function responseSuccess($return)
     {
         return $this->responseCore($return);
-    }
-
-    /**
-     * Handle the response error.
-     * @param \Throwable $e
-     * @return $this
-     */
-    private function responseError(\Throwable $e)
-    {
-        $this->handleErrorLogs($e);
-        $app_debug = conval('APP_DEBUG', false);
-        if (!$app_debug) {
-            $code = $this->getStatusCode($e->getCode());
-            $errors = [
-                "message" => $code === 500 ? "Internal Server Error" : $e->getMessage(),
-                "code" => $code
-            ];
-        } else {
-            $errors = [
-                "message" => $e->getMessage(),
-                "code" => $this->getStatusCode($e->getCode()),
-                "line" => $e->getLine(),
-                "file" => $e->getFile(),
-                "trace" => $e->getTraceAsString(),
-                "previous" => $e->getPrevious()
-            ];
-        }
-        if ($this->request()->isJson()) {
-            $res = Response::json($errors)->setStatus($errors['code']);
-            return $this->responseCore($res);
-        }
-        $res = Response::view('error.index', $errors)->setStatus($errors['code']);
-        return $this->responseCore($res);
-    }
-
-
-    /**
-     * Write the error logs.
-     * @param \Throwable $e
-     * @return void
-     */
-    private function handleErrorLogs(\Throwable $e)
-    {
-        $storagePath = __DIR__ROOT . '/storage';
-        if (!file_exists($storagePath) && !mkdir($storagePath, 0777, true) && !is_dir($storagePath)) {
-            echo sprintf('Directory "%s" was not created', $storagePath);
-            return;
-        }
-
-        $storagePath = __DIR__ROOT . '/storage';
-        $logFile = "$storagePath/application.log";
-
-        $errorMessage = sprintf(
-            "[%s][%d]: %s in %s on line %d\n%s\n\n",
-            date('Y-m-d H:i:s'),
-            $this->getStatusCode($e->getCode()),
-            $e->getMessage(),
-            $e->getFile(),
-            $e->getLine(),
-            $e->getTraceAsString()
-        );
-
-        file_put_contents($logFile, $errorMessage, FILE_APPEND);
-
-        app()->event()->trigger('app.exceptions', [
-            'type' => 'event_exceptions',
-            'message' => $e->getMessage(),
-            'code' => $this->getStatusCode($e->getCode()),
-            'line' => $e->getLine(),
-            'file' => $e->getFile(),
-            'trace' => $e->getTraceAsString(),
-            'class' => get_class($e),
-            'previous' => $e->getPrevious()
-        ]);
-
-        $currentException = $e;
-        $level = 0;
-        while ($currentException->getPrevious()) {
-            $level++;
-            $currentException = $currentException->getPrevious();
-            $logMessage = sprintf(
-                "[%s] Error level %d: %s in %s on line %d\n",
-                date('Y-m-d H:i:s'),
-                $level,
-                $currentException->getMessage(),
-                $currentException->getFile(),
-                $currentException->getLine()
-            );
-            file_put_contents($logFile, $logMessage, FILE_APPEND);
-        }
     }
 
     /**
@@ -367,29 +239,4 @@ class Application extends Container
         return $code ? $code : 500;
     }
 
-    /**
-     * Handle the shutdown.
-     * @return void
-     */
-    private function handleShutdown()
-    {
-        $error = error_get_last();
-        if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
-            $this->handleErrorLogs(new \ErrorException(
-                $error['message'],
-                $error['type'],
-                0,
-                $error['file'],
-                $error['line']
-            ));
-        }
-    }
-
-    private function handleClosure(\Closure $closure) {
-        try {
-            return $closure();
-        } catch (\Exception $e) {
-            return Response::text('Error executing closure: ' . $e->getMessage())->send();
-        }
-    }
 }

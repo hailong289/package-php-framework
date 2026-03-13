@@ -14,19 +14,19 @@ class Response {
     }
 
     public static function json($data = []){
-        return self::build()->json($data, $status, $headers);
+        return self::build()->json($data);
     }
 
     public static function view($view, $data = []){
-        return self::build()->view($view, $data, $status, $headers);
+        return self::build()->view($view, $data);
     }
 
     public static function redirect($url){
-        return self::build()->redirect($url, $status, $headers);
+        return self::build()->redirect($url);
     }
 
     public static function xml($data = []){
-        return self::build()->xml($data, $status, $headers);
+        return self::build()->xml($data);
     }
 
     public static function terminate() {

@@ -302,6 +302,9 @@ class Container
             throw new \ReflectionException($e->getMessage(), 500);
         }
 
+        // Use a stable key for resolved instances.
+        $className = $classReflection->getName();
+
         $constructor = $classReflection->getConstructor();
 
         if (is_null($constructor)) {

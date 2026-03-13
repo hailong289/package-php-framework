@@ -19,6 +19,45 @@ class RegisterLoad
             ->get('configs') ?? [];
         $this->bind['has_cache'] = !empty($this->bind['config']);
     }
+    
+    /**
+     * Register error handler
+     *
+     * @param string $name
+     * @return $this
+     */
+    
+    public function registerErrorHandler() {
+        set_error_handler(function ($severity, $message, $file, $line) {
+
+            if (!(error_reporting() & $severity)) {
+                return false;
+            }
+
+            throw new ErrorException($message, 0, $severity, $file, $line);
+
+        });
+        set_exception_handler([\Hola\Exceptions\ExceptionHandler::class, 'handle']);
+        register_shutdown_function(function () {
+            $error = error_get_last();
+            if ($error && in_array($error['type'], [
+                    E_ERROR,
+                    E_CORE_ERROR,
+                    E_COMPILE_ERROR,
+                    E_PARSE
+                ])) {
+
+                $exception = new ErrorException(
+                    $error['message'],
+                    0,
+                    $error['type'],
+                    $error['file'],
+                    $error['line']
+                );
+                \Hola\Exceptions\ExceptionHandler::handle($exception);
+            }
+        });
+    }
 
     /**
      * Register file
@@ -133,7 +172,17 @@ class RegisterLoad
      */
     public function loadTimeZone($timezone = null)
     {
-        $timezone = $timezone ?? conval('TIMEZONE', 'Asia/Ho_Chi_Minh');
+        $defaultTimezone = 'Asia/Ho_Chi_Minh';
+        $timezone = $timezone ?? conval('TIMEZONE', $defaultTimezone);
+
+        // Normalize common .env formatting mistakes, e.g. trailing quote: Asia/Ho_Chi_Minh'
+        $timezone = trim((string) $timezone);
+        $timezone = trim($timezone, " \t\n\r\0\x0B'\"");
+
+        if (!in_array($timezone, timezone_identifiers_list(), true)) {
+            $timezone = $defaultTimezone;
+        }
+
         date_default_timezone_set($timezone);
         return $this;
     }

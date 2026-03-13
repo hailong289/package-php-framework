@@ -13,13 +13,14 @@ class RouterBuilder {
     public function add($method, $uri, $actions)
     {
         $this->uid = uid();
-        $this->method = $method;
-        $this->path = $this->mainPath . $this->prefix . $uri;
-        $this->callback = $actions;
+        $routeMethod = $method;
+        $routePath = $this->mainPath . $this->prefix . $uri;
+        $routeCallback = $actions;
+
         $this->router[$this->uid] = [
-            'method' => $this->method,
-            'path' => $this->resolvePath($this->path),
-            'callback' => $this->callback,
+            'method' => $routeMethod,
+            'path' => $this->resolvePath($routePath),
+            'callback' => $routeCallback,
             'middlewares' => $this->middlewares
         ];
         return $this;

@@ -12,7 +12,7 @@ class ShareData {
         return self::$instance;
     }
     
-    public function create($key = 'data', $value) {
+    public function create($key = 'data', $value = []) {
         self::$bindings[conval('PROJECT_KEY')][$key] = $value;
     }
 
