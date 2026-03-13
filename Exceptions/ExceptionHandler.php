@@ -2,6 +2,7 @@
 
 namespace Hola\Exceptions;
 
+use Hola\Core\Logger;
 use Hola\Transport\Request;
 use Hola\Transport\Response;
 use Hola\Transport\ResponseBuilder;
@@ -12,7 +13,7 @@ class ExceptionHandler
     public static function handle(Throwable $e)
     {
         $request = new Request();
-        self::writeLogs($e, $request);
+        Logger::error($e);
         $app_debug = conval('APP_DEBUG', false);
         if (!$app_debug) {
             $code = self::getStatusCode($e->getCode());
@@ -65,57 +66,5 @@ class ExceptionHandler
         }
 
         return Response::text('Invalid response')->send();
-    }
-    
-    private static function writeLogs(Throwable $e, $request)
-    {
-        $storagePath = __DIR__ROOT . '/storage';
-        if (!file_exists($storagePath) && !mkdir($storagePath, 0777, true) && !is_dir($storagePath)) {
-            echo sprintf('Directory "%s" was not created', $storagePath);
-            return;
-        }
-
-
-        $storagePath = __DIR__ROOT . '/storage';
-        $logFile = "$storagePath/application.log";
-
-        $errorMessage = sprintf(
-            "[%s][%d]: %s in %s on line %d\n%s\n\n",
-            date('Y-m-d H:i:s'),
-            self::getStatusCode($e->getCode()),
-            $e->getMessage(),
-            $e->getFile(),
-            $e->getLine(),
-            $e->getTraceAsString()
-        );
-
-        file_put_contents($logFile, $errorMessage, FILE_APPEND);
-
-        app()->event()->trigger('app.exceptions', [
-            'type' => 'event_exceptions',
-            'message' => $e->getMessage(),
-            'code' => self::getStatusCode($e->getCode()),
-            'line' => $e->getLine(),
-            'file' => $e->getFile(),
-            'trace' => $e->getTraceAsString(),
-            'class' => get_class($e),
-            'previous' => $e->getPrevious()
-        ]);
-
-        $currentException = $e;
-        $level = 0;
-        while ($currentException->getPrevious()) {
-            $level++;
-            $currentException = $currentException->getPrevious();
-            $logMessage = sprintf(
-                "[%s] Error level %d: %s in %s on line %d\n",
-                date('Y-m-d H:i:s'),
-                $level,
-                $currentException->getMessage(),
-                $currentException->getFile(),
-                $currentException->getLine()
-            );
-            file_put_contents($logFile, $logMessage, FILE_APPEND);
-        }
     }
 }

@@ -5,6 +5,7 @@ use Hola\Connection\RabbitMQ;
 use Hola\Connection\Redis;
 use Hola\Database\DBO;
 use Hola\Database\QueryBuilder;
+use Hola\Exceptions\AppException;
 
 class SwitchDB {
     public QueueDatabase|QueueRedis|QueueRabbitmq $driver;
@@ -31,7 +32,7 @@ class SwitchDB {
                 $this->driver = new QueueRabbitmq();
                 break;
             default:
-                throw new \Exception('Driver queue not supported, please check again');
+                throw new AppException('Driver queue not supported, please check again', 500);
         }
     }
 
