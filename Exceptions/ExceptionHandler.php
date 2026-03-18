@@ -12,8 +12,18 @@ class ExceptionHandler
 {
     public static function handle(Throwable $e)
     {
-        $request = new Request();
-        Logger::error($e);
+
+        try {
+            Logger::error($e);
+        } catch (Throwable $loggerError) {
+            // Prevent secondary logger failures from hiding the original exception.
+        }
+
+        if (PHP_SAPI === 'cli') {
+            self::handleCli($e);
+            return;
+        }
+
         $app_debug = conval('APP_DEBUG', false);
         if (!$app_debug) {
             $code = self::getStatusCode($e->getCode());
@@ -31,12 +41,35 @@ class ExceptionHandler
                 "previous" => $e->getPrevious()
             ];
         }
-        if ($request->isJson()) {
+        $isJson = false;
+        try {
+            $request = new Request();
+            $isJson = $request->isJson();
+        } catch (Throwable $requestError) {
+            $isJson = false;
+        }
+
+        if ($isJson) {
             $res = Response::json($errors)->setStatus($errors['code']);
             return self::responseCore($res);
         }
         $res = Response::view('error.index', $errors)->setStatus($errors['code']);
         return self::responseCore($res);
+    }
+
+    private static function handleCli(Throwable $e): void
+    {
+
+        $code = self::getStatusCode($e->getCode());
+        $message = sprintf(
+            "[CLI ERROR][%d] %s in %s:%d\n %s\n",
+            $code,
+            $e->getMessage(),
+            $e->getFile(),
+            $e->getLine(),
+            $e->getTraceAsString()
+        );
+        file_put_contents('php://stderr', $message);
     }
 
     private static function getStatusCode($code) {

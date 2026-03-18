@@ -37,6 +37,13 @@ class Cache extends \Hola\Core\Command {
                 }
                 $this->output()->info("=== Clear cache view successfully ===");
                 break;
+            case 'log':
+                $item = __DIR__ROOT.'/storage/application.log';
+                if(file_exists($item)){
+                    file_put_contents($item, '');
+                }
+                $this->output()->info("=== Clear cache log successfully ===");
+                break;
             case 'all':
                 $cache = rglob(__DIR__ROOT.'/storage/cache/*.cache');
                 if (!empty($cache)) {

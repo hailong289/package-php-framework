@@ -19,7 +19,7 @@ class CliCommand {
     public function register() {
         $array_command = [];
         $command_default = scandir(__DIR__ .'/Commands');
-        $command_default = array_diff($command_default, array('.', '..','QueueJobs'));
+        $command_default = array_diff($command_default, array('.', '..','QueueJobs', 'Schedule'));
         $array_command_default = [];
         if (!empty($command_default)) {
             foreach($command_default as $item){
@@ -29,7 +29,7 @@ class CliCommand {
         }
 
         $command_dir = scandir(__DIR__ROOT .'/App/Commands');
-        $command_dir = array_diff($command_dir, array('.', '..'));
+        $command_dir = array_diff($command_dir, array('.', '..', 'Kernel.php'));
         if (!empty($command_dir)) {
             foreach($command_dir as $item){
                 $item = str_replace('.php','',$item);

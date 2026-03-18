@@ -16,12 +16,13 @@ class QueueRun extends \Hola\Core\Command
     protected $command = 'queue:run';
     protected $command_description = 'Run a queue';
     protected $arguments = ['?connection_type'];
-    protected $options = ['?queue','?timeout','?connection', '?failed_rollback'];
+    protected $options = ['?queue','?timeout','?connection', '?failed_rollback', '?delay'];
     protected $jobs_queue = 'jobs';
     protected $connection = 'database';
     protected $connection_type = 'database';
     protected $timeout = 600; // default 10 minutes
     protected $failed_rollback = false; // true, false
+    protected $delay = 5;
 
     public function __construct()
     {
@@ -38,6 +39,7 @@ class QueueRun extends \Hola\Core\Command
         $timeout_options = $this->getOption('timeout');
         $queue_name = $this->getOption('queue');
         $failed_rollback = $this->getOption('failed_rollback') ?? false;
+        $delay_options = $this->getOption('delay') ?? 5;
         if(!empty($connection_type)) {
             $this->connection_type = $connection_type;
         }
@@ -50,6 +52,7 @@ class QueueRun extends \Hola\Core\Command
         if (!empty($timeout_options)) {
             $this->timeout = $timeout_options;
         }
+        $this->delay = $delay_options;
         $this->handleQueue();
     }
 
@@ -70,6 +73,9 @@ class QueueRun extends \Hola\Core\Command
             }
 
             $switchDB->getDriver()->queueWork($queueManage);
+            $this->output()->info("Queue worked. Watting for new job...");
+            sleep($this->delay);
+            exit();
         } catch (\Throwable $th) {
             logs()->write_error($th);
             $this->output()->error($th->getMessage());

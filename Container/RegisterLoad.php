@@ -34,7 +34,7 @@ class RegisterLoad
                 return false;
             }
 
-            throw new ErrorException($message, 0, $severity, $file, $line);
+            throw new \ErrorException($message, 0, $severity, $file, $line);
 
         });
         set_exception_handler([\Hola\Exceptions\ExceptionHandler::class, 'handle']);
@@ -47,7 +47,7 @@ class RegisterLoad
                     E_PARSE
                 ])) {
 
-                $exception = new ErrorException(
+                $exception = new \ErrorException(
                     $error['message'],
                     0,
                     $error['type'],
