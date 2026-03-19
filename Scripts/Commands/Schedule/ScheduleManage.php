@@ -27,22 +27,12 @@ abstract class ScheduleManage
     public function run(): void
     {
         $this->handle();
-
-        // One-shot execution: run only tasks that are due at current time.
         foreach ($this->tasks as $task) {
             if (!$this->isDue($task->expression)) {
                 continue;
             }
 
             $this->executeTask($task);
-        }
-
-        $elapsed = time() - $startTime;
-        $sleep = 60 - $elapsed;
-
-        if ($sleep > 0) {
-            echo "Task finished, sleeping for {$sleep}s before exit...\n";
-            sleep($sleep);
         }
     }
 
