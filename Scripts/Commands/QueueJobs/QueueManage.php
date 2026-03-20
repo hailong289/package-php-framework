@@ -9,6 +9,9 @@ class QueueManage {
     private $triggers = [];
     private $startTime;
     private $endTime;
+    private $tries = 0;
+    private $delayTries = 0;
+    private $numberTries = 0;
     public $output;
 
     private function registerSignalHandler()
@@ -31,6 +34,15 @@ class QueueManage {
     public function setTimeout(int $timeout)
     {
         $this->timeout = $timeout;
+    }
+    
+    public function setTries(int $retry)
+    {
+        $this->tries = $retry;
+    }
+    
+    public function setDelayTries(int $delay) {
+        $this->delayTries = $delay;
     }
 
     public function eventTimeOut($callback) {
@@ -108,6 +120,17 @@ class QueueManage {
         logs()->write_error($exception);
         $driver->pushFailedJob($data);
         pcntl_alarm(0);
+
+        $jobData = $this->payload['data'] ?? [];
+        $this->tries = (int)($jobData['tries'] ?? 0);
+        $this->delayTries = (int)($jobData['delayTries'] ?? 0);
+
+        if ($this->tries > 0 && method_exists($driver, 'retryFailedJob')) {
+            sleep($this->delayTries);
+            $this->tries--;
+            $jobData['tries'] = $this->tries;
+            $driver->retryFailedJob($this, $jobData);
+        }
     }
 
 }

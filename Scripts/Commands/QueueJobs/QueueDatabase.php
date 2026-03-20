@@ -24,6 +24,8 @@ class QueueDatabase {
             'class' => stripslashes($data['class']),
             'payload' => $data['payload'],
             'timeout' => $data['timeout'] ?? 0,
+            'tries' => $data['tries'] ?? 0,
+            'delayTries' => $data['delayTries'] ?? 0,
         ];
     }
 
@@ -135,7 +137,9 @@ class QueueDatabase {
             'payload' => $queue['payload'],
             'class' => $class,
             'error' => $exception->getMessage(),
-            'failed' => $exception->getTraceAsString()
+            'failed' => $exception->getTraceAsString(),
+            'tries' => $queue['tries'],
+            'delayTries' => $queue['delayTries'],
         ];
         return [
             'data' => json_encode($data),
@@ -154,6 +158,32 @@ class QueueDatabase {
             unset($data['failed']);
         }
         $this->driver->from('failed_jobs')->insert($data);
+    }
+
+    public function retryFailedJob(QueueManage $queueManage, $queue)
+    {
+        $queueManage->eventTimeOut(fn ($payload) => $this->eventTimeOut($payload, $queueManage));
+        sleep(1);
+        $taskName = $queue['uid'];
+        
+        if (!empty($queue['timeout'])) {
+            $queueManage->setTimeOut((int)$queue['timeout']);
+        }
+
+        $callback = function () use ($queue, $queueManage) {
+            $queueManage->pendingJob();
+            try {
+                if (!method_exists($queue['class'], 'handle')) {
+                    throw new QueueException("function handle does not exits in {$queue['class']}");
+                }
+                app()->make($queue['class'], $queue['payload'])->handle();
+                $queueManage->doneJob();
+            } catch (\Throwable $exception) {
+                $data = $this->getDataFailed($queue, $exception);
+                $queueManage->failedJob($this, $data, $exception);
+            }
+        };
+        $queueManage->execute($taskName, $callback, $queue);
     }
 
 }
