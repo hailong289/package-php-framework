@@ -47,16 +47,24 @@ class CreateQueue
             throw new QueueException("Function handle does not exist in class $className", 500);
         }
 
+        $attributes = get_class_vars(get_class($class));
+        $excludeKeys = ['queue', 'connection', 'timeout', 'tries', 'delayTries'];
+
         $dataQueue = [
             'uid' => uid(),
-            'payload' => get_object_vars($class),
+            'payload' => array_diff_key($attributes, array_flip($excludeKeys)),
             'class' => addslashes($class::class),
             'queue' => $this->queue,
-            'connection' => $this->connection
+            'connection' => $this->connection,
         ];
         
-        if (!is_null($this->timeout)) {
+        if (!is_null($this->timeout) && !empty($attributes['timeout'])) {
             $dataQueue['timeout'] = $this->timeout;
+        }
+        
+        if (!empty($attributes['tries'])) {
+            $dataQueue['tries'] = $attributes['tries'];
+            $dataQueue['delayTries'] = $attributes['delayTries'] ?? 0;
         }
 
         $data = json_encode($dataQueue, JSON_UNESCAPED_UNICODE);

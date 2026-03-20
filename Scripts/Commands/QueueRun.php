@@ -40,18 +40,19 @@ class QueueRun extends \Hola\Core\Command
         $queue_name = $this->getOption('queue');
         $failed_rollback = $this->getOption('failed_rollback') ?? false;
         $delay_options = $this->getOption('delay') ?? 5;
-        if(!empty($connection_type)) {
+        if (!empty($connection_type)) {
             $this->connection_type = $connection_type;
         }
-        if(!empty($queue_name)) {
+        if (!empty($queue_name)) {
             $this->jobs_queue = $queue_name;
         }
-        if(!empty($connection)) {
+        if (!empty($connection)) {
             $this->connection = $connection;
         }
         if (!empty($timeout_options)) {
             $this->timeout = $timeout_options;
         }
+        $this->failed_rollback = $failed_rollback;
         $this->delay = $delay_options;
         $this->handleQueue();
     }

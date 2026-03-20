@@ -142,6 +142,7 @@ class QueueDatabase {
             'delayTries' => $queue['delayTries'],
         ];
         return [
+            'id' => $queue['key'],
             'data' => json_encode($data),
             'queue' => 'failed_jobs',
             'exception' => $exception->getMessage() . ". Trace: " . $exception->getTraceAsString(),
@@ -157,7 +158,9 @@ class QueueDatabase {
         if (isset($data['failed'])) {
             unset($data['failed']);
         }
-        $this->driver->from('failed_jobs')->insert($data);
+        $id = $data['id'];
+        unset($data['id']);
+        $this->driver->from('failed_jobs')->updateOrInsert($data, $id);
     }
 
     public function retryFailedJob(QueueManage $queueManage, $queue)

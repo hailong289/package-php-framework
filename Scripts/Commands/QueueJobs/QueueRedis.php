@@ -140,7 +140,31 @@ class QueueRedis {
         if (is_null($this->driver)) {
             $this->connect();
         }
-        $this->driver->rPush('queue:failed_jobs', json_encode($data));
+
+        $listKey = 'queue:failed_jobs';
+        $uid = $data['uid'] ?? null;
+        $payload = json_encode($data, JSON_UNESCAPED_UNICODE);
+
+        // Fallback to legacy append behavior when uid/payload is not usable.
+        if (empty($uid) || $payload === false) {
+            $this->driver->rPush($listKey, json_encode($data));
+            return;
+        }
+
+        $items = $this->driver->lRange($listKey, 0, -1);
+        foreach ($items as $index => $item) {
+            $decoded = json_decode($item, true);
+            if (!is_array($decoded)) {
+                continue;
+            }
+
+            if (($decoded['uid'] ?? null) === $uid) {
+                $this->driver->lSet($listKey, $index, $payload);
+                return;
+            }
+        }
+
+        $this->driver->rPush($listKey, $payload);
     }
 
     public function retryFailedJob(QueueManage $queueManage, $queue)
