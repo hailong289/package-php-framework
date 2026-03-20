@@ -31,6 +31,8 @@ class MailerBuilder extends Mailer {
                 } else {
                     $this->setBody($view);
                 }
+            } elseif (method_exists($this,'content')) {
+                $this->setBody($this->content());
             }
 
             if (method_exists($this,'mailFrom')) {
