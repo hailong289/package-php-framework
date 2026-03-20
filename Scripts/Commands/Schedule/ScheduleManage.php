@@ -6,10 +6,12 @@ abstract class ScheduleManage
 {
     protected array $tasks = [];
     protected string $cli;
+    protected string $lockDirectory;
 
     public function __construct()
     {
         $this->cli = PHP_BINARY . ' cli.php ';
+        $this->lockDirectory = __DIR__ROOT . '/storage/cache/schedule_locks';
     }
 
     abstract public function handle();
@@ -41,49 +43,121 @@ abstract class ScheduleManage
         $command = $this->cli . $task->command;
         $output = [];
         $exitCode = 0;
+        $lockFile = null;
+        $releaseLockInFinally = false;
 
-        echo "[schedule] " . date('Y-m-d H:i:s') . " - Running: {$command}\n";
-        
-        if ($task->background) {
-            exec($command . ' > /dev/null 2>&1 &');
-            echo "[background] Task queued to run in background\n";
-            return;
+        echo "\033[0;32m[Schedule]\033[0m " . date('Y-m-d H:i:s') . " - Running: {$command}\n";
+
+        if ($task->withoutOverlap) {
+            $lockFile = $this->acquireTaskLock($task);
+            if ($lockFile === null) {
+                echo "\033[0;33m[Skip]\033[0m Task is already running (withoutOverlap): {$task->command}\n";
+                return;
+            }
+            $releaseLockInFinally = !$task->background;
         }
         
-        if ($task->queue) {
-            echo "[queue] Task queued for later execution\n";
-            return;
-        }
-        
-        $attempts = max(1, $task->retry + 1);
-        for ($i = 0; $i < $attempts; $i++) {
-            if ($i > 0) {
-                echo "[retry] Attempt {$i} of {$attempts}\n";
+        try {
+            if ($task->background) {
+                if ($lockFile !== null) {
+                    $lockArg = escapeshellarg($lockFile);
+                    $script = "echo $$ > {$lockArg}; trap 'rm -f {$lockArg}' EXIT; {$command}";
+                    $backgroundCommand = 'sh -c ' . escapeshellarg($script) . ' > /dev/null 2>&1 &';
+                    exec($backgroundCommand, $output, $exitCode);
+                    if ($exitCode !== 0) {
+                        $this->releaseTaskLock($lockFile);
+                        echo "\033[0;31m[Error]\033[0m Failed to start background task: {$task->command}\n";
+                    } else {
+                        echo "\033[0;34m[Background]\033[0m Task queued to run in background\n";
+                    }
+                    return;
+                }
+
+                exec($command . ' > /dev/null 2>&1 &');
+                echo "\033[0;34m[Background]\033[0m Task queued to run in background\n";
+                return;
             }
 
-            exec($command . ' 2>&1', $output, $exitCode);
+            if ($task->queue) {
+                echo "\033[0;34m[Queue]\033[0m Task queued for later execution\n";
+                return;
+            }
 
-            if ($exitCode === 0) {
-                break;
+            $attempts = max(1, $task->retry + 1);
+            for ($i = 0; $i < $attempts; $i++) {
+                if ($i > 0) {
+                    echo "\033[0;32m[Retry]\033[0m Attempt {$i} of {$attempts}\n";
+                }
+
+                exec($command . ' 2>&1', $output, $exitCode);
+
+                if ($exitCode === 0) {
+                    break;
+                }
+            }
+
+            if (!empty($output)) {
+                echo implode(PHP_EOL, $output) . PHP_EOL;
+            }
+
+            if ($exitCode !== 0) {
+                $logMessage = sprintf(
+                    "[%s] SCHEDULE FAILED: %s (Exit: %d)\n",
+                    date('Y-m-d H:i:s'),
+                    $command,
+                    $exitCode
+                );
+                file_put_contents(__DIR__ROOT . '/storage/scheduler.log', $logMessage, FILE_APPEND);
+            }
+        } finally {
+            if ($releaseLockInFinally && $lockFile !== null) {
+                $this->releaseTaskLock($lockFile);
             }
         }
-        
-        if (!empty($output)) {
-            echo implode(PHP_EOL, $output) . PHP_EOL;
+    }
+
+    protected function acquireTaskLock(ScheduledTask $task): ?string
+    {
+        if (!is_dir($this->lockDirectory)) {
+            mkdir($this->lockDirectory, 0777, true);
         }
-        
-        $statusText = $exitCode === 0 ? 'SUCCESS' : 'FAILED';
-        echo "[exit-code] {$exitCode} ({$statusText})\n";
-        
-        if ($exitCode !== 0) {
-            $logMessage = sprintf(
-                "[%s] SCHEDULE FAILED: %s (Exit: %d)\n",
-                date('Y-m-d H:i:s'),
-                $command,
-                $exitCode
-            );
-            file_put_contents(__DIR__ROOT . '/storage/scheduler.log', $logMessage, FILE_APPEND);
+
+        $lockName = md5($task->command) . '.lock';
+        $lockFile = $this->lockDirectory . '/' . $lockName;
+
+        if (file_exists($lockFile)) {
+            $pid = (int) trim((string) file_get_contents($lockFile));
+            if ($pid > 0 && $this->isProcessRunning($pid)) {
+                return null;
+            }
+
+            @unlink($lockFile);
         }
+
+        file_put_contents($lockFile, (string) getmypid());
+
+        return $lockFile;
+    }
+
+    protected function releaseTaskLock(string $lockFile): void
+    {
+        if (file_exists($lockFile)) {
+            @unlink($lockFile);
+        }
+    }
+
+    protected function isProcessRunning(int $pid): bool
+    {
+        if ($pid <= 0) {
+            return false;
+        }
+
+        if (function_exists('posix_kill')) {
+            return @posix_kill($pid, 0);
+        }
+
+        exec('ps -p ' . (int) $pid . ' > /dev/null 2>&1', $output, $exitCode);
+        return $exitCode === 0;
     }
 
     protected function isDue(string $expression): bool

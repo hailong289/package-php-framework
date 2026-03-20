@@ -1,6 +1,7 @@
 <?php
 
 namespace Hola\Scripts\Commands;
+use App\Commands\Kernel;
 use Hola\Core\Command;
 
 class ScheduleRun extends Command
@@ -18,7 +19,7 @@ class ScheduleRun extends Command
     public function handle()
     {
         try {
-            app('\\App\\Commands\\Kernel')->run();
+            app(Kernel::class)->run();
         } catch (\Exception $e) {
             $this->output()->writeln("<error>Error running scheduled commands: {$e->getMessage()}</error>");
         }

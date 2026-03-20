@@ -205,6 +205,11 @@ class ScheduledTask
         return $this;
     }
 
+    public function withoutOverlap(): self
+    {
+        return $this->withoutOverlapping();
+    }
+
     public function runInBackground(): self
     {
         $this->background = true;
