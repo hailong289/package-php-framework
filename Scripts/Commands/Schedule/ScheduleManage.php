@@ -2,16 +2,20 @@
 
 namespace Hola\Scripts\Commands\Schedule;
 
+use Throwable;
+
 abstract class ScheduleManage
 {
     protected array $tasks = [];
     protected string $cli;
     protected string $lockDirectory;
+    protected string $schedulerLog;
 
     public function __construct()
     {
         $this->cli = PHP_BINARY . ' cli.php ';
         $this->lockDirectory = __DIR__ROOT . '/storage/cache/schedule_locks';
+        $this->schedulerLog = __DIR__ROOT . '/storage/scheduler.log';
     }
 
     abstract public function handle();
@@ -36,7 +40,12 @@ abstract class ScheduleManage
                         continue;
                     }
 
-                    $this->executeTask($task);
+                    try {
+                        $this->executeTask($task);
+                    } catch (Throwable $e) {
+                        $this->logSchedulerMessage('error', 'Task crashed: ' . $task->command, $e);
+                        echo "\033[0;31m[Error]\033[0m Task crashed and was skipped: {$task->command}\n";
+                    }
                 }
                 sleep(1);
             }
@@ -45,8 +54,12 @@ abstract class ScheduleManage
                 if (!$this->isDue($task->expression)) {
                     continue;
                 }
-
-                $this->executeTask($task);
+                try {
+                    $this->executeTask($task);
+                } catch (Throwable $e) {
+                    $this->logSchedulerMessage('error', 'Task crashed: ' . $task->command, $e);
+                    echo "\033[0;31m[Error]\033[0m Task crashed and was skipped: {$task->command}\n";
+                }
             }
         }
     }
@@ -69,7 +82,7 @@ abstract class ScheduleManage
             }
             $releaseLockInFinally = !$task->background;
         }
-        
+
         try {
             if ($task->background) {
                 if ($lockFile !== null) {
@@ -79,6 +92,7 @@ abstract class ScheduleManage
                     $exitCode = $result->exitCode();
                     if ($exitCode !== 0) {
                         $this->releaseTaskLock($lockFile);
+                        $this->logSchedulerMessage('error', 'Failed to start background task: ' . $task->command . ' (Exit: ' . $exitCode . ')');
                         echo "\033[0;31m[Error]\033[0m Failed to start background task: {$task->command}\n";
                     } else {
                         echo "\033[0;34m[Background]\033[0m Task queued to run in background\n";
@@ -90,6 +104,7 @@ abstract class ScheduleManage
                 if ($result->ok()) {
                     echo "\033[0;34m[Background]\033[0m Task queued to run in background\n";
                 } else {
+                    $this->logSchedulerMessage('error', 'Failed to start background task: ' . $task->command);
                     echo "\033[0;31m[Error]\033[0m Failed to start background task: {$task->command}\n";
                 }
                 return;
@@ -120,13 +135,7 @@ abstract class ScheduleManage
             }
 
             if ($exitCode !== 0) {
-                $logMessage = sprintf(
-                    "[%s] SCHEDULE FAILED: %s (Exit: %d)\n",
-                    date('Y-m-d H:i:s'),
-                    $command,
-                    $exitCode
-                );
-                file_put_contents(__DIR__ROOT . '/storage/scheduler.log', $logMessage, FILE_APPEND);
+                $this->logSchedulerMessage('error', sprintf('SCHEDULE FAILED: %s (Exit: %d)', $command, $exitCode));
             }
         } finally {
             if ($releaseLockInFinally && $lockFile !== null) {
@@ -253,5 +262,15 @@ abstract class ScheduleManage
         }
 
         return false;
+    }
+
+    protected function logSchedulerMessage(string $level, string $message, ?Throwable $exception = null): void
+    {
+        $logLine = sprintf('[%s] %s: %s', date('Y-m-d H:i:s'), strtoupper($level), $message);
+        if ($exception !== null) {
+            $logLine .= sprintf(' | %s in %s:%d', $exception->getMessage(), $exception->getFile(), $exception->getLine());
+        }
+        $logLine .= PHP_EOL;
+        file_put_contents($this->schedulerLog, $logLine, FILE_APPEND);
     }
 }
