@@ -1,6 +1,8 @@
 <?php
 namespace Hola\Core;
 use Hola\Core\Hash\Argon2Hasher;
+use Hola\Core\Hash\BcryptHasher;
+use Hola\Core\Hash\GenericHasher;
 use Hola\Core\Hash\Interfaces\HashInterface;
 
 class Hash

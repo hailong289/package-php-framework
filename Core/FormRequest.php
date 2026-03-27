@@ -48,6 +48,7 @@ class FormRequest extends Request {
         $validate = Validation::create($request->all(), $this->rules());
         if (!empty($validate->errors())) {
             $this->attributes['errors'] = $validate->errors();
+            ShareData::init()->create('errors', $this->attributes['errors']);
         } else if (method_exists($this, 'customValidation')) {
             try {
                 $this->customValidation($request);
@@ -59,20 +60,20 @@ class FormRequest extends Request {
                 } else {
                     $this->attributes['errors']['custom'] = $e->getMessage();
                 }
+                ShareData::init()->create('errors', $this->attributes['errors']);
             }
         }
-        ShareData::init()->create('errors', $this->attributes['errors']);
         $this->attributes['data'] = $validate->data();
         return $this->attributes['data'];
     }
 
     public function errors()
     {
-        return $this->attributes['errors'];
+        return $this->attributes['errors'] ?? null;
     }
 
     public function data(): array|object|null
     {
-        return $this->attributes['data'];
+        return $this->attributes['data'] ?? null;
     }
 }
