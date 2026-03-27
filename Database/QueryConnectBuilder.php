@@ -182,20 +182,19 @@ class QueryConnectBuilder {
             return false;
         }
         $this->binndingLog['time'] = microtime(true);
-        $callback = function ($sql, $bindings) use ($startTime, $return) {
-            $endTime = microtime(true); // End time
-            $queryTime = $endTime - $startTime; // Query time
+        $callback = function ($sql, $bindings) use ($return) {
+            $this->binndingLog['time'] = microtime(true) - $this->binndingLog['time']; // Query time
             if ($return) {
                 return [
                     'params' => $bindings,
                     'query' => $this->getRawSql($sql, $bindings),
-                    'time' => $queryTime
+                    'time' => $this->binndingLog['time']
                 ];
             }
             $this->binndingLog['log'][] = [
                 'params' => $bindings,
                 'query' => $this->getRawSql($sql, $bindings),
-                'time' => "Query took $queryTime seconds to execute."
+                'time' => "Query took {$this->binndingLog['time']} seconds to execute."
             ];
         };
         return $callback;
