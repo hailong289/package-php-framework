@@ -75,6 +75,7 @@ class ResponseBuilder {
         }
         
         if (!empty($data['keywords'])) {
+            $data['keywords'] = is_array($data['keywords']) ? implode(', ', $data['keywords']) : $data['keywords'];
             $metaTags[] = "<meta name=\"keywords\" content=\"{$data['keywords']}\">";
         }
         

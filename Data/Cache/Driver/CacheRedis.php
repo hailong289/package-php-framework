@@ -52,12 +52,13 @@ class CacheRedis implements ICacheDriver {
     }
 
     private function connect() {
-        $this->instance = app()
+        $redis = app()
                 ->get(ConnectionManager::class)
                 ->setConfigName('cache')
                 ->setConnectionType('redis')
-                ->setConnectionName($this->default_connection)
-                ->getConnection();
+                ->setConnectionName($this->default_connection);
+        $redis->handle();
+        $this->instance = $redis->getConnection();
         return $this;
     }
 }
