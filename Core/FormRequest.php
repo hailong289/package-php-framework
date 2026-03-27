@@ -8,6 +8,7 @@ use Hola\Transport\Request;
 use Hola\Transport\Response;
 
 class FormRequest extends Request {
+    protected array $attributes = [];
     private $data_errors = null;
     private $data = null;
     public function __construct()
@@ -43,22 +44,35 @@ class FormRequest extends Request {
             $class = get_class($this);
             throw new AppException("Function rules does not exist in $class");
         }
+
         $validate = Validation::create($request->all(), $this->rules());
-        if(!empty($validate->errors())) {
-            $this->data_errors = $validate->errors();
-            ShareData::init()->create('errors', $this->data_errors);
+        if (!empty($validate->errors())) {
+            $this->attributes['errors'] = $validate->errors();
+        } else if (method_exists($this, 'customValidation')) {
+            try {
+                $this->customValidation($request);
+            } catch (\Throwable $e) {
+                if (empty($this->attributes['errors'])) {
+                    $this->attributes['errors']['custom'] = $e->getMessage();
+                } else if (is_object($this->attributes['errors'])) {
+                    $this->attributes['errors']->custom = $e->getMessage();
+                } else {
+                    $this->attributes['errors']['custom'] = $e->getMessage();
+                }
+            }
         }
-        $this->data = $validate->data();
-        return $this->data;
+        ShareData::init()->create('errors', $this->attributes['errors']);
+        $this->attributes['data'] = $validate->data();
+        return $this->attributes['data'];
     }
 
     public function errors()
     {
-        return $this->data_errors;
+        return $this->attributes['errors'];
     }
 
     public function data(): array|object|null
     {
-        return $this->data;
+        return $this->attributes['data'];
     }
 }
