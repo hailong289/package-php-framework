@@ -41,6 +41,7 @@ class ExceptionHandler
                 "previous" => $e->getPrevious()
             ];
         }
+
         $isJson = false;
         try {
             $request = new Request();
@@ -48,6 +49,8 @@ class ExceptionHandler
         } catch (Throwable $requestError) {
             $isJson = false;
         }
+
+        self::pushEvent($e, 'app.exceptions');
 
         if ($isJson) {
             $res = Response::json($errors)->setStatus($errors['code']);
@@ -99,5 +102,19 @@ class ExceptionHandler
         }
 
         return Response::text('Invalid response')->send();
+    }
+
+    private static function pushEvent(Throwable $e, $event)
+    {
+        app()->event()->trigger($event, [
+            'type' => 'event_exceptions',
+            'message' => $e->getMessage(),
+            'code' => self::getStatusCode($e->getCode()),
+            'line' => $e->getLine(),
+            'file' => $e->getFile(),
+            'trace' => $e->getTraceAsString(),
+            'class' => get_class($e),
+            'previous' => $e->getPrevious()
+        ]);
     }
 }
