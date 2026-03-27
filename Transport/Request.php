@@ -6,16 +6,19 @@ use Hola\Data\Session;
 use Hola\Exceptions\AppException;
 
 class Request extends RequestBuilder {
+    protected array $attributes = [];
     private $file = '';
 
     public function __construct()
     {
         $all_data = (array)$this->all();
-        if (count($all_data)) {
-            foreach ($all_data as $key => $item) {
-                if (!isset($this->{$key})) $this->{$key} = $item;
-            }
+        foreach ($all_data as $key => $item) {
+            $this->attributes[$key] = $item;
         }
+    }
+
+    public function __get($key) {
+        return $this->attributes[$key] ?? null;
     }
 
     public function get($key = '', $default = null)

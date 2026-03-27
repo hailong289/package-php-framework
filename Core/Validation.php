@@ -14,16 +14,16 @@ class Validation {
              foreach ($keys_validate as $name) {
                  if (!isset($data[$name])) {
                      $value = '';
-                     self::handleRule($name, $value, $rules, self::$bind->errors);
+                     self::handleRule($name, $value, self::$bind->errors, $rules);
                  } else {
                      $value = $data[$name];
-                     self::handleRule($name, $value, $rules, self::$bind->errors);
+                     self::handleRule($name, $value, self::$bind->errors, $rules);
                  }
              }
          } else {
              $keys_validate = array_keys($rules);
              foreach ($keys_validate as $name) {
-                 self::handleRule($name, '', $rules, self::$bind->errors);
+                 self::handleRule($name, '', self::$bind->errors, $rules);
              }
          }
          self::$bind->data = $data;
@@ -53,7 +53,7 @@ class Validation {
         return $isCount ? $data : null;
     }
 
-    private static function handleRule($name, $value, $rules = [], &$errors){
+    private static function handleRule($name, $value, &$errors, $rules = []){
         $list_rule = [
             'required' => [
                 'function' => function (...$value) {
