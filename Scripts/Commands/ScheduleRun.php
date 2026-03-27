@@ -8,7 +8,7 @@ class ScheduleRun extends Command
 {
     protected $command = 'schedule:run';
     protected $command_description = 'Run the scheduled commands';
-    protected $arguments = [];
+    protected $arguments = ['?environment'];
     protected $options = [];
     
     public function __construct()
@@ -19,7 +19,8 @@ class ScheduleRun extends Command
     public function handle()
     {
         try {
-            app(Kernel::class)->run();
+            $isDev = $this->getArgument('environment') === 'dev';
+            app(Kernel::class)->run($isDev);
         } catch (\Exception $e) {
             $this->output()->writeln("<error>Error running scheduled commands: {$e->getMessage()}</error>");
         }

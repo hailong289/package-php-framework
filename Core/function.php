@@ -974,3 +974,431 @@ if (!function_exists('share')) {
         return \Hola\Data\ShareData::init();
     }
 }
+
+if (!function_exists('bash')) {
+    function bash() {
+        return new class
+        {
+            private ?string $cwd = null;
+            private array $env = [];
+            private bool $unsafe = false;
+            private array $lastResult = [
+                'command' => '',
+                'stdout' => '',
+                'stderr' => '',
+                'exitCode' => 0,
+                'ok' => true,
+            ];
+
+            function __toString()
+            {
+                return $this->output();
+            }
+
+            function cwd(?string $cwd)
+            {
+                $this->cwd = $cwd;
+                return $this;
+            }
+
+            function env(array $env)
+            {
+                $this->env = array_merge($this->env, $env);
+                return $this;
+            }
+
+            function unsafe(bool $unsafe = true)
+            {
+                $this->unsafe = $unsafe;
+                return $this;
+            }
+
+            function command($command, ...$arguments)
+            {
+                return $this->run($command, ...$arguments);
+            }
+
+            function git(...$arguments)
+            {
+                return $this->run('git', ...$arguments);
+            }
+
+            function gitMustRun(...$arguments)
+            {
+                return $this->mustRun('git', ...$arguments);
+            }
+
+            function run($command, ...$arguments)
+            {
+                $commandLine = $this->buildCommandLine($command, $arguments);
+                $environment = $this->buildEnvironment();
+
+                $descriptorSpec = [
+                    0 => ['pipe', 'r'],
+                    1 => ['pipe', 'w'],
+                    2 => ['pipe', 'w'],
+                ];
+
+                $process = proc_open(
+                    $commandLine,
+                    $descriptorSpec,
+                    $pipes,
+                    $this->cwd,
+                    $environment
+                );
+
+                if (!is_resource($process)) {
+                    throw new \RuntimeException('Unable to start bash command.');
+                }
+
+                fclose($pipes[0]);
+                $stdout = stream_get_contents($pipes[1]);
+                fclose($pipes[1]);
+                $stderr = stream_get_contents($pipes[2]);
+                fclose($pipes[2]);
+
+                $exitCode = proc_close($process);
+
+                $this->lastResult = [
+                    'command' => $commandLine,
+                    'stdout' => $stdout === false ? '' : $stdout,
+                    'stderr' => $stderr === false ? '' : $stderr,
+                    'exitCode' => (int)$exitCode,
+                    'ok' => $exitCode === 0,
+                ];
+
+                return $this;
+            }
+
+            function runMany(array $commands): array
+            {
+                if (empty($commands)) {
+                    return [];
+                }
+
+                $descriptorSpec = [
+                    0 => ['pipe', 'r'],
+                    1 => ['pipe', 'w'],
+                    2 => ['pipe', 'w'],
+                ];
+
+                $processes = [];
+                $results = [];
+
+                foreach ($commands as $index => $commandSpec) {
+                    $spec = $this->normalizeBatchCommand($commandSpec);
+                    $commandLine = $this->buildCommandLineWithMode($spec['command'], $spec['arguments'], $spec['unsafe']);
+                    $environment = $this->buildEnvironment($spec['env']);
+
+                    $process = proc_open(
+                        $commandLine,
+                        $descriptorSpec,
+                        $pipes,
+                        $spec['cwd'],
+                        $environment
+                    );
+
+                    if (!is_resource($process)) {
+                        $results[$index] = [
+                            'command' => $commandLine,
+                            'stdout' => '',
+                            'stderr' => 'Unable to start bash command.',
+                            'exitCode' => -1,
+                            'ok' => false,
+                        ];
+                        continue;
+                    }
+
+                    fclose($pipes[0]);
+                    stream_set_blocking($pipes[1], false);
+                    stream_set_blocking($pipes[2], false);
+
+                    $processes[$index] = [
+                        'process' => $process,
+                        'pipes' => $pipes,
+                        'command' => $commandLine,
+                        'stdout' => '',
+                        'stderr' => '',
+                    ];
+                }
+
+                while (!empty($processes)) {
+                    foreach ($processes as $index => $data) {
+                        $out = stream_get_contents($data['pipes'][1]);
+                        if ($out !== false && $out !== '') {
+                            $data['stdout'] .= $out;
+                        }
+
+                        $err = stream_get_contents($data['pipes'][2]);
+                        if ($err !== false && $err !== '') {
+                            $data['stderr'] .= $err;
+                        }
+
+                        $status = proc_get_status($data['process']);
+                        if ($status['running']) {
+                            $processes[$index] = $data;
+                            continue;
+                        }
+
+                        fclose($data['pipes'][1]);
+                        fclose($data['pipes'][2]);
+
+                        $exitCode = proc_close($data['process']);
+                        $results[$index] = [
+                            'command' => $data['command'],
+                            'stdout' => $data['stdout'],
+                            'stderr' => $data['stderr'],
+                            'exitCode' => (int)$exitCode,
+                            'ok' => $exitCode === 0,
+                        ];
+
+                        unset($processes[$index]);
+                    }
+
+                    if (!empty($processes)) {
+                        usleep(10000);
+                    }
+                }
+
+                ksort($results);
+                $results = array_values($results);
+                if (!empty($results)) {
+                    $this->lastResult = $results[count($results) - 1];
+                }
+
+                return $results;
+            }
+
+            function mustRunMany(array $commands): array
+            {
+                $results = $this->runMany($commands);
+                foreach ($results as $result) {
+                    if (!($result['ok'] ?? false)) {
+                        $message = trim((string)($result['stderr'] ?? ''));
+                        if ($message === '') {
+                            $message = trim((string)($result['stdout'] ?? ''));
+                        }
+
+                        throw new \RuntimeException(
+                            'Command failed (' . (int)($result['exitCode'] ?? -1) . '): ' . ($result['command'] ?? '') . ($message !== '' ? "\n" . $message : '')
+                        );
+                    }
+                }
+
+                return $results;
+            }
+
+            function mustRun($command, ...$arguments)
+            {
+                $this->run($command, ...$arguments);
+                if (!$this->ok()) {
+                    $message = trim($this->errorOutput());
+                    if ($message === '') {
+                        $message = trim($this->output());
+                    }
+                    throw new \RuntimeException(
+                        'Command failed (' . $this->exitCode() . '): ' . $this->lastResult['command'] . ($message !== '' ? "\n" . $message : '')
+                    );
+                }
+                return $this;
+            }
+
+            function result()
+            {
+                return $this->lastResult;
+            }
+
+            function ok(): bool
+            {
+                return (bool)$this->lastResult['ok'];
+            }
+
+            function exitCode(): int
+            {
+                return (int)$this->lastResult['exitCode'];
+            }
+
+            function output(?string $color = null): string
+            {
+                $stdout = (string)$this->lastResult['stdout'];
+                if ($color === null || trim($color) === '') {
+                    return $stdout;
+                }
+
+                return $this->colorizeOutput($stdout, $color);
+            }
+
+            function errorOutput(): string
+            {
+                return (string)$this->lastResult['stderr'];
+            }
+
+            function lines(): array
+            {
+                $output = trim($this->output());
+                return $output === '' ? [] : preg_split('/\r\n|\r|\n/', $output);
+            }
+
+            function json(bool $assoc = true)
+            {
+                return json_decode($this->output(), $assoc);
+            }
+
+            function __call($name, $arguments) {
+                return $this->run($name, ...$arguments);
+            }
+
+            private function buildCommandLine($command, array $arguments): string
+            {
+                return $this->buildCommandLineWithMode($command, $arguments, $this->unsafe);
+            }
+
+            private function buildCommandLineWithMode($command, array $arguments, bool $unsafe): string
+            {
+                $command = trim((string)$command);
+
+                if ($unsafe) {
+                    $rawArgs = array_map(function ($arg) {
+                        return $this->normalizeValue($arg);
+                    }, $arguments);
+
+                    return trim($command . ' ' . implode(' ', $rawArgs));
+                }
+
+                $parts = [escapeshellcmd($command)];
+                foreach ($arguments as $argument) {
+                    if ($argument === null) {
+                        continue;
+                    }
+
+                    $parts[] = escapeshellarg($this->normalizeValue($argument));
+                }
+
+                return implode(' ', array_filter($parts, static function ($part) {
+                    return $part !== '';
+                }));
+            }
+
+            private function buildEnvironment(array $extraEnv = []): array
+            {
+                $environment = [];
+                $source = array_merge($_ENV ?? [], $this->env, $extraEnv);
+
+                foreach ($source as $key => $value) {
+                    if ($value === null) {
+                        continue;
+                    }
+
+                    $envKey = trim((string)$key);
+                    if ($envKey === '') {
+                        continue;
+                    }
+
+                    $environment[$envKey] = $this->normalizeValue($value);
+                }
+
+                return $environment;
+            }
+
+            private function normalizeBatchCommand($commandSpec): array
+            {
+                if (is_string($commandSpec)) {
+                    return [
+                        'command' => $commandSpec,
+                        'arguments' => [],
+                        'cwd' => $this->cwd,
+                        'env' => [],
+                        'unsafe' => true,
+                    ];
+                }
+
+                if (!is_array($commandSpec)) {
+                    throw new \InvalidArgumentException('Each command must be a string or array.');
+                }
+
+                if (array_is_list($commandSpec)) {
+                    if (count($commandSpec) === 0) {
+                        throw new \InvalidArgumentException('Command list item cannot be empty.');
+                    }
+
+                    $command = array_shift($commandSpec);
+                    return [
+                        'command' => $command,
+                        'arguments' => array_values($commandSpec),
+                        'cwd' => $this->cwd,
+                        'env' => [],
+                        'unsafe' => $this->unsafe,
+                    ];
+                }
+
+                if (!isset($commandSpec['command'])) {
+                    throw new \InvalidArgumentException('Command array must have a `command` key.');
+                }
+
+                $arguments = $commandSpec['args'] ?? ($commandSpec['arguments'] ?? []);
+                if (!is_array($arguments)) {
+                    $arguments = [$arguments];
+                }
+
+                return [
+                    'command' => $commandSpec['command'],
+                    'arguments' => $arguments,
+                    'cwd' => $commandSpec['cwd'] ?? $this->cwd,
+                    'env' => isset($commandSpec['env']) && is_array($commandSpec['env']) ? $commandSpec['env'] : [],
+                    'unsafe' => isset($commandSpec['unsafe']) ? (bool)$commandSpec['unsafe'] : $this->unsafe,
+                ];
+            }
+
+            private function normalizeValue($value): string
+            {
+                if (is_array($value) || is_object($value)) {
+                    $encoded = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                    return $encoded === false ? '' : $encoded;
+                }
+
+                if (is_bool($value)) {
+                    return $value ? '1' : '0';
+                }
+
+                return (string)$value;
+            }
+
+            private function colorizeOutput(string $text, string $color): string
+            {
+                if ($text === '' || PHP_SAPI !== 'cli') {
+                    return $text;
+                }
+
+                $colorMap = [
+                    'black' => '0;30',
+                    'red' => '0;31',
+                    'green' => '0;32',
+                    'yellow' => '0;33',
+                    'blue' => '0;34',
+                    'purple' => '0;35',
+                    'cyan' => '0;36',
+                    'white' => '0;37',
+                    'gray' => '1;30',
+                    'light_red' => '1;31',
+                    'light_green' => '1;32',
+                    'light_yellow' => '1;33',
+                    'light_blue' => '1;34',
+                    'light_purple' => '1;35',
+                    'light_cyan' => '1;36',
+                    'light_white' => '1;37',
+                ];
+
+                $key = strtolower(trim($color));
+                if (isset($colorMap[$key])) {
+                    return "\033[" . $colorMap[$key] . "m" . $text . "\033[0m";
+                }
+
+                if (preg_match('/^\d{1,2}(;\d{1,2})?$/', $key)) {
+                    return "\033[" . $key . "m" . $text . "\033[0m";
+                }
+
+                return $text;
+            }
+        };
+    }
+}

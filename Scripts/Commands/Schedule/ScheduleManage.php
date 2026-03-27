@@ -26,22 +26,35 @@ abstract class ScheduleManage
     }
 
 
-    public function run(): void
+    public function run($is_dev = false): void
     {
         $this->handle();
-        foreach ($this->tasks as $task) {
-            if (!$this->isDue($task->expression)) {
-                continue;
-            }
+        if ($is_dev) {
+            while (true) {
+                foreach ($this->tasks as $task) {
+                    if (!$this->isDue($task->expression)) {
+                        continue;
+                    }
 
-            $this->executeTask($task);
+                    $this->executeTask($task);
+                }
+                sleep(1);
+            }
+        } else {
+            foreach ($this->tasks as $task) {
+                if (!$this->isDue($task->expression)) {
+                    continue;
+                }
+
+                $this->executeTask($task);
+            }
         }
     }
 
     protected function executeTask(ScheduledTask $task): void
     {
         $command = $this->cli . $task->command;
-        $output = [];
+        $output = '';
         $exitCode = 0;
         $lockFile = null;
         $releaseLockInFinally = false;
@@ -62,8 +75,8 @@ abstract class ScheduleManage
                 if ($lockFile !== null) {
                     $lockArg = escapeshellarg($lockFile);
                     $script = "echo $$ > {$lockArg}; trap 'rm -f {$lockArg}' EXIT; {$command}";
-                    $backgroundCommand = 'sh -c ' . escapeshellarg($script) . ' > /dev/null 2>&1 &';
-                    exec($backgroundCommand, $output, $exitCode);
+                    $result = bash()->run('sh', '-c', $script . ' > /dev/null 2>&1 &');
+                    $exitCode = $result->exitCode();
                     if ($exitCode !== 0) {
                         $this->releaseTaskLock($lockFile);
                         echo "\033[0;31m[Error]\033[0m Failed to start background task: {$task->command}\n";
@@ -73,8 +86,12 @@ abstract class ScheduleManage
                     return;
                 }
 
-                exec($command . ' > /dev/null 2>&1 &');
-                echo "\033[0;34m[Background]\033[0m Task queued to run in background\n";
+                $result = bash()->run('sh', '-c', $command . ' > /dev/null 2>&1 &');
+                if ($result->ok()) {
+                    echo "\033[0;34m[Background]\033[0m Task queued to run in background\n";
+                } else {
+                    echo "\033[0;31m[Error]\033[0m Failed to start background task: {$task->command}\n";
+                }
                 return;
             }
 
@@ -89,15 +106,17 @@ abstract class ScheduleManage
                     echo "\033[0;32m[Retry]\033[0m Attempt {$i} of {$attempts}\n";
                 }
 
-                exec($command . ' 2>&1', $output, $exitCode);
+                $result = bash()->run('sh', '-c', $command . ' 2>&1');
+                $output = $result->output();
+                $exitCode = $result->exitCode();
 
                 if ($exitCode === 0) {
                     break;
                 }
             }
 
-            if (!empty($output)) {
-                echo implode(PHP_EOL, $output) . PHP_EOL;
+            if (trim($output) !== '') {
+                echo rtrim($output, "\r\n") . PHP_EOL;
             }
 
             if ($exitCode !== 0) {
@@ -156,8 +175,7 @@ abstract class ScheduleManage
             return @posix_kill($pid, 0);
         }
 
-        exec('ps -p ' . (int) $pid . ' > /dev/null 2>&1', $output, $exitCode);
-        return $exitCode === 0;
+        return bash()->run('ps', '-p', (string) $pid)->ok();
     }
 
     protected function isDue(string $expression): bool
