@@ -47,7 +47,7 @@ class CreateQueue
             throw new QueueException("Function handle does not exist in class $className", 500);
         }
 
-        $attributes = get_class_vars(get_class($class));
+        $attributes = collection($class)->toArray();
         $excludeKeys = ['queue', 'connection', 'timeout', 'tries', 'delayTries'];
 
         $dataQueue = [
