@@ -735,6 +735,7 @@ class QueryBuilder {
             $sql .= ' WHERE ';
         }
         foreach ($bindings as $idx => $where) {
+            $where['type'] = $where['type'] ?? 'basic';
             if ($where['type'] === 'nested') {
                 $sql_nested = '';
                 $subWhere = $this->resolveWhere($sql_nested, $where['query'], true);
