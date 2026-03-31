@@ -13,7 +13,11 @@ abstract class ScheduleManage
 
     public function __construct()
     {
-        $this->cli = PHP_BINARY . ' cli.php ';
+        $php_binary = PHP_BINARY ?: PHP_BINDIR . '/php';
+        if (!is_executable($php_binary)) {
+            $php_binary = 'php';
+        }
+        $this->cli = $php_binary . ' cli.php ';
         $this->lockDirectory = __DIR__ROOT . '/storage/cache/schedule_locks';
         $this->schedulerLog = __DIR__ROOT . '/storage/scheduler.log';
     }
@@ -72,12 +76,11 @@ abstract class ScheduleManage
         $lockFile = null;
         $releaseLockInFinally = false;
 
-        echo "\033[0;32m[Schedule]\033[0m " . date('Y-m-d H:i:s') . " - Running: {$command}\n";
-
+        $this->output('info', 'RUNNING',date('Y-m-d H:i:s') . " - Command: {$command}");
         if ($task->withoutOverlap) {
             $lockFile = $this->acquireTaskLock($task);
             if ($lockFile === null) {
-                echo "\033[0;33m[Skip]\033[0m Task is already running (withoutOverlap): {$task->command}\n";
+                $this->output('info', 'RUNNING', "Task is already running (withoutOverlap): {$task->command}");
                 return;
             }
             $releaseLockInFinally = !$task->background;
@@ -93,32 +96,32 @@ abstract class ScheduleManage
                     if ($exitCode !== 0) {
                         $this->releaseTaskLock($lockFile);
                         $this->logSchedulerMessage('error', 'Failed to start background task: ' . $task->command . ' (Exit: ' . $exitCode . ')');
-                        echo "\033[0;31m[Error]\033[0m Failed to start background task: {$task->command}\n";
+                        $this->output('error', 'ERROR', "Failed to start background task: {$task->command}\n");
                     } else {
-                        echo "\033[0;34m[Background]\033[0m Task queued to run in background\n";
+                        $this->output('info', 'INFO', "Task queued to run in background");
                     }
                     return;
                 }
 
                 $result = bash()->run('sh', '-c', $command . ' > /dev/null 2>&1 &');
                 if ($result->ok()) {
-                    echo "\033[0;34m[Background]\033[0m Task queued to run in background\n";
+                    $this->output('info', "INFO", "Task queued to run in background");
                 } else {
                     $this->logSchedulerMessage('error', 'Failed to start background task: ' . $task->command);
-                    echo "\033[0;31m[Error]\033[0m Failed to start background task: {$task->command}\n";
+                    $this->output('error','ERROR', "Failed to start background task: {$task->command}\n");
                 }
                 return;
             }
 
             if ($task->queue) {
-                echo "\033[0;34m[Queue]\033[0m Task queued for later execution\n";
+                $this->output('warning', 'WARNING', "Task queued for later execution");
                 return;
             }
 
             $attempts = max(1, $task->retry + 1);
             for ($i = 0; $i < $attempts; $i++) {
                 if ($i > 0) {
-                    echo "\033[0;32m[Retry]\033[0m Attempt {$i} of {$attempts}\n";
+                    $this->output('info', 'RETRY', "Attempt {$i} of {$attempts}", date('Y-m-d H:i:s'));
                 }
 
                 $result = bash()->run('sh', '-c', $command . ' 2>&1');
@@ -272,5 +275,24 @@ abstract class ScheduleManage
         }
         $logLine .= PHP_EOL;
         file_put_contents($this->schedulerLog, $logLine, FILE_APPEND);
+    }
+
+    protected function output($color, $title = '', $message = ''): void {
+        switch ($color) {
+            case 'info':
+                echo "\033[0;36m[$title]\033[0m: " . $message . "\n";
+                break;
+            case 'error':
+                echo "\033[0;31m[$title]\033[0m: " . $message . "\n";
+                break;
+            case 'success':
+                echo "\033[0;32m[$title]\033[0m: " . $message . "\n";
+                break;
+            case 'warning':
+                echo "\033[0;33m[$title]\033[0m: " . $message . "\n";
+                break;
+            default:
+                echo "[$title]: " . $message . "\n";
+        }
     }
 }
